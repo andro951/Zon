@@ -1,0 +1,33 @@
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    background-color: #000000;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    color: #303030;
+}
+
+/* #gameCanvas {
+    background-color: #222;
+    width: 800px;
+    height: 600px;
+    border: 2px solid #000;
+    margin-top: 20px;
+} */
+
+#topUI, #bottomUI {
+    width: 100%;
+    background-color: #d0d0d0;
+    box-sizing: border-box;
+    display: none;
+}
+
+#combatAreaUI {
+    justify-content: center;
+    align-items: center;
+    background-color: #a0a0a0;
+    display: none;
+}
