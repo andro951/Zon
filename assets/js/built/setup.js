@@ -4,10 +4,10 @@ const Zon = {}
 
 Zon.name = "Zon";
 
+Zon.debug = true;
+
 Zon.init = function() {
     Zon.initGame();
-    Zon.topUI.show();
-    Zon.combatUI.show();
-    Zon.bottomUI.show();
+    Zon.finishAndShowCombatUI();
     Zon.game.start();
 }

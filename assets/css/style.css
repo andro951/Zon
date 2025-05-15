@@ -25,9 +25,9 @@ h1 {
     display: none;
 }
 
-#combatAreaUI {
+#combatAreaCanvas {
     justify-content: center;
     align-items: center;
-    background-color: #a0a0a0;
+    background-color: #030303;
     display: none;
 }

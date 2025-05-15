@@ -12,36 +12,35 @@ Zon.Device = class {
         this.widthRatio = this.DEFAULT_WIDTH_RATIO;
         this.usedHeightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.usedWidthRatio = this.DEFAULT_WIDTH_RATIO;
-        this.top = undefined;
-        this.bottom = undefined;
-        this.left = undefined;
-        this.right = undefined;
-        this.width = undefined;
-        this.height = undefined;
+        this.top = new DataTypes.Variable(undefined);
+        this.left = new DataTypes.Variable(undefined);
+        this.width = new DataTypes.Variable(undefined);
+        this.height = new DataTypes.Variable(undefined);
+        this.bottom = new DataTypes.DependentVariable(() =>  Zon.device.top.value + Zon.device.height.value, this.top, this.height);
+        this.right = new DataTypes.DependentVariable(() => Zon.device.left.value + Zon.device.width.value, this.left, this.width);
         window.addEventListener("load", () => Zon.device.resize());
         window.addEventListener("resize", () => Zon.device.resize());
         this.resizeListenners = new Set();
+        this.resize();
     }
 
     resize() {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
-        this.height = this.isMobile ? screenHeight * (this.heightRatio / this.DEFAULT_HEIGHT_RATIO) : screenHeight;
-        this.width = Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth);
-        this.top = (screenHeight - this.height) / 2;
-        this.bottom = this.top + this.height;
-        this.left = (screenWidth - this.width) / 2;
-        this.right = this.left + this.width;
-        for (const uiPanel of this.resizeListenners) {
-            uiPanel.resize();
-        }
-    }
-
-    registerResize(uiPanel) {
-        this.resizeListenners.add(uiPanel);
-    }
-    unregisterResize(uiPanel) {
-        this.resizeListenners.delete(uiPanel);
+        DataTypes.VariableBase.pause();
+        this.height.set(this.isMobile ? screenHeight * (this.heightRatio / this.DEFAULT_HEIGHT_RATIO) : screenHeight);
+        this.width.set(Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth));
+        this.top.set((screenHeight - this.height) / 2);
+        this.left.set((screenWidth - this.width) / 2);
+        DataTypes.VariableBase.resume();
+        // if (Zon.device) {
+        //     console.log('this.top', Zon.device.top.value);
+        //     console.log('this.left', Zon.device.left.value);
+        //     console.log('this.width', Zon.device.width.value);
+        //     console.log('this.height', Zon.device.height.value);
+        //     console.log('this.bottom', Zon.device.bottom.value);
+        //     console.log('this.right', Zon.device.right.value);
+        // }
     }
 }
 
