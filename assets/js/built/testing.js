@@ -29,3 +29,12 @@
 // }
 
 // test2();
+
+
+// function test3() {
+//     const max = 0x0001FFFFFFFFFFFFF;
+//     const maxShift = 0x0001FFFFFFFFFFFFF >>> 0;
+//     console.log(`max: ${max}, maxShift: ${maxShift}`);
+// }
+
+// test3();

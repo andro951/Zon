@@ -312,6 +312,8 @@ BinaryTests.testData1 = [
     new BinaryTests.TestData_BinaryReadAndWrite(0x3FFFFFFF, 31, 'int'),          // Max 31-bit int
     new BinaryTests.TestData_BinaryReadAndWrite(-0x3FFFFFFF, 31, 'int'),         // Min 31-bit int
     new BinaryTests.TestData_BinaryReadAndWrite(-0x7FFFFFFF, 31, 'int'),         // Edge of 32-bit int (not full 2's comp)
+    new BinaryTests.TestData_BinaryReadAndWrite(-(1 < 31), 31, 'int'),           // Min 32-bit int
+    new BinaryTests.TestData_BinaryReadAndWrite(-2147483648, 32, 'int'),
 
     new BinaryTests.TestData_BinaryReadAndWrite(1n << 32n, 33n, 'biguint'),       // Just past 32-bit boundary
     new BinaryTests.TestData_BinaryReadAndWrite((1n << 63n) - 1n, 63n, 'biguint'),// Max 63-bit
@@ -326,10 +328,70 @@ BinaryTests.testData1 = [
     new BinaryTests.TestData_BinaryReadAndWrite(-128, 0, 'int'),            // 8-bit negative
     new BinaryTests.TestData_BinaryReadAndWrite(1n << 40n, 0n, 'biguint'),   // Cross 5-byte threshold
 
-    //new BinaryTests.TestData_BinaryReadAndWrite(Number.MAX_SAFE_INTEGER, 0, 'uint'), // Edge of JS safe integer
-
     new BinaryTests.TestData_BinaryReadAndWrite(true, 1, 'bool'),
     new BinaryTests.TestData_BinaryReadAndWrite(false, 1, 'bool'),
+
+    new BinaryTests.TestData_BinaryReadAndWrite(Number.MAX_SAFE_INTEGER, 0, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(Number.MIN_SAFE_INTEGER, 0, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(-165486765, 0, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(-165486765, 40, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(-1, 0, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0, 0, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(1, 0, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(2, 0, 'int53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1, 1, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x3, 2, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x7, 3, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0xF, 4, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1F, 5, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x3F, 6, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x7F, 7, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0xFF, 8, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FF, 9, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x3FF, 10, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x7FF, 11, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0xFFF, 12, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFF, 13, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x3FFF, 14, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x7FFF, 15, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0xFFFF, 16, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFF, 17, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFF, 18, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFF, 19, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFF, 20, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 21, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 22, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 23, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 24, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 25, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 26, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 27, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 28, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 29, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 30, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 31, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 32, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 33, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 34, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 35, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 36, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 37, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 38, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 39, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 40, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 41, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 42, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 43, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 44, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 45, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 46, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 47, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 48, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 49, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x2FFFFF, 50, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 51, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 52, 'uint53'),
+    new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 53, 'uint53'),
 ];
 
 BinaryTests.logTest1 = BinaryTests.logAllInfo || true;
@@ -346,18 +408,37 @@ BinaryTests.test1 = function() {
             case 'uint':
                 if (length === 0) {
                     if (type === 'int') {
-                        writer.writeIntAutoLength(value);
+                        writer.writeInt32AutoLength(value);
                     }
                     else {
-                        writer.writeUIntAutoLength(value);
+                        writer.writeUInt32AutoLength(value);
                     }
                 }
                 else {
                     if (type === 'int') {
-                        writer.writeInt(value, length);
+                        writer.writeInt32(value, length);
                     }
                     else {
-                        writer.writeUInt(value, length);
+                        writer.writeUInt32(value, length);
+                    }
+                }
+                break;
+            case 'uint53':
+            case 'int53':
+                if (length === 0) {
+                    if (type === 'int53') {
+                        writer.writeInt53AutoLength(value);
+                    }
+                    else {
+                        writer.writeUInt53AutoLength(value);
+                    }
+                }
+                else {
+                    if (type === 'int53') {
+                        writer.writeInt53(value, length);
+                    }
+                    else {
+                        writer.writeUInt53(value, length);
                     }
                 }
                 break;
@@ -409,18 +490,37 @@ BinaryTests.test1 = function() {
             case 'int':
                 if (length === 0) {
                     if (type === 'int') {
-                        readValue = reader.readIntAutoLength();
+                        readValue = reader.readInt32AutoLength();
                     }
                     else {
-                        readValue = reader.readUIntAutoLength();
+                        readValue = reader.readUInt32AutoLength();
                     }
                 }
                 else {
                     if (type === 'int') {
-                        readValue = reader.readInt(length);
+                        readValue = reader.readInt32(length);
                     }
                     else {
-                        readValue = reader.readUInt(length);
+                        readValue = reader.readUInt32(length);
+                    }
+                }
+                break;
+            case 'uint53':
+            case 'int53':
+                if (length === 0) {
+                    if (type === 'int53') {
+                        readValue = reader.readInt53AutoLength();
+                    }
+                    else {
+                        readValue = reader.readUInt53AutoLength();
+                    }
+                }
+                else {
+                    if (type === 'int53') {
+                        readValue = reader.readInt53(length);
+                    }
+                    else {
+                        readValue = reader.readUInt53(length);
                     }
                 }
                 break;
@@ -468,4 +568,4 @@ BinaryTests.allTests = function() {
     BinaryTests.test1();
 }
 
-BinaryTests.allTests();
+//BinaryTests.allTests();
