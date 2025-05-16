@@ -12,27 +12,59 @@ Zon.Device = class {
         this.widthRatio = this.DEFAULT_WIDTH_RATIO;
         this.usedHeightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.usedWidthRatio = this.DEFAULT_WIDTH_RATIO;
-        this.top = new DataTypes.Variable(undefined);
-        this.left = new DataTypes.Variable(undefined);
-        this.width = new DataTypes.Variable(undefined);
-        this.height = new DataTypes.Variable(undefined);
-        this.bottom = new DataTypes.DependentVariable(() =>  Zon.device.top.value + Zon.device.height.value, this.top, this.height);
-        this.right = new DataTypes.DependentVariable(() => Zon.device.left.value + Zon.device.width.value, this.left, this.width);
+        this.rect = Struct.DynamicRectangle.empty();
         window.addEventListener("load", () => Zon.device.resize());
         window.addEventListener("resize", () => Zon.device.resize());
         this.resizeListenners = new Set();
         this.resize();
     }
 
+    get top() {
+        return this.rect.top;
+    }
+    get left() {
+        return this.rect.left;
+    }
+    get width() {
+        return this.rect.width;
+    }
+    get height() {
+        return this.rect.height;
+    }
+    get right() {
+        return this.rect.right;
+    }
+    get bottom() {
+        return this.rect.bottom;
+    }
+    get _top() {
+        return this.rect._top;
+    }
+    get _left() {
+        return this.rect._left;
+    }
+    get _width() {
+        return this.rect._width;
+    }
+    get _height() {
+        return this.rect._height;
+    }
+    get _right() {
+        return this.rect._right;
+    }
+    get _bottom() {
+        return this.rect._bottom;
+    }
+
     resize() {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
-        DataTypes.VariableBase.pause();
-        this.height.set(this.isMobile ? screenHeight * (this.heightRatio / this.DEFAULT_HEIGHT_RATIO) : screenHeight);
-        this.width.set(Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth));
-        this.top.set((screenHeight - this.height) / 2);
-        this.left.set((screenWidth - this.width) / 2);
-        DataTypes.VariableBase.resume();
+        Variable.Base.pause();
+        this._height.set(this.isMobile ? screenHeight * (this.heightRatio / this.DEFAULT_HEIGHT_RATIO) : screenHeight);
+        this._width.set(Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth));
+        this._top.set((screenHeight - this.height) / 2);
+        this._left.set((screenWidth - this.width) / 2);
+        Variable.Base.resume();
         // if (Zon.device) {
         //     console.log('this.top', Zon.device.top.value);
         //     console.log('this.left', Zon.device.left.value);

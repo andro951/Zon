@@ -6,25 +6,55 @@ Zon.UIPanel = class {
         this.element.style.position = "absolute";
         this.element.style.display = "none";
         this.visible = false;
-        this.top = new DataTypes.VariableBase();
-        this.left = new DataTypes.VariableBase();
-        this.width = new DataTypes.VariableBase();
-        this.height = new DataTypes.VariableBase();
-        this.right = new DataTypes.DependentVariable(() => this.left + this.width, this.left, this.width);
-        this.bottom = new DataTypes.DependentVariable(() => this.top + this.height, this.top, this.height);
+        this.rect = Struct.DynamicRectangle.base();
     }
-
+    get _top() {
+        return this.rect._top;
+    }
+    get _left() {
+        return this.rect._left;
+    }
+    get _width() {
+        return this.rect._width;
+    }
+    get _height() {
+        return this.rect._height;
+    }
+    get _right() {
+        return this.rect._right;
+    }
+    get _bottom() {
+        return this.rect._bottom;
+    }
+    get top() {
+        return this.rect.top;
+    }
+    get left() {
+        return this.rect.left;
+    }
+    get width() {
+        return this.rect.width;
+    }
+    get height() {
+        return this.rect.height;
+    }
+    get right() {
+        return this.rect.right;
+    }
+    get bottom() {
+        return this.rect.bottom;
+    }
     updateTop() {
-        this.element.style.top = `${this.top.value}px`;
+        this.element.style.top = `${this.top}px`;
     }
     updateLeft() {
-        this.element.style.left = `${this.left.value}px`;
+        this.element.style.left = `${this.left}px`;
     }
     updateWidth() {
-        this.element.style.width = `${this.width.value}px`;
+        this.element.style.width = `${this.width}px`;
     }
     updateHeight() {
-        this.element.style.height = `${this.height.value}px`;
+        this.element.style.height = `${this.height}px`;
     }
     updateAllValues() {
         this.updateWidth();
@@ -33,16 +63,16 @@ Zon.UIPanel = class {
         this.updateTop();
     }
     removeTopListener() {
-        this.top.onChangedAction.remove(this);
+        this.rect._top.onChangedAction.remove(this);
     }
     removeLeftListener() {
-        this.left.onChangedAction.remove(this);
+        this.rect._left.onChangedAction.remove(this);
     }
     removeWidthListener() {
-        this.width.onChangedAction.remove(this);
+        this.rect._width.onChangedAction.remove(this);
     }
     removeHeightListener() {
-        this.height.onChangedAction.remove(this);
+        this.rect._height.onChangedAction.remove(this);
     }
     removeListeners() {
         this.removeTopListener();
@@ -51,22 +81,46 @@ Zon.UIPanel = class {
         this.removeHeightListener();
     }
     addTopListener() {
-        this.top.onChangedAction.add(this, () => this.updateTop());
+        this.rect._top.onChangedAction.add(this, () => this.updateTop());
     }
     addLeftListener() {
-        this.left.onChangedAction.add(this, () => this.updateLeft());
+        this.rect._left.onChangedAction.add(this, () => this.updateLeft());
     }
     addWidthListener() {
-        this.width.onChangedAction.add(this, () => this.updateWidth());
+        this.rect._width.onChangedAction.add(this, () => this.updateWidth());
     }
     addHeightListener() {
-        this.height.onChangedAction.add(this, () => this.updateHeight());
+        this.rect._height.onChangedAction.add(this, () => this.updateHeight());
     }
     addListeners() {
         this.addTopListener();
         this.addLeftListener();
         this.addWidthListener();
         this.addHeightListener();
+    }
+    replaceTop(newTop) {
+        this.rect._top = this.rect._top.copyData(newTop);
+    }
+    replaceLeft(newLeft) {
+        this.rect._left = this.rect._left.copyData(newLeft);
+    }
+    replaceWidth(newWidth) {
+        this.rect._width = this.rect._width.copyData(newWidth);
+    }
+    replaceHeight(newHeight) {
+        this.rect._height = this.rect._height.copyData(newHeight);
+    }
+    leftIsDefault() {
+        return this.rect._left.constructor === Variable.Base;
+    }
+    widthIsDefault() {
+        return this.rect._width.constructor === Variable.Base;
+    }
+    heightIsDefault() {
+        return this.rect._height.constructor === Variable.Base;
+    }
+    topIsDefault() {
+        return this.rect._top.constructor === Variable.Base;
     }
     show() {
         if (this.visible)

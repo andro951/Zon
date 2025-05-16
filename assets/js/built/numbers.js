@@ -537,8 +537,8 @@ Numbers.Triple = class {
 
         const { exponentBase2, fraction } = Numbers.Triple.base10ToBase2(exponentBase10);
         const base10FractionMult = Math.pow(2, fraction);
-        significand *= base10FractionMult;
-        return Numbers.Triple.fromNumber(significand, exponentBase2);
+        significand = BigInt(Math.round(Number(significand) * base10FractionMult));
+        return Numbers.Triple.create(significand, exponentBase2);
     }
     multiplyByPow10(pow10Exponent) {
         return this.multiply(Numbers.Triple.triplePow10(1n, pow10Exponent));

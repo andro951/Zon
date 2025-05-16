@@ -38,3 +38,13 @@
 // }
 
 // test3();
+
+async function test4() {
+    await Zon.LevelData.preSetLoadedValuesSetup();
+    console.log(`Zon.LevelData.blockHealthMultiplePerPrestige: ${Zon.LevelData.blockHealthMultiplePerPrestige}`);
+    const levelData = new Zon.LevelData(Zon.StageID.MONSTERS_WILD_CREATURES, 1);
+
+    
+}
+
+test4();

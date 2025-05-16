@@ -36,10 +36,10 @@ Zon.TopUI = class extends Zon.UIPanel {
         switch (newLayout) {
             case Zon.settings.combatLayoutDefault:
             case Zon.settings.combatLayoutBottom:
-                this.top = this.top.copyData(new DataTypes.DependentVariable(() => Zon.device.top.value, Zon.device.top));
+                this.replaceTop(new Variable.Dependent(() => Zon.device.top, Zon.device._top));
                 break;
             case Zon.settings.combatLayoutCenter:
-                this.top = this.top.copyData(new DataTypes.DependentVariable(() => Zon.combatUI.top.value - Zon.topUI.height.value, Zon.combatUI.top, this.height));
+                this.replaceTop(new Variable.Dependent(() => Zon.combatUI.top - Zon.topUI.height, Zon.combatUI._top, this._height));
                 break;
             default:
                 throw new Error(`Unknown combat layout: ${newLayout}`);
@@ -48,29 +48,29 @@ Zon.TopUI = class extends Zon.UIPanel {
         if (this.visible)
             this.addTopListener();
 
-        if (this.left.constructor === DataTypes.VariableBase) {
+        if (this.leftIsDefault()) {
             if (this.visible)
                 this.removeLeftListener();
 
-            this.left = this.left.copyData(new DataTypes.DependentVariable(() => Zon.device.left.value, Zon.device.left));
+            this.replaceLeft(new Variable.Dependent(() => Zon.device.left, Zon.device._left));
             if (this.visible)
                 this.addLeftListener();
         }
 
-        if (this.width.constructor === DataTypes.VariableBase) {
+        if (this.widthIsDefault()) {
             if (this.visible)
                 this.removeWidthListener();
 
-            this.width = this.width.copyData(new DataTypes.DependentVariable(() => Zon.device.width.value, Zon.device.width));
+            this.replaceWidth(new Variable.Dependent(() => Zon.device.width, Zon.device._width));
             if (this.visible)
                 this.addWidthListener();
         }
 
-        if (this.height.constructor === DataTypes.VariableBase) {
+        if (this.heightIsDefault()) {
             if (this.visible)
                 this.removeHeightListener();
 
-            this.height = this.height.copyData(new DataTypes.DependentVariable(() => Math.min(Zon.device.height.value * Zon.topUI.topUIPercentOfHeight, Zon.device.width.value / Zon.topUI.topUIAspectRatio), Zon.device.width, Zon.device.height));
+            this.replaceHeight(new Variable.Dependent(() => Math.min(Zon.device.height * Zon.topUI.topUIPercentOfHeight, Zon.device.width / Zon.topUI.topUIAspectRatio), Zon.device._width, Zon.device._height));
             if (this.visible)
                 this.addHeightListener();
         }
@@ -93,39 +93,39 @@ Zon.CombatUI = class extends Zon.UIPanel {
         switch (newLayout) {
             case Zon.settings.combatLayoutDefault:
             case Zon.settings.combatLayoutCenter:
-                this.top = this.top.copyData(new DataTypes.DependentVariable(() => Zon.device.top.value + (Zon.device.height.value - Zon.device.width.value) / 2, Zon.device.top, Zon.device.width, Zon.device.height));
+                this.replaceTop(new Variable.Dependent(() => Zon.device.top + (Zon.device.height - Zon.device.width) / 2, Zon.device._top, Zon.device._width, Zon.device._height));
                 break;
             case Zon.settings.combatLayoutBottom:
-                this.top = this.top.copyData(new DataTypes.DependentVariable(() => Zon.bottomUI.top.value - Zon.combatUI.height.value, Zon.bottomUI.top, this.height));
+                this.replaceTop(new Variable.Dependent(() => Zon.bottomUI.top - Zon.combatUI.height, Zon.bottomUI._top, this._height));
                 break;
         }
 
         if (this.visible)
             this.addTopListener();
-        
-        if (this.left.constructor === DataTypes.VariableBase) {
+
+        if (this.leftIsDefault()) {
             if (this.visible)
                 this.removeLeftListener();
 
-            this.left = this.left.copyData(new DataTypes.DependentVariable(() => Zon.device.left.value, Zon.device.left));
+            this.replaceLeft(new Variable.Dependent(() => Zon.device.left, Zon.device._left));
             if (this.visible)
                 this.addLeftListener();
         }
 
-        if (this.width.constructor === DataTypes.VariableBase) {
+        if (this.widthIsDefault()) {
             if (this.visible)
                 this.removeWidthListener();
 
-            this.width = this.width.copyData(new DataTypes.DependentVariable(() => Zon.device.width.value, Zon.device.width));
+            this.replaceWidth(new Variable.Dependent(() => Zon.device.width, Zon.device._width));
             if (this.visible)
                 this.addWidthListener();
         }
 
-        if (this.height.constructor === DataTypes.VariableBase) {
+        if (this.heightIsDefault()) {
             if (this.visible)
                 this.removeHeightListener();
 
-            this.height = this.height.copyData(new DataTypes.DependentVariable(() => Zon.device.width.value / Zon.combatUI.combatUIAspectRatio, Zon.device.width));
+            this.replaceHeight(new Variable.Dependent(() => Zon.device.width / Zon.combatUI.combatUIAspectRatio, Zon.device._width));
             if (this.visible)
                 this.addHeightListener();
         }
@@ -151,41 +151,39 @@ Zon.BottomUI = class extends Zon.UIPanel {
         switch (newLayout) {
             case Zon.settings.combatLayoutDefault:
             case Zon.settings.combatLayoutBottom:
-                this.top = this.top.copyData(new DataTypes.DependentVariable(() => {
-                    return Zon.device.bottom.value - Zon.bottomUI.height.value;
-                }, Zon.device.bottom , this.height));
+                this.replaceTop(new Variable.Dependent(() => Zon.device.bottom - Zon.bottomUI.height, Zon.device._bottom , this._height));
                 break;
             case Zon.settings.combatLayoutCenter:
-                this.top = this.top.copyData(new DataTypes.DependentVariable(() => Zon.combatUI.bottom.value, Zon.combatUI.bottom));
+                this.replaceTop(new Variable.Dependent(() => Zon.combatUI.bottom, Zon.combatUI._bottom));
                 break;
         }
 
         if (this.visible)
             this.addTopListener();
 
-        if (this.left.constructor === DataTypes.VariableBase) {
+        if (this.leftIsDefault()) {
             if (this.visible)
                 this.removeLeftListener();
 
-            this.left = this.left.copyData(new DataTypes.DependentVariable(() => Zon.device.left.value, Zon.device.left));
+            this.replaceLeft(new Variable.Dependent(() => Zon.device.left, Zon.device._left));
             if (this.visible)
                 this.addLeftListener();
         }
 
-        if (this.width.constructor === DataTypes.VariableBase) {
+        if (this.widthIsDefault()) {
             if (this.visible)
                 this.removeWidthListener();
 
-            this.width = this.width.copyData(new DataTypes.DependentVariable(() => Zon.device.width.value, Zon.device.width));
+            this.replaceWidth(new Variable.Dependent(() => Zon.device.width, Zon.device._width));
             if (this.visible)
                 this.addWidthListener();
         }
 
-        if (this.height.constructor === DataTypes.VariableBase) {
+        if (this.heightIsDefault()) {
             if (this.visible)
                 this.removeHeightListener();
 
-            this.height = this.height.copyData(new DataTypes.DependentVariable(() => Math.min(Zon.device.height.value * this.bottomUIPercentOfHeight, Zon.device.width.value / this.bottomUIAspectRatio), Zon.device.width, Zon.device.height));
+            this.replaceHeight(new Variable.Dependent(() => Math.min(Zon.device.height * this.bottomUIPercentOfHeight, Zon.device.width / this.bottomUIAspectRatio), Zon.device._width, Zon.device._height));
             if (this.visible)
                 this.addHeightListener();
         }

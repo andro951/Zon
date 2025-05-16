@@ -1,6 +1,7 @@
 "use strict";
 
 const Zon = {}
+const Struct = {}
 
 Zon.name = "Zon";
 

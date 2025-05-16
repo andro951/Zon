@@ -7,6 +7,7 @@ Zon.Game = class {
         this.loopInterval = undefined;
         this.TICK_INTERVAL = 10;// 100 FPS
         this.FPS = 1000 / this.TICK_INTERVAL;
+        this.prestigeCount = 0;
         //this.dummyGame = new DummyGame();
     }
 

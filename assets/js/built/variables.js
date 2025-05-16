@@ -1,8 +1,8 @@
 "use strict";
 
-const DataTypes = {}
+const Variable = {}
 
-DataTypes.VariableBase = class {
+Variable.Base = class {
     constructor() {
         this.onChangedAction = new Actions.Action();
     }
@@ -16,8 +16,8 @@ DataTypes.VariableBase = class {
     }
 
     onChanged() {
-        if (DataTypes.VariableBase.paused) {
-            this.onChangedAction.callbacks.forEach((callback, key) => DataTypes.VariableBase.pausedCallbacks.add(key, callback));
+        if (Variable.Base.paused) {
+            this.onChangedAction.callbacks.forEach((callback, key) => Variable.Base.pausedCallbacks.add(key, callback));
             return;
         }
 
@@ -25,7 +25,7 @@ DataTypes.VariableBase = class {
     }
 
     copyData(newVariable) {
-        if (!(newVariable instanceof DataTypes.VariableBase))
+        if (!(newVariable instanceof Variable.Base))
             throw new Error("newVariable must be a VariableBase", newVariable);
 
         newVariable.onChangedAction.setCallbacks(this.onChangedAction.callbacks);
@@ -37,16 +37,16 @@ DataTypes.VariableBase = class {
     static pausedCallbacks = new Actions.Action();
 
     static pause() {
-        DataTypes.VariableBase.paused = true;
+        Variable.Base.paused = true;
     }
 
     static resume() {
-        DataTypes.VariableBase.paused = false;
-        DataTypes.VariableBase.pausedCallbacks.callAndClear();
+        Variable.Base.paused = false;
+        Variable.Base.pausedCallbacks.callAndClear();
     }
 }
 
-DataTypes.Variable = class extends DataTypes.VariableBase {
+Variable.Value = class extends Variable.Base {
     constructor(initialValue) {
         super();
         this._value = initialValue;
@@ -65,13 +65,13 @@ DataTypes.Variable = class extends DataTypes.VariableBase {
     }
 }
 
-DataTypes.DependentVariable = class extends DataTypes.VariableBase {
+Variable.Dependent = class extends Variable.Base {
     constructor(getValue, ...args) {
         super();
         this.getValue = getValue;
         this.needsRecalculate = true;
         args.forEach(arg => {
-            if (arg instanceof DataTypes.VariableBase) {
+            if (arg instanceof Variable.Base) {
                 arg.onChangedAction.add(this, () => this.onChanged());
             }
             else {
