@@ -27,7 +27,7 @@ Zon.Health = class {
         return this._hp.Divide(this._maxHP).ToNumber();
     }
 
-    damage(damage, source, overKill = false) {
+    damage = (damage, source, overKill = false) => {
         if (damage.isZero)
             return Zon.Triple.ZERO;
 
@@ -55,7 +55,7 @@ Zon.Health = class {
         return damageReceived;
     }
 
-    heal(heal, source, overHeal = false) {
+    heal = (heal, source, overHeal = false) => {
         if (heal.isZero)
             return Zon.Triple.ZERO;
 
@@ -83,55 +83,11 @@ Zon.Health = class {
         return healingReceived;
     }
 
-    /*
-    internal void SetHealth(Triple health) {
-        hp = health;
-    }
-    public void SetMaxHP(Triple newMaxHP, MonoBehaviour source) {
-        Triple old = maxHP;
-        maxHP = newMaxHP;
-        Triple diff = maxHP - old;
-        if (diff.IsPositive) {
-            Heal(diff, source);
-        }
-        else {
-            if (!maxHP.IsPositive) {
-                Damage(HP, source);
-            }
-            else {
-                if (HP > maxHP) {
-                    Damage(HP - MaxHP, source);
-                }
-            }
-        }
-
-        OnMaxHPChanged?.Invoke(maxHP, old, source);
-    }
-    public void SetMaxHPNoEffects(Triple newMaxHP) {
-        Triple old = newMaxHP;
-        maxHP = newMaxHP;
-        Triple diff = newMaxHP - old;
-        if (diff.IsPositive) {
-            hp += diff;
-        }
-        else {
-            if (!maxHP.IsPositive) {
-                hp = Triple.Zero;
-            }
-            else {
-                if (HP > maxHP) {
-                    hp = maxHP;
-                }
-            }
-        }
-    }
-    */
-
-    setHealth(health) {
+    setHealth = (health) => {
         this._hp = health;
     }
 
-    setMaxHP(newMaxHP, source) {
+    setMaxHP = (newMaxHP, source) => {
         let old = this._maxHP;
         this._maxHP = newMaxHP;
         let diff = this._maxHP.subtract(old);
@@ -152,7 +108,7 @@ Zon.Health = class {
         this.onMaxHPChanged.call(this.maxHP, old, source);
     }
 
-    setMaxHPNoEffects(newMaxHP) {
+    setMaxHPNoEffects = (newMaxHP) => {
         let old = newMaxHP;
         this._maxHP = newMaxHP;
         let diff = newMaxHP.subtract(old);

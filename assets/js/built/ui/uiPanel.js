@@ -44,85 +44,109 @@ Zon.UIPanel = class {
     get bottom() {
         return this.rect.bottom;
     }
-    updateTop() {
+    updateTop = () => {
         this.element.style.top = `${this.top}px`;
     }
-    updateLeft() {
+    updateLeft = () => {
         this.element.style.left = `${this.left}px`;
     }
-    updateWidth() {
+    updateWidth = () => {
         this.element.style.width = `${this.width}px`;
     }
-    updateHeight() {
+    updateHeight = () => {
         this.element.style.height = `${this.height}px`;
     }
-    updateAllValues() {
+    updateAllValues = () => {
         this.updateWidth();
         this.updateHeight();
         this.updateLeft();
         this.updateTop();
     }
-    removeTopListener() {
-        this.rect._top.onChangedAction.remove(this);
+    removeTopListener = () => {
+        this.rect._top.onChangedAction.remove(this.updateTop);
     }
-    removeLeftListener() {
-        this.rect._left.onChangedAction.remove(this);
+    removeLeftListener = () => {
+        this.rect._left.onChangedAction.remove(this.updateLeft);
     }
-    removeWidthListener() {
-        this.rect._width.onChangedAction.remove(this);
+    removeWidthListener = () => {
+        this.rect._width.onChangedAction.remove(this.updateWidth);
     }
-    removeHeightListener() {
-        this.rect._height.onChangedAction.remove(this);
+    removeHeightListener = () => {
+        this.rect._height.onChangedAction.remove(this.updateHeight);
     }
-    removeListeners() {
+    removeListeners = () => {
         this.removeTopListener();
         this.removeLeftListener();
         this.removeWidthListener();
         this.removeHeightListener();
     }
-    addTopListener() {
-        this.rect._top.onChangedAction.add(this, () => this.updateTop());
+    addTopListener = () => {
+        this.rect._top.onChangedAction.add(this.updateTop);
     }
-    addLeftListener() {
-        this.rect._left.onChangedAction.add(this, () => this.updateLeft());
+    addLeftListener = () => {
+        this.rect._left.onChangedAction.add(this.updateLeft);
     }
-    addWidthListener() {
-        this.rect._width.onChangedAction.add(this, () => this.updateWidth());
+    addWidthListener = () => {
+        this.rect._width.onChangedAction.add(this.updateWidth);
     }
-    addHeightListener() {
-        this.rect._height.onChangedAction.add(this, () => this.updateHeight());
+    addHeightListener = () => {
+        this.rect._height.onChangedAction.add(this.updateHeight);
     }
-    addListeners() {
+    addListeners = () => {
         this.addTopListener();
         this.addLeftListener();
         this.addWidthListener();
         this.addHeightListener();
     }
-    replaceTop(newTop) {
-        this.rect._top = this.rect._top.copyData(newTop);
+    replaceTop = (func, ...variables) => {
+        if (this.visible)
+            this.removeTopListener();
+
+        this.rect._top = this.rect._top.copyData(new Variable.Dependent(func, ...variables));
+
+        if (this.visible)
+            this.addTopListener();
     }
-    replaceLeft(newLeft) {
-        this.rect._left = this.rect._left.copyData(newLeft);
+    replaceLeft = (func, ...variables) => {
+        if (this.visible)
+            this.removeLeftListener();
+
+        this.rect._left = this.rect._left.copyData(new Variable.Dependent(func, ...variables));
+
+        if (this.visible)
+            this.addLeftListener();
     }
-    replaceWidth(newWidth) {
-        this.rect._width = this.rect._width.copyData(newWidth);
+    replaceWidth = (func, ...variables) => {
+        if (this.visible)
+            this.removeWidthListener();
+
+        this.rect._width = this.rect._width.copyData(new Variable.Dependent(func, ...variables));
+
+        if (this.visible)
+            this.addWidthListener();
     }
-    replaceHeight(newHeight) {
-        this.rect._height = this.rect._height.copyData(newHeight);
+    replaceHeight = (func, ...variables) => {
+        if (this.visible)
+            this.removeHeightListener();
+
+        this.rect._height = this.rect._height.copyData(new Variable.Dependent(func, ...variables));
+
+        if (this.visible)
+            this.addHeightListener();
     }
-    leftIsDefault() {
+    leftIsDefault = () => {
         return this.rect._left.constructor === Variable.Base;
     }
-    widthIsDefault() {
+    widthIsDefault = () => {
         return this.rect._width.constructor === Variable.Base;
     }
-    heightIsDefault() {
+    heightIsDefault = () => {
         return this.rect._height.constructor === Variable.Base;
     }
-    topIsDefault() {
+    topIsDefault = () => {
         return this.rect._top.constructor === Variable.Base;
     }
-    show() {
+    show = () => {
         if (this.visible)
             return;
         
@@ -131,7 +155,7 @@ Zon.UIPanel = class {
         this.element.style.display = 'block';
         this.visible = true;
     }
-    hide() {
+    hide = () => {
         if (!this.visible)
             return;
         

@@ -13,9 +13,9 @@ Zon.Device = class {
         this.usedHeightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.usedWidthRatio = this.DEFAULT_WIDTH_RATIO;
         this.rect = Struct.DynamicRectangle.empty();
-        window.addEventListener("load", () => Zon.device.resize());
-        window.addEventListener("resize", () => Zon.device.resize());
-        this.resizeListenners = new Set();
+        window.addEventListener("load", this.resize);
+        window.addEventListener("resize", this.resize);
+        this.onResize = new Actions.Action();
         this.resize();
     }
 
@@ -56,7 +56,7 @@ Zon.Device = class {
         return this.rect._bottom;
     }
 
-    resize() {
+    resize = () => {
         const screenWidth = window.innerWidth;
         const screenHeight = window.innerHeight;
         Variable.Base.pause();
@@ -65,14 +65,7 @@ Zon.Device = class {
         this._top.set((screenHeight - this.height) / 2);
         this._left.set((screenWidth - this.width) / 2);
         Variable.Base.resume();
-        // if (Zon.device) {
-        //     console.log('this.top', Zon.device.top.value);
-        //     console.log('this.left', Zon.device.left.value);
-        //     console.log('this.width', Zon.device.width.value);
-        //     console.log('this.height', Zon.device.height.value);
-        //     console.log('this.bottom', Zon.device.bottom.value);
-        //     console.log('this.right', Zon.device.right.value);
-        // }
+        this.onResize.call();
     }
 }
 

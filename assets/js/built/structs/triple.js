@@ -1,7 +1,5 @@
 "use strict";
 
-const Numbers = {};
-
 Numbers.Triple = class {
     static get ZERO() {
         return new Numbers.Triple(0n, 0n, 0n);
@@ -96,11 +94,11 @@ Numbers.Triple = class {
             return;
         }
 
-        const trailingZeros = this.trailingZeroCount(this.significand);
+        const trailingZeros = Numbers.Triple.trailingZeroCount(this.significand);
         this._significand >>= trailingZeros;
         this._exponent += trailingZeros;
     }
-    trailingZeroCount(value) {
+    static trailingZeroCount(value) {
         if (value === 0n)
             return 0n;
 

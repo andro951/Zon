@@ -8,16 +8,19 @@ Zon.Game = class {
         this.TICK_INTERVAL = 10;// 100 FPS
         this.FPS = 1000 / this.TICK_INTERVAL;
         this.prestigeCount = 0;
+        this.lateUpdate = new Actions.Action();
+        this.lateDraw = new Actions.Action();
         //this.dummyGame = new DummyGame();
     }
 
-    start() {
+    start = () => {
         // Game start logic
         console.log("Game started");
+
         this.loopInterval = window.setInterval(this.loop.bind(this), this.TICK_INTERVAL);
     }
 
-    loop() {
+    loop = () => {
         this.updateLoop(this.getUpdateSpeed());
         this.drawLoop();
         // Game loop logic
@@ -25,22 +28,20 @@ Zon.Game = class {
         //this.dummyGame.update();
     }
 
-    getUpdateSpeed() {
+    getUpdateSpeed = () => {
         return 1;
     }
 
-    updateLoop(updatesToRun) {
+    updateLoop = (updatesToRun) => {
         for (let i = 0; i < updatesToRun; i++) {
             Zon.balls.forEach((ball) => ball.update());
+            this.lateUpdate.call();
         }
     }
 
-    drawLoop() {
+    drawLoop = () => {
         Zon.combatUI.clearCanvas();
         Zon.balls.forEach((ball) => ball.draw());
-        Zon.block.draw();
+        this.lateDraw.call();
     }
 };
-Zon.initGame = function() {
-    this.game = new this.Game();
-}

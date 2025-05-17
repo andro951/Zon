@@ -105,18 +105,18 @@ Binary.BitExtractor = class {
         this.uint8Array = new Uint8Array(this.buffer);
     }
 
-    convertNumber(num) {
+    convertNumber = (num) => {
         this.dataView.setFloat64(0, num, true);
         return [ this.dataView.getUint32(0, true), this.dataView.getUint32(4, true) ];
     }
 
-    convertToNumber(low, high) {
+    convertToNumber = (low, high) => {
         this.dataView.setUint32(0, low, true);
         this.dataView.setUint32(4, high, true);
         return this.dataView.getFloat64(0, true);
     }
 
-    convertInt53(num) {
+    convertInt53 = (num) => {
         this.dataView.setFloat64(0, num, true);
         const low = this.dataView.getUint32(0, true);
         const high = this.dataView.getUint32(4, true);
@@ -151,7 +151,7 @@ Binary.BitExtractor = class {
         return [ intLow, intHigh ];
     }
 
-    convertToInt53(intLow, intHigh) {
+    convertToInt53 = (intLow, intHigh) => {
         let exp = intHigh > 0 ? intHigh.bitLength32() - 1 + Binary.BitExtractor.UINT_32_BITS : intLow.bitLength32() - 1;
         const expShift = Binary.BitExtractor.INT_53_BITS - exp - 1 - Binary.BitExtractor.UINT_32_BITS;
         let high;
@@ -215,12 +215,12 @@ Binary.Stream = class {
         this.currentByte = 0;
     }
 
-    static makeEmptyStream(size) {
+    static makeEmptyStream = (size) => {
         const buffer = new ArrayBuffer(size);
         return new Binary.Stream(buffer);
     }
 
-    resize(newBytes) {
+    resize = (newBytes) => {
         if (this.buffer.byteLength > newBytes)
             throw new Error("Cannot resize to a smaller size");
 
@@ -232,7 +232,7 @@ Binary.Stream = class {
         this.uint8Array = newUint8Array;
     }
 
-    slice() {
+    slice = () => {
         this.buffer = this.buffer.slice(0, this.currentByte);
         this.dataView = new DataView(this.buffer);
         this.uint8Array = new Uint8Array(this.buffer);
@@ -245,7 +245,7 @@ Binary.Writer = class {
         this.currentBit = 0;
     }
 
-    createStream(initialSize = 128) {
+    createStream = (initialSize = 128) => {
         this.stream = Binary.Stream.makeEmptyStream(initialSize << 1);//initialSize * 2
         this.numBuffer = 0;
         this.currentBit = 0;
@@ -255,25 +255,25 @@ Binary.Writer = class {
         return this.stream.buffer.byteLength - this.stream.currentByte;
     }
 
-    getFinishedStream() {
+    getFinishedStream = () => {
         this._writeBufferToStream();
         this.stream.slice();
         return this.stream;
     }
 
-    convertBufferToCompressedString() {
+    convertBufferToCompressedString = () => {
         const finishedStream = this.getFinishedStream();
         // return finishedStream.uint8Array;
         const compressedData = fflate.strFromU8(fflate.zlibSync(finishedStream.uint8Array), true);
         return btoa(compressedData);
     }
 
-    saveToLocalStorage(key) {
+    saveToLocalStorage = (key) => {
         const saveString = this.convertBufferToCompressedString();
         localStorage.setItem(key, saveString);
     }
 
-    _writeBufferToStream() {
+    _writeBufferToStream = () => {
         if (this.currentBit > 0) {
             const bytes = this.currentBit >= Binary.BitExtractor.UINT_32_BITS ? 4 : this.currentBit.bitsToBytes();
             this._checkSpace(4);
@@ -293,7 +293,7 @@ Binary.Writer = class {
         }
     }
 
-    _checkSpace(bytes) {
+    _checkSpace = (bytes) => {
         if (this.bytesRemaining < bytes) {
             const neededBytes = this.stream.buffer.byteLength + bytes;
             let newBytes = neededBytes.ceilPow2();
@@ -306,7 +306,7 @@ Binary.Writer = class {
         }
     }
 
-    writeBool(b) {
+    writeBool = (b) => {
         if (b)
             this.numBuffer |= 1 << this.currentBit;
 
@@ -317,7 +317,7 @@ Binary.Writer = class {
         }
     }
 
-    writeUInt32(num, length = Binary.BitExtractor.UINT_32_BITS) {
+    writeUInt32 = (num, length = Binary.BitExtractor.UINT_32_BITS) => {
         if (num > Binary.BitExtractor.UINT_32_MAX_VALUE)
             throw new Error(`Number exceeds maximum value for uint32.  Value: ${num}, Length: ${length}`);
 
@@ -334,13 +334,13 @@ Binary.Writer = class {
         }
     }
 
-    writeUInt32AutoLength(num) {
+    writeUInt32AutoLength = (num) => {
         const length = num.bitLength32();
         this.writeUInt32(length - 1, Binary.BitExtractor.INT_32_PREFIX_BITS);
         this.writeUInt32(num, length);
     }
 
-    writeInt32(num, length = Binary.BitExtractor.INT_32_BITS) {
+    writeInt32 = (num, length = Binary.BitExtractor.INT_32_BITS) => {
         const negative = num < 0;
         const abs = negative ? -(num + 1) : num;
         if (abs > Binary.BitExtractor.INT_32_MAX_VALUE)
@@ -350,7 +350,7 @@ Binary.Writer = class {
         this.writeBool(negative);
     }
 
-    writeInt32AutoLength(num) {
+    writeInt32AutoLength = (num) => {
         const negative = num < 0;
         const abs = negative ? -(num + 1) : num;
         const length = abs.bitLength32();
@@ -360,7 +360,7 @@ Binary.Writer = class {
         this.writeBool(negative);
     }
 
-    writeUInt53(num, length = Binary.BitExtractor.INT_53_BITS) {
+    writeUInt53 = (num, length = Binary.BitExtractor.INT_53_BITS) => {
         if (num > Binary.BitExtractor.INT_53_MAX_VALUE)
             throw new Error(`Number exceeds maximum value for uint53.  Value: ${num}, Length: ${length}`);
 
@@ -378,20 +378,20 @@ Binary.Writer = class {
         this.writeUInt32(high, length - Binary.BitExtractor.UINT_32_BITS);
     }
 
-    writeUInt53AutoLength(num) {
+    writeUInt53AutoLength = (num) => {
         const length = num.bitLength53();
         this.writeUInt32(length - 1, Binary.BitExtractor.INT_53_PREFIX_BITS);
         this.writeUInt53(num, length);
     }
 
-    writeInt53(num, length = Binary.BitExtractor.INT_53_BITS) {
+    writeInt53 = (num, length = Binary.BitExtractor.INT_53_BITS) => {
         const negative = num < 0;
         const abs = negative ? -num : num;
         this.writeUInt53(abs, length);
         this.writeBool(negative);
     }
 
-    writeInt53AutoLength(num) {
+    writeInt53AutoLength = (num) => {
         const negative = num < 0;
         const abs = negative ? -num : num;
         const length = abs.bitLength53();
@@ -400,13 +400,13 @@ Binary.Writer = class {
         this.writeBool(negative);
     }
 
-    writeNumber(num) {
+    writeNumber = (num) => {
         const [ low, high ] = Binary.extractor.convertNumber(num);
         this.writeUInt32(low, Binary.extractor.UINT_32_BITS);
         this.writeUInt32(high, Binary.extractor.UINT_32_BITS);
     }
 
-    writeBigUInt(bigUInt, length) {
+    writeBigUInt = (bigUInt, length) => {
         const doubleWords = length.bitsToDoubleWord();
         for (let i = 0n; i < doubleWords - 1n; i++) {
             const num = Number(bigUInt & Binary.BitExtractor.BIG_UINT_32_MASK) >>> 0;
@@ -422,13 +422,13 @@ Binary.Writer = class {
         this.writeUInt32(number, Number(lastBits));
     }
 
-    writeBigUIntAutoLength(bigUInt) {
+    writeBigUIntAutoLength = (bigUInt) => {
         const length = bigUInt.bitLength();
         this.writeUInt32AutoLength(length - 1);
         this.writeBigUInt(bigUInt, BigInt(length));
     }
 
-    writeBigInt(bigInt, length) {
+    writeBigInt = (bigInt, length) => {
         const negative = bigInt < 0n;
         const abs = negative ? -bigInt : bigInt;
         this.writeBigUInt(abs, length);
@@ -436,7 +436,7 @@ Binary.Writer = class {
             this.writeBool(negative);
     }
 
-    writeBigIntAutoLength(bigInt) {
+    writeBigIntAutoLength = (bigInt) => {
         const negative = bigInt < 0n;
         const abs = negative ? -bigInt : bigInt;
         const length = abs.bitLength();
@@ -453,7 +453,7 @@ Binary.Reader = class {
         this.currentBit = Binary.BitExtractor.UINT_32_BITS;
     }
 
-    loadFromLocalStorage(key) {
+    loadFromLocalStorage = (key) => {
         const string = localStorage.getItem(key);
         if (!string)
             throw new Error(`No data found for key: ${key}`);
@@ -465,7 +465,7 @@ Binary.Reader = class {
         return this.stream.buffer.byteLength - this.stream.currentByte;
     }
 
-    setStreamFromString(string) {
+    setStreamFromString = (string) => {
         this.stream = new Binary.Stream(fflate.unzlibSync(fflate.strToU8(atob(string), true)).buffer);
         if (this.stream.buffer.byteLength > 0 && this.stream.buffer.byteLength < 4)
             this.stream.resize(4);
@@ -474,7 +474,7 @@ Binary.Reader = class {
         this.currentBit = Binary.BitExtractor.UINT_32_BITS;
     }
 
-    _readStreamIntoBuffer() {
+    _readStreamIntoBuffer = () => {
         const bytesRemaining = this.bytesRemaining;
         if (bytesRemaining < 4) {
             if (bytesRemaining === 0)
@@ -489,14 +489,14 @@ Binary.Reader = class {
         }
     }
 
-    checkEmptyBuffer() {
+    checkEmptyBuffer = () => {
         if (this.currentBit === Binary.BitExtractor.UINT_32_BITS) {
             this._readStreamIntoBuffer();
             this.currentBit = 0;
         }
     }
 
-    readBool() {
+    readBool = () => {
         this.checkEmptyBuffer();
 
         const bit = (this.numBuffer >> this.currentBit) & 1;
@@ -505,7 +505,7 @@ Binary.Reader = class {
         return bit === 1;
     }
 
-    readUInt32(length = Binary.BitExtractor.UINT_32_BITS) {
+    readUInt32 = (length = Binary.BitExtractor.UINT_32_BITS) => {
         this.checkEmptyBuffer();
 
         const originalBit = this.currentBit;
@@ -533,12 +533,12 @@ Binary.Reader = class {
         return result; // Convert to unsigned 32-bit integer
     }
 
-    readUInt32AutoLength() {
+    readUInt32AutoLength = () => {
         const length = this.readUInt32(Binary.BitExtractor.INT_32_PREFIX_BITS) + 1;
         return this.readUInt32(length);
     }
 
-    readInt32(length = Binary.BitExtractor.INT_32_BITS) {
+    readInt32 = (length = Binary.BitExtractor.INT_32_BITS) => {
         let result = this.readUInt32(length);
         if (this.readBool())
             result = -result - 1;
@@ -546,13 +546,13 @@ Binary.Reader = class {
         return result;
     }
 
-    readInt32AutoLength() {
+    readInt32AutoLength = () => {
         const length = this.readUInt32(Binary.BitExtractor.INT_32_PREFIX_BITS) + 1;
         //console.log(`readIntAutoLength: length: ${length}`);
         return this.readInt32(length);
     }
 
-    readUInt53(length = Binary.BitExtractor.INT_53_BITS) {
+    readUInt53 = (length = Binary.BitExtractor.INT_53_BITS) => {
         const small = length <= Binary.BitExtractor.UINT_32_BITS;
         const low = this.readUInt32(small ? length : Binary.BitExtractor.UINT_32_BITS);
         if (length <= Binary.BitExtractor.UINT_32_BITS)
@@ -562,12 +562,12 @@ Binary.Reader = class {
         return Binary.extractor.convertToInt53(low, high);
     }
 
-    readUInt53AutoLength() {
+    readUInt53AutoLength = () => {
         const length = this.readUInt32(Binary.BitExtractor.INT_53_PREFIX_BITS) + 1;
         return this.readUInt53(length);
     }
 
-    readInt53(length = Binary.BitExtractor.INT_53_BITS) {
+    readInt53 = (length = Binary.BitExtractor.INT_53_BITS) => {
         let result = this.readUInt53(length);
         if (this.readBool())
             result = -result;
@@ -575,18 +575,18 @@ Binary.Reader = class {
         return result;
     }
 
-    readInt53AutoLength() {
+    readInt53AutoLength = () => {
         const length = this.readUInt32(Binary.BitExtractor.INT_53_PREFIX_BITS) + 1;
         return this.readInt53(length);
     }
 
-    readNumber() {
+    readNumber = () => {
         const low = this.readUInt32(Binary.BitExtractor.UINT_32_BITS);
         const high = this.readUInt32(Binary.BitExtractor.UINT_32_BITS);
         return Binary.extractor.convertToNumber(low, high);
     }
 
-    readBigUInt(length) {
+    readBigUInt = (length) => {
         const doubleWords = length.bitsToDoubleWord();
         //console.log(`readBigUInt: length: ${length}, doubleWords: ${doubleWords}`);
         let result = 0n;
@@ -599,12 +599,12 @@ Binary.Reader = class {
         return result;
     }
 
-    readBigUIntAutoLength() {
+    readBigUIntAutoLength = () => {
         const length = this.readUInt32AutoLength() + 1;
         return this.readBigUInt(BigInt(length));
     }
 
-    readBigInt(length) {
+    readBigInt = (length) => {
         let result = this.readBigUInt(length);
         if (result === 0n)
             return 0n;
@@ -615,7 +615,7 @@ Binary.Reader = class {
         return result;
     }
 
-    readBigIntAutoLength() {
+    readBigIntAutoLength = () => {
         const length = this.readUInt32AutoLength() + 1;
         //console.log(`readBigIntAutoLength: length: ${length}`);
         return this.readBigInt(BigInt(length));

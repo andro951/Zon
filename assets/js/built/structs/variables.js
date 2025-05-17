@@ -17,7 +17,10 @@ Variable.Base = class {
 
     onChanged() {
         if (Variable.Base.paused) {
-            this.onChangedAction.callbacks.forEach((callback, key) => Variable.Base.pausedCallbacks.add(key, callback));
+            for (const callback of this.onChangedAction.callbacks) {
+                Variable.Base.pausedCallbacks.add(callback);
+            }
+            
             return;
         }
 
@@ -68,11 +71,13 @@ Variable.Value = class extends Variable.Base {
 Variable.Dependent = class extends Variable.Base {
     constructor(getValue, ...args) {
         super();
+        ///\b(?:\w+\.)+\w+\b/g
+        ///\b(?:\w+\.)+\w+\.value\b/g
         this.getValue = getValue;
         this.needsRecalculate = true;
         args.forEach(arg => {
             if (arg instanceof Variable.Base) {
-                arg.onChangedAction.add(this, () => this.onChanged());
+                arg.onChangedAction.add(this.onChanged);
             }
             else {
                 throw new Error("DependentVariable can only depend on VariableBase instances", arg);
@@ -92,7 +97,7 @@ Variable.Dependent = class extends Variable.Base {
 
         return this._value;
     }
-    onChanged() {
+    onChanged = () => {
         this.needsRecalculate = true;
         super.onChanged();
     }

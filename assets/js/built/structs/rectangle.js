@@ -1,32 +1,18 @@
 "use strict";
 
 Struct.Rectangle = class {
-    constructor(x, y, width, height) {
-        this.topLeft = new Vectors.Vector(x, y);
-        this.size = new Vectors.Vector(width, height);
-    }
-
-    get width() {
-        return this.size.x;
-    }
-
-    get height() {
-        return this.size.y;
-    }
-    
-    get left() {
-        return this.topLeft.x;
+    constructor(left, top, width, height) {
+        this.left = left;
+        this.top = top;
+        this.width = width;
+        this.height = height;
     }
 
     get right() {
-        return this.topLeft.x + this.width;
-    }
-
-    get top() {
-        return this.topLeft.y;
+        return this.left + this.width;
     }
 
     get bottom() {
-        return this.topLeft.y + this.height;
+        return this.top + this.height;
     }
 };

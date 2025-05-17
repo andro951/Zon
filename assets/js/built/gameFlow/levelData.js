@@ -40,7 +40,6 @@ Zon.LevelData = class {
         this.stageCount = this.maxStage + 1;
         this.maxStageDisplayedNum = this.maxStage * this.maxStageNum;
         this.blockHealthMultiplePerPrestige = this.maxStageDisplayedNum;
-        console.log("blockHealthMultiplePerPrestige: " + this.blockHealthMultiplePerPrestige);
         this.stageCompletionAetherBonusPerPrestige = this.maxStageDisplayedNum;
         this.maxStageIndex = this.getStageIndex(this.maxStage, this.maxStageNum);
     }
@@ -54,7 +53,7 @@ Zon.LevelData = class {
         this.getRandomPngFile();
     }
 
-    copyStage(stageID, stageNum, width, height, pixels, blockHP, blockMaxHealth, stageDuration) {
+    copyStage = (stageID, stageNum, width, height, pixels, blockHP, blockMaxHealth, stageDuration) => {
         const stage = new Zon.LevelData(stageID, stageNum);
         stage.width = width;
         stage.height = height;
@@ -65,12 +64,12 @@ Zon.LevelData = class {
         stage.blockMaxHealth = blockMaxHealth;
     }
 
-    setup() {
+    setup = () => {
         this.displayedStageNum = Zon.LevelData.getDisplayedStageNum(this.stageID, this.stageNum);
         this.stageIndex = Zon.LevelData.getStageIndex(this.stageID, this.stageNum);
     }
 
-    update() {
+    update = () => {
         this.stageDuration += Time.TimeController.deltaTime;
     }
 
@@ -94,21 +93,22 @@ Zon.LevelData = class {
         return Zon.LevelData.displayedStageNumToStageIndex(Zon.Settings.stageToReturnToStage1.value);
     }
 
-    getRandomPngFile() {
+    get levelName() {
+        return this.imgName();
+    }
+
+    getRandomPngFile = () => {
         const textures = Zon.LevelData.allLevelTextures[this.stageID];
         const randomIndex = Math.floor(Math.random() * textures.length);
-        this.texture = textures[randomIndex];
-        this.levelName = this.texture.name;
-        this.width = this.texture.width;
-        this.height = this.texture.height;
-        this.pixels = this.texture.pixels;
+        this.imageWrapper = textures[randomIndex];
+        this.forwardMethodsFrom(this.imageWrapper, !!this.imgName);//Ignore duplicates error if this.imgName is already defined.  !! is to cast to boolean.
     }
 
-    toString() {
-        return `LevelData; ID: ${this.stageID}, Width: ${this.width}, Height: ${this.height}, LevelName: ${this.levelName}`;
+    toString = () => {
+        return `LevelData; ID: ${this.stageID}, Width: ${this.width()}, Height: ${this.height()}, LevelName: ${this.levelName}`;
     }
 
-    giveLevelRewards() {
+    giveLevelRewards = () => {
         this.giveResourceRewards();
         this.givePostResourceRewards();
     }
@@ -127,11 +127,11 @@ Zon.LevelData = class {
         return Zon.LevelData.getStageCompletionAetherReward(this.displayedStageNum, Zon.game.prestigeCount);
     }
 
-    giveResourceRewards() {
+    giveResourceRewards = () => {
         Zon.PlayerInventory.receiveAether(this.aetherStageCompletionReward);
     }
 
-    givePostResourceRewards() {
+    givePostResourceRewards = () => {
         Zon.StageBonusManager.onCompleteStage(this);
     }
 
@@ -154,34 +154,36 @@ Zon.LevelData = class {
     }
 
     static allLevelTextures = {};
-    // static preSetLoadedValuesSetup() {
-    //     for (let stageId = Zon.StageID.NONE; stageId < Zon.StageID.COUNT; stageId++) {
-    //         const path = `textures/levels/${stageId}`;
-    //         Zon.LevelData.allLevelTextures[stageId] = Resources.loadAll(path);
-    //     }
-    // }
-    static async preSetLoadedValuesSetup() {
+    static allStageImagesLoadedPromise;
+    static preSetLoadedValuesSetup() {
         Zon.LevelData.allLevelTextures = {};
-
+        const stagePromises = [];
         for (let stageId = Zon.LevelData.startingStage; stageId <= Zon.LevelData.maxStage; stageId++) {
             const stageName = Zon.StageIDMap[stageId];
             const folder = `assets/textures/levels/${stageName}`;
             const manifestUrl = `${folder}/manifest.json`;
 
-            try {
-                const response = await fetch(manifestUrl);
-                const manifest = await response.json();
+            const stagePromise = fetch(manifestUrl)
+                .then(response => response.json())
+                .then(manifest => {
+                    return Promise.all(
+                        manifest.files.map(filename =>
+                            Zon.LevelData.loadImageWithPixels(`${folder}/${filename}`)
+                        )
+                    );
+                })
+                .catch(err => {
+                    console.error(`Failed to load manifest for stage ${stageId}:`, err);
+                    return [];
+                })
+                .then(textures => {
+                    Zon.LevelData.allLevelTextures[stageId] = textures;
+                });
 
-                const texturePromises = manifest.files.map(filename =>
-                    Zon.LevelData.loadImageWithPixels(`${folder}/${filename}`)
-                );
-
-                Zon.LevelData.allLevelTextures[stageId] = await Promise.all(texturePromises);
-            } catch (err) {
-                console.error(`Failed to load manifest for stage ${stageId}:`, err);
-                Zon.LevelData.allLevelTextures[stageId] = [];
-            }
+            stagePromises.push(stagePromise);
         }
+
+        Zon.LevelData.allStageImagesLoadedPromise = Promise.all(stagePromises);
     }
     static loadImageWithPixels(src) {
         return new Promise((resolve, reject) => {
@@ -189,23 +191,7 @@ Zon.LevelData = class {
             img.crossOrigin = "anonymous";
             img.src = src;
 
-            img.onload = () => {
-                const canvas = document.createElement("canvas");
-                canvas.width = img.width;
-                canvas.height = img.height;
-                const ctx = canvas.getContext("2d");
-                ctx.drawImage(img, 0, 0);
-                const imageData = ctx.getImageData(0, 0, img.width, img.height);
-
-                resolve({
-                    name: src.split('/').pop(),
-                    width: img.width,
-                    height: img.height,
-                    pixels: imageData.data,
-                    texture: img
-                });
-            };
-
+            img.onload = () => resolve(new Struct.ImageDataWrapper(img));
             img.onerror = () => reject(new Error(`Failed to load ${src}`));
         });
     }
