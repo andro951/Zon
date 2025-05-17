@@ -64,3 +64,34 @@ async function test4Inner() {
 
 test4();
 
+function resolvePath(pathStr, root = window) {
+    const parts = pathStr.split('.');
+    let current = root;
+
+    console.log(`Resolving path: ${pathStr}`);
+    for (let i = 0; i < parts.length; i++) {
+        const part = parts[i];
+        if (current == null) {
+            console.warn(`Stopped at '${part}': current value is null or undefined.`);
+            return undefined;
+        }
+
+        console.log(`Step ${i + 1}: Accessing '${part}' on`, current);
+        if (!(part in current)) {
+            console.warn(`Property '${part}' does not exist on:`, current);
+            return undefined;
+        }
+
+        current = current[part];
+        if (current instanceof Variable.Base) {
+            console.log(`Found Variable.Base instance: value: ${current.value}`);
+        }
+    }
+
+    console.log(`Resolved value:`, current);
+    return current;
+}
+
+window.Zon = Zon;
+const result = resolvePath("Zon.device._top.value");
+console.log("Resolved value:", result);

@@ -86,6 +86,34 @@ Variable.Dependent = class extends Variable.Base {
 
         this._value = undefined;
     }
+    extractVariables() {
+        const matches = fnStr.match(/\b(?:\w+\.)+\w+\b/g);
+        for (const match of matches) {
+            const parts = match.split('.');
+            let current = Zon;
+            for (const part of parts) {
+                const desc = Object.getOwnPropertyDescriptor(current, part);
+                if (typeof desc.value !== "object")
+                    break;
+
+                if (current instanceof Variable.Base) {
+                    current.onChangedAction.add(this.onChanged);
+                    break;
+                }
+                
+                if (current == null) {
+                    console.warn(`Stopped at '${part}': current value is null or undefined.`);
+                    return undefined;
+                }
+                if (!(part in current)) {
+                    console.warn(`Property '${part}' does not exist on:`, current);
+                    return undefined;
+                }
+                
+                current = current[part];
+            }
+        }
+    }
     set(value) {
         throw new Error("Cannot set value of DependentVariable");
     }

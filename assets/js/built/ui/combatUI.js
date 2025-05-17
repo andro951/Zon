@@ -40,11 +40,11 @@ Zon.TopUI = class extends Zon.UIPanel {
             case Zon.settings.combatLayoutDefault:
             case Zon.settings.combatLayoutBottom:
                 this.calculateTop = () => Zon.device.top;
-                this.replaceTop(new Variable.Dependent(this.calculateTop, Zon.device._top));
+                this.replaceTop(this.calculateTop, Zon.device._top);
                 break;
             case Zon.settings.combatLayoutCenter:
                 this.calculateTop = () => Zon.combatUI.top - Zon.topUI.height;
-                this.replaceTop(new Variable.Dependent(() => this.calculateTop, Zon.combatUI._top, this._height));
+                this.replaceTop(() => this.calculateTop, Zon.combatUI._top, this._height);
                 break;
             default:
                 throw new Error(`Unknown combat layout: ${newLayout}`);
@@ -61,19 +61,19 @@ Zon.CombatUI = class extends Zon.UIPanel {
         this.ctx = this.element.getContext('2d');
         this.combatAreaPercentOfHeight = 0.6;
         this.combatUIAspectRatio = 9 / 9;
-        this.replaceLeft(new Variable.Dependent(() => Zon.device.left, Zon.device._left));
-        this.replaceWidth(new Variable.Dependent(() => Zon.device.width, Zon.device._width));
-        this.replaceHeight(new Variable.Dependent(() => Zon.device.width / Zon.combatUI.combatUIAspectRatio, Zon.device._width));
+        this.replaceLeft(() => Zon.device.left, Zon.device._left);
+        this.replaceWidth(() => Zon.device.width, Zon.device._width);
+        this.replaceHeight(() => Zon.device.width / Zon.combatUI.combatUIAspectRatio, Zon.device._width);
     }
     
     updateCombatLayout = (newLayout) => {
         switch (newLayout) {
             case Zon.settings.combatLayoutDefault:
             case Zon.settings.combatLayoutCenter:
-                this.replaceTop(new Variable.Dependent(() => Zon.device.top + (Zon.device.height - Zon.device.width) / 2, Zon.device._top, Zon.device._width, Zon.device._height));
+                this.replaceTop(() => Zon.device.top + (Zon.device.height - Zon.device.width) / 2, Zon.device._top, Zon.device._width, Zon.device._height);
                 break;
             case Zon.settings.combatLayoutBottom:
-                this.replaceTop(new Variable.Dependent(() => Zon.bottomUI.top - Zon.combatUI.height, Zon.bottomUI._top, this._height));
+                this.replaceTop(() => Zon.bottomUI.top - Zon.combatUI.height, Zon.bottomUI._top, this._height);
                 break;
         }
     }
@@ -89,19 +89,19 @@ Zon.BottomUI = class extends Zon.UIPanel {
         super(document.getElementById('bottomUI'));
         this.bottomUIPercentOfHeight = 0.2;
         this.bottomUIAspectRatio = 3;
-        this.replaceLeft(new Variable.Dependent(() => Zon.device.left, Zon.device._left));
-        this.replaceWidth(new Variable.Dependent(() => Zon.device.width, Zon.device._width));
-        this.replaceHeight(new Variable.Dependent(() => Math.min(Zon.device.height * this.bottomUIPercentOfHeight, Zon.device.width / this.bottomUIAspectRatio), Zon.device._width, Zon.device._height));
+        this.replaceLeft(() => Zon.device.left, Zon.device._left);
+        this.replaceWidth(() => Zon.device.width, Zon.device._width);
+        this.replaceHeight(() => Math.min(Zon.device.height * this.bottomUIPercentOfHeight, Zon.device.width / this.bottomUIAspectRatio), Zon.device._width, Zon.device._height);
     }
 
     updateCombatLayout = (newLayout) => {
         switch (newLayout) {
             case Zon.settings.combatLayoutDefault:
             case Zon.settings.combatLayoutBottom:
-                this.replaceTop(new Variable.Dependent(() => Zon.device.bottom - Zon.bottomUI.height, Zon.device._bottom , this._height));
+                this.replaceTop(() => Zon.device.bottom - Zon.bottomUI.height, Zon.device._bottom , this._height);
                 break;
             case Zon.settings.combatLayoutCenter:
-                this.replaceTop(new Variable.Dependent(() => Zon.combatUI.bottom, Zon.combatUI._bottom));
+                this.replaceTop(() => Zon.combatUI.bottom, Zon.combatUI._bottom);
                 break;
         }
     }
