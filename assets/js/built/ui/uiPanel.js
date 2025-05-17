@@ -7,6 +7,10 @@ Zon.UIPanel = class {
         this.element.style.display = "none";
         this.visible = false;
         this.rect = Struct.DynamicRectangle.base();
+        Zon.Setup.postConstructors.add(this.postConstructor);
+    }
+    postConstructor = () => {
+        Zon.Setup.onSetupUI.add(this.setup);
     }
     get _top() {
         return this.rect._top;
@@ -98,38 +102,38 @@ Zon.UIPanel = class {
         this.addWidthListener();
         this.addHeightListener();
     }
-    replaceTop = (func, ...variables) => {
+    replaceTop = (func) => {
         if (this.visible)
             this.removeTopListener();
 
-        this.rect._top = this.rect._top.copyData(new Variable.Dependent(func, ...variables));
+        this.rect._top = this.rect._top.copyData(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addTopListener();
     }
-    replaceLeft = (func, ...variables) => {
+    replaceLeft = (func) => {
         if (this.visible)
             this.removeLeftListener();
 
-        this.rect._left = this.rect._left.copyData(new Variable.Dependent(func, ...variables));
+        this.rect._left = this.rect._left.copyData(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addLeftListener();
     }
-    replaceWidth = (func, ...variables) => {
+    replaceWidth = (func) => {
         if (this.visible)
             this.removeWidthListener();
 
-        this.rect._width = this.rect._width.copyData(new Variable.Dependent(func, ...variables));
+        this.rect._width = this.rect._width.copyData(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addWidthListener();
     }
-    replaceHeight = (func, ...variables) => {
+    replaceHeight = (func) => {
         if (this.visible)
             this.removeHeightListener();
 
-        this.rect._height = this.rect._height.copyData(new Variable.Dependent(func, ...variables));
+        this.rect._height = this.rect._height.copyData(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addHeightListener();
@@ -162,5 +166,8 @@ Zon.UIPanel = class {
         this.removeListeners();
         this.element.style.display = 'none';
         this.visible = false;
+    }
+    setup = () => {
+        throw new Error("setup not implemented");
     }
 }

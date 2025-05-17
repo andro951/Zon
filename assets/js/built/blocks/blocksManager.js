@@ -6,18 +6,10 @@ Zon.BlocksManager = class {
         this.ctx = this.canvas.getContext('2d');
         const widthScale = 8 / 9;
         this.blockArea = new Struct.DynamicRectangle(
-            new Variable.Dependent(() => {
-                return Zon.device.left + Zon.device.width * (1 - widthScale) / 2;
-            } , Zon.device._left, Zon.device._width),
-            new Variable.Dependent(() => {
-                return Zon.device.top + Zon.device.height * (1 - widthScale) / 2;
-            } , Zon.device._top, Zon.device._height),
-            new Variable.Dependent(() => {
-                return Zon.device.width * widthScale;
-            } , Zon.device._width),
-            new Variable.Dependent(() => {
-                return Zon.device.height * widthScale;
-            } , Zon.device._height),
+            new Variable.Dependent(() => Zon.device.left + Zon.device.width * (1 - widthScale) / 2),
+            new Variable.Dependent(() => Zon.device.top + Zon.device.height * (1 - widthScale) / 2),
+            new Variable.Dependent(() => Zon.device.width * widthScale),
+            new Variable.Dependent(() => Zon.device.height * widthScale),
         );
 
         this._levelData = null;

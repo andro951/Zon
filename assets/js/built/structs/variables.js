@@ -69,49 +69,155 @@ Variable.Value = class extends Variable.Base {
 }
 
 Variable.Dependent = class extends Variable.Base {
-    constructor(getValue, ...args) {
+    constructor(getValue, thisObj = undefined) {
         super();
-        ///\b(?:\w+\.)+\w+\b/g
-        ///\b(?:\w+\.)+\w+\.value\b/g
         this.getValue = getValue;
         this.needsRecalculate = true;
-        args.forEach(arg => {
-            if (arg instanceof Variable.Base) {
-                arg.onChangedAction.add(this.onChanged);
-            }
-            else {
-                throw new Error("DependentVariable can only depend on VariableBase instances", arg);
-            }
-        });
-
+        this.extractVariables(getValue, thisObj);
         this._value = undefined;
     }
-    extractVariables() {
-        const matches = fnStr.match(/\b(?:\w+\.)+\w+\b/g);
-        for (const match of matches) {
-            const parts = match.split('.');
-            let current = Zon;
-            for (const part of parts) {
-                const desc = Object.getOwnPropertyDescriptor(current, part);
-                if (typeof desc.value !== "object")
-                    break;
+    static debuggExtractVariables = false;
+    extractVariables(fn, thisContext = undefined) {
+        if (Variable.Dependent.debuggExtractVariables) console.log(`Extracting variables from function: ${fn}`);
+        const fnStr = fn.toString();
+        const matches = [...new Set(fnStr.match(/\b(?:\w+\.)+\w+\b/g))];
+        if (!matches) {
+            if (Variable.Dependent.debuggExtractVariables) console.warn(`No matches found in function: ${fnStr}`);
+            return;
+        }
 
-                if (current instanceof Variable.Base) {
-                    current.onChangedAction.add(this.onChanged);
-                    break;
-                }
-                
-                if (current == null) {
-                    console.warn(`Stopped at '${part}': current value is null or undefined.`);
-                    return undefined;
-                }
-                if (!(part in current)) {
-                    console.warn(`Property '${part}' does not exist on:`, current);
-                    return undefined;
-                }
-                
-                current = current[part];
+        for (const match of matches) {
+            if (Variable.Dependent.debuggExtractVariables) console.log(`Found match: ${match}`);
+            const parts = match.split('.');
+            if (parts.length === 1) {
+                if (Variable.Dependent.debuggExtractVariables) console.warn(`Match '${match}' only has 1 part, so it is not a valid path: ${parts}`);
+                continue;
             }
+
+            let current = Zon;
+            let i = 0;
+            const firstPart = parts[0];
+            if (firstPart === 'Zon') {
+                i = 1;
+            }
+            else if (firstPart === 'this') {
+                if (!thisContext) {
+                    if (Variable.Dependent.debuggExtractVariables) console.warn(`'this' context is not defined, cannot resolve path: ${match}`);
+                    continue;
+                }
+
+                current = thisContext;
+                i = 1;
+            }
+
+            for (; i < parts.length - 1; i++) {
+                current = this.trygetPart(current, parts[i]);
+                if (!current)
+                    break;
+            }
+
+            if (!current) {
+                if (Variable.Dependent.debuggExtractVariables) console.warn(`Failed to find second in ${match}.  ((Zon/this).###...###.second.last)  Current is null or undefined: ${current}`);
+                continue;
+            }
+
+            const second = current;
+
+            //(Zon/this).###...###.second.last; Check if second is an object such as Zon.topUI.rect._left.value
+            const secondType = typeof second;
+            if (secondType === "object") {
+                if (this.tryExtractVariablesFromObject(second))
+                    continue;
+            }
+
+            //Check type of last part
+            const lastStr = parts[i];
+            const lastDesc = this.getDescription(second, lastStr);
+            if (!lastDesc) {
+                if (Variable.Dependent.debuggExtractVariables) console.warn(`Failed to get a description for ${lastStr} on ${second}`);
+                continue;
+            }
+
+            if (lastDesc.value) {
+                const lastType = typeof lastDesc.value;
+                if (lastType === 'object') {
+                    const last = this.trygetPart(second, lastStr);
+                    if (this.tryExtractVariablesFromObject(last))
+                        continue;
+
+                    if (Variable.Dependent.debuggExtractVariables) console.warn(`last is an object, but tryExtractVariablesFromObject failed. ${second}[${lastStr}] -> ${last}`);
+                    continue;
+                }
+
+                if (Variable.Dependent.debuggExtractVariables) console.warn(`lastDesc.value exists, but last is not an object.  ${second}[${lastStr}], lastDesc.value: ${lastDesc.value}`);
+                continue;
+            }
+            else if (lastDesc.get) {
+                //Check for my standard organization of Variable getters/setters such as .left => this._left.value
+                if (lastStr[0] !== '_') {
+                    let lastPrivStr = `_${lastStr}`;
+                    let lastPrivDesc = this.getDescription(second, lastPrivStr);
+                    if (lastPrivDesc) {
+                        const lastPriv = this.trygetPart(second, lastPrivStr);
+                        if (typeof lastPriv === 'object') {
+                            if (this.tryExtractVariablesFromObject(lastPriv))
+                                continue;
+                        }
+                        else {
+                            if (Variable.Dependent.debuggExtractVariables) console.warn(`${lastPrivStr} is not an object.  ${second}[${lastPrivStr}] -> ${lastPriv}`);
+                            continue;
+                        }
+                    }
+
+                    if (Variable.Dependent.debuggExtractVariables) console.warn(`${lastStr} exists on ${second}, but lastPrivDesc is null.`);
+                }
+
+                if (Variable.Dependent.debuggExtractVariables) console.warn(`last is a getter.  Not possible for a Variable to be directly used in a math function, so not accessing it.  ${second}[${lastStr}]`);
+                continue;
+            }
+
+            console.warn(`Failed to find a variable for ${match}`);
+        }
+    }
+    trygetPart(current, part) {
+        try {
+            const newObj = current[part];
+            const type = typeof newObj;
+            if (newObj === null || newObj === undefined || type !== "object" && type !== "function")
+                throw new Error(`newObj is null, undefined, or not an object/function.  newObj: ${newObj}, type: ${type}`);
+
+            return newObj;
+        }
+        catch (e) {
+            if (Variable.Dependent.debuggExtractVariables) console.warn(`Error accessing ${current}[${part}]: ${e}`);
+            return null;
+        }
+    }
+    getDescription(current, part) {
+        let obj = current;
+        while (obj) {
+            const desc = Object.getOwnPropertyDescriptor(obj, part);
+            if (desc)
+                return desc;
+
+            obj = Object.getPrototypeOf(obj);
+        }
+
+        return null;
+    }
+    tryExtractVariablesFromObject(current) {
+        if (current instanceof Variable.Base) {
+            if (Variable.Dependent.debuggExtractVariables) console.log(`Adding onChangedAction to object: ${current}`);
+            current.onChangedAction.add(this.onChanged);
+            return true;
+        }
+        else if (current instanceof Actions.Action) {
+            if (Variable.Dependent.debuggExtractVariables) console.warn(`Adding onChangedAction to Action object: ${current}`);
+            current.add(this.onChanged);
+            return true;
+        }
+        else {
+            return false;
         }
     }
     set(value) {
