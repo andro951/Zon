@@ -2,8 +2,8 @@
 
 Struct.DynamicRectangle = class {
     constructor(left, top, width, height) {
-        this._top = top;
         this._left = left;
+        this._top = top;
         this._width = width;
         this._height = height;
         this._right = new Variable.Dependent(() => this.left + this.width, this);

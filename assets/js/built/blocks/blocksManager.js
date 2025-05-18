@@ -5,11 +5,11 @@ Zon.BlocksManager = class {
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
         const widthScale = 8 / 9;
-        this.blockArea = new Struct.DynamicRectangle(
-            new Variable.Dependent(() => Zon.device.left + Zon.device.width * (1 - widthScale) / 2),
-            new Variable.Dependent(() => Zon.device.top + Zon.device.height * (1 - widthScale) / 2),
-            new Variable.Dependent(() => Zon.device.width * widthScale),
-            new Variable.Dependent(() => Zon.device.height * widthScale),
+        this.blockArea = new Struct.Rectangle(
+            this.canvas.width * (1 - widthScale) / 2,
+            this.canvas.height * (1 - widthScale) / 2,
+            this.canvas.width * widthScale,
+            this.canvas.height * widthScale
         );
 
         this._levelData = null;
@@ -60,7 +60,7 @@ Zon.BlocksManager = class {
         this.clearAllBlocks();
         this._imagePixelsWidth = this._levelData.width();
         this._imagePixelsHeight = this._levelData.height();
-        this._blockSize = 100;
+        this._blockSize = this.blockArea.width / 16;//100
         this._x0 = this.blockArea.left;
         this._y0 = this.blockArea.top;
         this._blocks = new Array(this._imagePixelsWidth * this._imagePixelsHeight);
