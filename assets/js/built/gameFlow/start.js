@@ -1,3 +1,5 @@
 "use strict";
 
-Zon.init();
+(async () => {
+    await Zon.init();
+})();

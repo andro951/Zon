@@ -38,6 +38,9 @@ Zon.BlocksManager = class {
     getBlockIndex = (xPixel, yPixel) => {
         return yPixel * this._imagePixelsWidth + xPixel;
     }
+    tileHasBlock = (xIndex, yIndex) => {
+        return !!this.getBlock(xIndex, yIndex);
+    }
     get blocks() {
         return this._blocksSet;//TODO: make sure this works as a map.
     }
