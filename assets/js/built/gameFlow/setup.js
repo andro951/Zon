@@ -5,6 +5,7 @@ Zon.Setup = {};
 const Struct = {};
 const Extensions = {};
 const Numbers = {};
+const Trig = {};
 
 Zon.name = "Zon";
 

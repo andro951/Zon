@@ -1,11 +1,5 @@
 "use strict";
 
-const Trig = {};
-
-Trig.degToRad = function(degrees) {
-    return degrees * Math.PI / 180;
-}
-
 const Vectors = {};
 
 Vectors.Vector = class {
@@ -15,9 +9,9 @@ Vectors.Vector = class {
     }
 
     toPolar() {
-        const r = this.magnitude();
+        const radius = this.magnitude();
         const theta = this.angle();
-        return new Vectors.Polar(r, theta);
+        return new Vectors.Polar(radius, theta);
     }
 
     rotate(angle) {
@@ -66,17 +60,83 @@ Vectors.Vector = class {
         this.x *= scale;
         this.y *= scale;
     }
+
+    dot(vect) {
+        return this.x * vect.x + this.y * vect.y;
+    }
+    get dotSelf() {
+        return this.x * this.x + this.y * this.y;
+    }
+    reflect(axis) {
+        //Need to break appart this vector into a parallel (P) and perpendicular component (T) relative to the axis (A)
+        //The reflection is then P - T
+        //R = P - T
+        //P and A are parallel, so P = k * A where k is some scalar
+        //P = k * A
+        //T = V - P
+        //Perpendicular vectors are orthogonal, so T ⋅ A = 0
+        //T ⋅ A = 0
+        //T = V - P
+        //(V - P) ⋅ A = 0
+        //V ⋅ A - P ⋅ A = 0
+        //P ⋅ A = V ⋅ A
+        //k * A ⋅ A = V ⋅ A
+        //k = V ⋅ A / A ⋅ A
+
+        //R = P - T
+        //T = V - P
+        //R = P - (V - P)
+        //R = 2 * P - V
+        //P = k * A
+        //R = 2 * k * A - V
+        //R = 2 * (V ⋅ A / A ⋅ A) * A - V
+
+        //The direction of axis doesn't matter (between the 2 options)
+        //R = 2 * (Vx * Ax + Vy * Ay) / (Ax * Ax + Ay * Ay) * A - V
+        //k = 2 * (Vx * Ax + Vy * Ay) / (Ax * Ax + Ay * Ay)
+        //x = k * Ax - Vx
+        //y = k * Ay - Vy
+
+        //x = 2 * (Vx * Ax + Vy * Ay) / (Ax * Ax + Ay * Ay) * Ax - Vx
+        //y = 2 * (Vx * Ax + Vy * Ay) / (Ax * Ax + Ay * Ay) * Ay - Vy
+
+        //axis = (a, b)
+        //x = 2 * (Vx * a + Vy * b) / (a^2 + b^2) * a - Vx
+        //y = 2 * (Vx * a + Vy * b) / (a^2 + b^2) * b - Vy
+
+        //axis = (-a, -b)
+        //x = 2 * (Vx * -a + Vy * -b) / ((-a)^2 + (-b)^2) * -a - Vx => 2 * (Vx * a + Vy * b) / (a^2 + b^2) * a - Vx
+        //y = 2 * (Vx * -a + Vy * -b) / ((-a)^2 + (-b)^2) * -b - Vy => 2 * (Vx * a + Vy * b) / (a^2 + b^2) * b - Vx
+
+        //How to get the axis of an object?
+        //Rectangle: (left, top, width, height)
+        //For any edge, the axis is one point - the other point of the edge.
+        //Left edge axis:
+        //topLeft - bottomLeft = (l, t) - (l, t + h) = (0, -h)
+        //OR
+        //bottomLeft - topLeft = (l, t + h) - (l, t) = (0, h)
+        //Either is fine.  They will give the same result.
+
+        const div = axis.x * axis.x + axis.y * axis.y;
+        if (div === 0)
+            throw new Error("Cannot reflect a vector with a zero length axis.");
+
+        const k = 2 * ((this.x * axis.x + this.y * axis.y) / div);
+        const x = k * axis.x - this.x;
+        const y = k * axis.y - this.y;
+        return new Vectors.Vector(x, y);
+    }
 }
 
 Vectors.Polar = class {
-    constructor(r, theta) {
-        this.r = r;
+    constructor(radius, theta) {
+        this.radius = radius;
         this.theta = theta;
     }
 
     toVector() {
-        const x = this.r * Math.cos(this.theta);
-        const y = this.r * Math.sin(this.theta);
+        const x = this.radius * Math.cos(this.theta);
+        const y = this.radius * Math.sin(this.theta);
         return new Vectors.Vector(x, y);
     }
 }

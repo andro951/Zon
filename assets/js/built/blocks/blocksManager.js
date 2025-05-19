@@ -4,17 +4,17 @@ Zon.BlocksManager = class {
     constructor() {
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
+        this.tileCount = new Vectors.Vector(16, 16);
+        const heightScale = 8 / 9;
         const widthScale = 8 / 9;
         this.blockArea = new Struct.Rectangle(
             this.canvas.width * (1 - widthScale) / 2,
-            this.canvas.height * (1 - widthScale) / 2,
+            this.canvas.height * (1 - heightScale) / 2,
             this.canvas.width * widthScale,
-            this.canvas.height * widthScale
+            this.canvas.height * heightScale
         );
 
         this._levelData = null;
-        this._x0 = null;
-        this._y0 = null;
         this._imagePixelsWidth = null;
         this._imagePixelsHeight = null;
         this._blockSize = null;
@@ -24,10 +24,10 @@ Zon.BlocksManager = class {
     }
 
     getBlockX = (xPixel) => {
-        return this._x0 + xPixel * this._blockSize;
+        return this.blockArea.left + xPixel * this._blockSize.x;
     }
     getBlockY = (yPixel) => {
-        return this._y0 + yPixel * this._blockSize;
+        return this.blockArea.top + yPixel * this._blockSize.y;
     }
     getBlockPosition = (xPixel, yPixel) => {
         return new Vectors.Vector(this.getBlockX(xPixel), this.getBlockY(yPixel));
@@ -60,9 +60,7 @@ Zon.BlocksManager = class {
         this.clearAllBlocks();
         this._imagePixelsWidth = this._levelData.width();
         this._imagePixelsHeight = this._levelData.height();
-        this._blockSize = this.blockArea.width / 16;//100
-        this._x0 = this.blockArea.left;
-        this._y0 = this.blockArea.top;
+        this._blockSize = new Vectors.Vector(this.blockArea.width / this.tileCount.x, this.blockArea.height / this.tileCount.y);//100, 100
         this._blocks = new Array(this._imagePixelsWidth * this._imagePixelsHeight);
 
         for (let yPixel = 0; yPixel < this._imagePixelsHeight; yPixel++) {
@@ -74,7 +72,7 @@ Zon.BlocksManager = class {
                     continue;
                 }
 
-                const block = new Zon.Block(this._blockSize, this._blockSize, this, this.getBlockX(xPixel), this.getBlockY(yPixel), blockIndex, this._levelData.blockHP ? this._levelData.blockHP[blockIndex] : this._levelData.blockMaxHealth, color);
+                const block = new Zon.Block(this._blockSize.x, this._blockSize.y, this, this.getBlockX(xPixel), this.getBlockY(yPixel), blockIndex, this._levelData.blockHP ? this._levelData.blockHP[blockIndex] : this._levelData.blockMaxHealth, color);
                 this._blocks[blockIndex] = block;
                 this._blocksSet.add(block);
             }
