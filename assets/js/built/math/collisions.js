@@ -338,12 +338,153 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
         worldEndY = y1 + r;
     }
 
-    let tileStartX = Math.max(0, Math.floor((worldStartX - gridRect.left) / tileWidth));
-    let tileEndX = Math.min(tilesCount.x - 1, Math.floor((worldEndX - gridRect.left) / tileWidth));
-    let tileStartY = Math.max(0, Math.floor((worldStartY - gridRect.top) / tileHeight));
-    let tileEndY = Math.min(tilesCount.y - 1, Math.floor((worldEndY - gridRect.top) / tileHeight));
+    const tileMinX = Math.max(0, Math.floor((worldStartX - gridRect.left) / tileWidth));
+    const tileMaxX = Math.min(tilesCount.x - 1, Math.floor((worldEndX - gridRect.left) / tileWidth));
+    const tileMinY = Math.max(0, Math.floor((worldStartY - gridRect.top) / tileHeight));
+    const tileMaxY = Math.min(tilesCount.y - 1, Math.floor((worldEndY - gridRect.top) / tileHeight));
+    let tileXStart;
+    let tileXEnd;
+    let tileYStart;
+    let tileYEnd;
+    let xStep;
+    let yStep;
+    if (xDir >= 0) {
+        tileXStart = tileMinX;
+        tileXEnd = tileMaxX;
+        xStep = 1;
+    }
+    else {
+        tileXStart = tileMaxX;
+        tileXEnd = tileMinX;
+        xStep = -1;
+    }
 
-    const shortest = Infinity;
+    if (yDir >= 0) {
+        tileYStart = tileMinY;
+        tileYEnd = tileMaxY;
+        yStep = 1;
+    }
+    else {
+        tileYStart = tileMaxY;
+        tileYEnd = tileMinY;
+        yStep = -1;
+    }
+
+    let tileX = tileXStart;
+    let tileY = tileYStart;
+
+    //Imagine breaking through walls.
+    //Neet to track the curent xTile and yTile, determine if the next x or y 'wall' will be crossed first, then
+    // iterate across that wall from [Start, other).
+    //
+    let t = Infinity;//t is the % of total distance traveled
+    let shortestX = -1;
+    let shortestY = -1;
+    let normalX = 0;
+    let normalY = 0;
+
+    while (true) {
+        const nextTileX = tileX + xStep;
+        const nextTileY = tileY + yStep;
+        const xOutOfBounds = nextTileX < 0 || nextTileX >= tilesCount.x;
+        const yOutOfBounds = nextTileY < 0 || nextTileY >= tilesCount.y;
+        if (xOutOfBounds && yOutOfBounds)
+            break;
+
+        const tAtNextTileX = dx !== 0 ? (gridRect.left + nextTileX * tileWidth - worldStartX) / dx : Infinity;
+        const tAtNextTileY = dy !== 0 ? (gridRect.top + nextTileY * tileHeight - worldStartY) / dy : Infinity;
+        if (!xOutOfBounds && tAtNextTileX <= tAtNextTileY) {
+            //Check all y tiles between start tileY and nextTileY
+            let newT = Infinity;
+            let newShortestX = -1;
+            let newShortestY = -1;
+            let newNormalX = 0;
+            let newNormalY = 0;
+            for (let i = tileYStart; i !== nextTileY; i += yStep) {
+                if (isSolidTile(tileX, i)) {
+                    const yAtWallT = y0 + dy * tAtNextTileX;
+                    const thisRealTileTop = gridRect.top + i * tileHeight;
+                    const thisRealTileBottom = gridRect.top + i * tileHeight + tileHeight;
+                    // const rect = {
+                    //     x: gridRect.left + tileX * tileWidth - r,
+                    //     y: gridRect.top + i * tileHeight - r,
+                    //     width: tileWidth + r * 2,
+                    //     height: tileHeight + r * 2
+                    // };
+
+                    if (thisRealTileBottom > yAtWallT) {
+                        //Hit the tile's bottom corner
+                        
+                    }
+                    else if (thisRealTileTop < yAtWallT) {
+
+                    }
+                    else {
+                        //Direct edge hit
+                        newT = tAtNextTileX;
+                        newShortestX = tileX;
+                        newShortestY = i;
+                        newNormalX = xDir;
+                        newNormalY = 0;
+                    }
+                    
+
+                    //Check the tile is above or below the circle center, then check the corner based on x and y direction.
+                    //For a corner, use the length equation from the circle's center to the radius adjusted corner.
+
+                    // const clipT = [0, 1];
+
+                    // if (
+                    //     Collision.liangBarskyClip(-dx, x0 - rect.x, clipT) &&
+                    //     Collision.liangBarskyClip(dx, rect.x + rect.width - x0, clipT) &&
+                    //     Collision.liangBarskyClip(-dy, y0 - rect.y, clipT) &&
+                    //     Collision.liangBarskyClip(dy, rect.y + rect.height - y0, clipT)
+                    // ) {
+                    //     const impactT = clipT[0];
+                    //     if (impactT < newT) {
+                    //         newT = impactT;
+                    //         newShortestX = tileX;
+                    //         newShortestY = i;
+                    //         newNormalX = xDir;
+                    //         newNormalY = 0;
+                    //     }
+                    // }
+                }
+            }
+
+            if (newT < t) {
+                t = newT;
+                shortestX = newShortestX;
+                shortestY = newShortestY;
+                normalX = newNormalX;
+                normalY = newNormalY;
+
+            }
+
+            tileX = nextTileX;
+        }
+
+        if (!yOutOfBounds && tAtNextTileY <= tAtNextTileX) {
+            //Check all x tiles between start tileX and nextTileX
+
+            //Not implemented yet
+
+
+            tileY = nextTileY;
+        }
+
+        //update tileXEnd and tileYEnd based on the new t value.
+        
+    }
+
+    if (t > 1) {
+        //No collision
+        return null;
+    }
+
+    //Collision detected
+    const hitX = x0 + dx * t;
+    const hitY = y0 + dy * t;
 
     let xCondition = true;
     while (xCondition) {
@@ -354,14 +495,14 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
 
             switch (yDir) {
                 case -1:
-                        tileStartY--;
-                    if (tileStartY < 0)
+                        tileMinY--;
+                    if (tileMinY < 0)
                         yCondition = false;
                     break;
                 case 0:
                 case 1:
-                        tileEndY++;
-                    if (tileEndY >= tilesCount.y)
+                        tileMaxY++;
+                    if (tileMaxY >= tilesCount.y)
                         yCondition = false;
                     break;
             }
@@ -370,14 +511,14 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
 
         switch (xDir) {
             case -1:
-                    tileStartX--;
-                if (tileStartX < 0)
+                    tileMinX--;
+                if (tileMinX < 0)
                     xCondition = false;
                 break;
             case 0:
             case 1:
-                    tileEndX++;
-                if (tileEndX >= tilesCount.x)
+                    tileMaxX++;
+                if (tileMaxX >= tilesCount.x)
                     xCondition = false;
                 break;
         }
