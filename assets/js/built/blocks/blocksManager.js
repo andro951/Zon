@@ -5,13 +5,15 @@ Zon.BlocksManager = class {
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.tileCount = new Vectors.Vector(16, 16);
-        const heightScale = 8 / 9;
-        const widthScale = 8 / 9;
+        const heightScaleNum = 8;
+        const heightScaleDenom = 9;
+        const widthScaleNum = 8;
+        const widthScaleDenom = 9;
         this.blockArea = new Struct.Rectangle(
-            this.canvas.width * (1 - widthScale) / 2,
-            this.canvas.height * (1 - heightScale) / 2,
-            this.canvas.width * widthScale,
-            this.canvas.height * heightScale
+            this.canvas.width / widthScaleDenom / 2 * (widthScaleDenom - heightScaleNum),
+            this.canvas.height / heightScaleDenom / 2 * (heightScaleDenom - heightScaleNum),
+            this.canvas.width / widthScaleDenom * widthScaleNum,
+            this.canvas.height / heightScaleDenom * heightScaleNum
         );
 
         this._levelData = null;

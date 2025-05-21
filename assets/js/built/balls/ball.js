@@ -17,6 +17,10 @@ Zon.Ball = class extends Struct.Circle {
         this.color = 'white';
     }
 
+    get damage() {
+        return Numbers.Triple.create(1n, 0n);
+    }
+
     correctVelocity = () => {
         this.velocity.magnitude = this.speed;
     }
@@ -57,6 +61,11 @@ Zon.Ball = class extends Struct.Circle {
     // }
 
     update = () => {
+        const oldX = this.x;
+        const oldY = this.y;
+        const originalVelocityX = this.velocity.x;
+        const originalVelocityY = this.velocity.y;
+        let hadBlockCollision = false;
         const lastPos = new Vectors.Vector(this.x, this.y);
         this.x += this.velocity.x;
         this.y += this.velocity.y;
@@ -70,40 +79,41 @@ Zon.Ball = class extends Struct.Circle {
             if (gridCollision) {
                 collided = true;
                 const {
-                    t,
+                    tileX,
+                    tileY,
                     hitX,
                     hitY,
-                    normalX,
-                    normalY
+                    directionOfHit,
                 } = gridCollision;
-
+                
                 lastPos.x = hitX;
                 lastPos.y = hitY;
 
                 this.x = 2 * hitX - this.x;
                 this.y = 2 * hitY - this.y;
-                if (normalX !== 0) {
-                    this.velocity.x = -this.velocity.x;
+                const oldVelocity = this.velocity;
+                this.velocity = this.velocity.reflect(directionOfHit.perpendicular);
+                this.varyReflectionAngle(directionOfHit);
+                //console.log(`Ball hit block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
+                if (oldVelocity.x === this.velocity.x && oldVelocity.y === this.velocity.y)
+                    throw new Error(`Ball velocity did not change after collision with block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
+                
+                if (Zon.debug && directionOfHit.x !== 0 && directionOfHit.y !== 0) {
+                    if (directionOfHit.x === -1 && this.velocity.x < 0)
+                        console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+
+                    if (directionOfHit.x === 1 && this.velocity.x > 0)
+                        console.warn(`Ball reversed back into right wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+
+                    if (directionOfHit.y === -1 && this.velocity.y < 0)
+                        console.warn(`Ball reversed back into top wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+
+                    if (directionOfHit.y === 1 && this.velocity.y > 0)
+                        console.warn(`Ball reversed back into bottom wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
                 }
-                else {
-                    this.velocity.y = -this.velocity.y;
-                }
 
-                // //const remaining = 1 - t;
-
-                // // Move the ball to the exact collision point
-                // this.x = hitX;
-                // this.y = hitY;
-
-                // // // Reflect velocity vector against collision normal
-                // const dot = this.velocity.x * normalX + this.velocity.y * normalY;
-                // this.velocity.x = this.velocity.x - 2 * dot * normalX;
-                // this.velocity.y = this.velocity.y - 2 * dot * normalY;
-
-                // // Move ball for the remaining fraction of the tick after collision
-                // this.x += this.velocity.x * remaining;
-                // this.y += this.velocity.y * remaining;
-                this.varyReflectionAngle(normalX, normalY);
+                this.hitBlock(tileX, tileY);
+                hadBlockCollision = true;
             }
 
             if (!collided)
@@ -127,11 +137,38 @@ Zon.Ball = class extends Struct.Circle {
                     console.warn('Potential infinite loop detected');
                     break;
                 }
+
+                break;//TODO: remove this line
             }
         } while (collided);
+
+        // const tileWidth = Zon.blocksManager.blockArea.width / Zon.blocksManager.tileCount.x;
+        // const tileHeight = Zon.blocksManager.blockArea.height / Zon.blocksManager.tileCount.y;
+        // for (let tX = 0; tX < Zon.blocksManager.tileCount.x; tX++) {
+        //     for (let tY = 0; tY < Zon.blocksManager.tileCount.y; tY++) {
+        //         if (!Zon.blocksManager.tileHasBlock(tX, tY))
+        //             continue;
+
+        //         for (let x = 0; x <= 1; x++) {
+        //             for (let y = 0; y <= 1; y++) {
+        //                 const blockWorldX = (tX + x) * tileWidth + Zon.blocksManager.blockArea.left;
+        //                 const blockWorldY = (tY + y) * tileHeight + Zon.blocksManager.blockArea.top;
+        //                 const previousDistance = Math.sqrt((oldX - blockWorldX) ** 2 + (oldY - blockWorldY) ** 2);
+        //                 const distance = Math.sqrt((this.x - blockWorldX) ** 2 + (this.y - blockWorldY) ** 2);
+        //                 if (previousDistance < this.radius) {
+        //                     console.error(`Ball was already inside block ${tX}, ${tY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), (${blockWorldX}, ${blockWorldY}), oldDistance: ${previousDistance}, distance: ${distance}, radius: ${this.radius}, velocity: (${this.velocity.x}, ${this.velocity.y}), oldVelocity: (${originalVelocityX}, ${originalVelocityY}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
+        //                 }
+
+        //                 if (distance < this.radius) {
+        //                     console.error(`Ball is inside block ${tX}, ${tY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), (${blockWorldX}, ${blockWorldY}), oldDistance: ${previousDistance}, distance: ${distance}, radius: ${this.radius}, velocity: (${this.velocity.x}, ${this.velocity.y}), oldVelocity: (${originalVelocityX}, ${originalVelocityY}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 
-    checkWallCollision = (lastPos) => {
+    checkWallCollisionOld = (lastPos) => {
         const leftDx = this.x - this.radius;
         if (leftDx <= 0) {
             const dx = this.x - lastPos.x;
@@ -142,7 +179,7 @@ Zon.Ball = class extends Struct.Circle {
             lastPos.x = this.radius;
             this.x = this.radius - leftDx;
             this.velocity.x = -this.velocity.x;
-            this.varyReflectionAngle(-1, 0);
+            this.varyReflectionAngle(new Vectors.Vector(-1, 0));
             return true;
         }
         else {
@@ -156,7 +193,7 @@ Zon.Ball = class extends Struct.Circle {
                 lastPos.x = this.canvas.width - this.radius;
                 this.x = this.canvas.width - this.radius + rightDx;
                 this.velocity.x = -this.velocity.x;
-                this.varyReflectionAngle(1, 0);
+                this.varyReflectionAngle(new Vectors.Vector(1, 0));
                 return true;
             }
         }
@@ -172,7 +209,7 @@ Zon.Ball = class extends Struct.Circle {
             lastPos.y = this.radius;
             this.y = this.radius - topDy;
             this.velocity.y = -this.velocity.y;
-            this.varyReflectionAngle(0, 1);
+            this.varyReflectionAngle(new Vectors.Vector(0, -1));
             return true;
         }
         else {
@@ -186,9 +223,88 @@ Zon.Ball = class extends Struct.Circle {
                 lastPos.y = this.canvas.height - this.radius;
                 this.y = this.canvas.height - this.radius + bottomDy;
                 this.velocity.y = -this.velocity.y;
-                this.varyReflectionAngle(0, -1);
+                this.varyReflectionAngle(new Vectors.Vector(0, 1));
                 return true;
             }
+        }
+
+        return false;
+    }
+
+    checkWallCollision = (lastPos) => {
+        let xDir = null;
+        let yDir = null;
+        const leftDx = this.x - this.radius;
+        if (leftDx <= 0) {
+            const dx = this.x - lastPos.x;
+            if (dx !== 0) {
+                lastPos.y += Math.abs((this.radius - lastPos.x) / dx) * (this.y - lastPos.y);
+            }
+
+            lastPos.x = this.radius;
+            this.x = this.radius - leftDx;
+            xDir = -1;
+        }
+        else {
+            const rightDx = this.canvas.width - this.x - this.radius;
+            if (rightDx <= 0) {
+                const dx = this.x - lastPos.x;
+                if (dx !== 0) {
+                    lastPos.y += Math.abs((this.canvas.width - this.radius - lastPos.x) / dx) * (this.y - lastPos.y);
+                }
+
+                lastPos.x = this.canvas.width - this.radius;
+                this.x = this.canvas.width - this.radius + rightDx;
+                xDir = 1;
+            }
+        }
+
+        const topDy = this.y - this.radius;
+        if (topDy <= 0) {
+            const dy = this.y - lastPos.y;
+            if (dy !== 0) {
+                const xAdd = Math.abs((this.radius - lastPos.y) / dy) * (this.x - lastPos.x);
+                lastPos.x += xAdd;
+            }
+
+            lastPos.y = this.radius;
+            this.y = this.radius - topDy;
+            yDir = -1;
+        }
+        else {
+            const bottomDy = this.canvas.height - this.y - this.radius;
+            if (bottomDy <= 0) {
+                const dy = this.y - lastPos.y;
+                if (dy !== 0) {
+                    lastPos.x += Math.abs((this.canvas.height - this.radius - lastPos.y) / dy) * (this.x - lastPos.x);
+                }
+
+                lastPos.y = this.canvas.height - this.radius;
+                this.y = this.canvas.height - this.radius + bottomDy;
+                yDir = 1;
+            }
+        }
+
+        if (xDir || yDir) {
+            const direction = new Vectors.Vector(xDir ?? 0, yDir ?? 0);
+            const oldVelocity = this.velocity;
+            this.velocity = this.velocity.reflect(direction.perpendicular);
+            if (Zon.debug && direction.x !== 0 && direction.y !== 0) {
+                if (direction.x === -1 && this.velocity.x < 0)
+                    console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+
+                if (direction.x === 1 && this.velocity.x > 0)
+                    console.warn(`Ball reversed back into right wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+
+                if (direction.y === -1 && this.velocity.y < 0)
+                    console.warn(`Ball reversed back into top wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+
+                if (direction.y === 1 && this.velocity.y > 0)
+                    console.warn(`Ball reversed back into bottom wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+            }
+
+            this.varyReflectionAngle(direction);
+            return true;
         }
 
         return false;
@@ -198,10 +314,10 @@ Zon.Ball = class extends Struct.Circle {
     static standardBounceSin = Math.sin(Trig.degToRad(5));
     //static standardBounceCos = Math.cos(Zon.Ball.standardBounceValue);
     //static pi2 = Math.PI / 2;
-    varyReflectionAngle = (wallNormX, wallNormY) => {
+    varyReflectionAngle = (ballDirection) => {
         //Old version with trig
         // const angle = this.velocity.angle;
-        // const angleToWall = Math.abs(Math.abs(wallNormX !== 0 ? angle : Math.abs(angle) - Zon.Ball.pi2) - Zon.Ball.pi2);
+        // const angleToWall = Math.abs(Math.abs(wallNorm.x !== 0 ? angle : Math.abs(angle) - Zon.Ball.pi2) - Zon.Ball.pi2);
         // const maxAngleChange = Math.min(angleToWall * 0.8, Zon.Ball.standardBounceValue);
         // const angleChange = (Math.random() * 2 - 1) * maxAngleChange;
         // const vx = this.velocity.x;
@@ -222,8 +338,8 @@ Zon.Ball = class extends Struct.Circle {
         this.velocity.y = vx * sin + vy * cos;
 
         //If random angle reflected the ball back into the wall, keep original exact reflection with no random angle
-        if (wallNormX !== 0) {
-            if (wallNormX === -1) {
+        if (ballDirection.x !== 0) {
+            if (ballDirection.x === -1) {
                 if (this.velocity.x < 0) {
                     this.velocity.x = vx;
                 }
@@ -235,7 +351,7 @@ Zon.Ball = class extends Struct.Circle {
             }
         }
         else {
-            if (wallNormY === 1) {
+            if (ballDirection.y === -1) {
                 if (this.velocity.y < 0) {
                     this.velocity.y = vy;
                 }
@@ -252,34 +368,19 @@ Zon.Ball = class extends Struct.Circle {
         // console.log('theta', theta, 'maxAngle', maxAngle, 'angle', angle, 'cos', cos, 'sin', sin, 'x', x, 'y', y);
 
         if (Zon.debug) {
-            if (wallNormX === -1 && this.velocity.x < 0)
+            if (ballDirection.x === -1 && this.velocity.x < 0)
                 console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), (${this.velocity.x}, ${this.velocity.y})`);
 
-            if (wallNormX === 1 && this.velocity.x > 0)
+            if (ballDirection.x === 1 && this.velocity.x > 0)
                 console.warn(`Ball reversed back into right wall: (${this.x}, ${this.y}), (${this.velocity.x}, ${this.velocity.y})`);
 
-            if (wallNormY === 1 && this.velocity.y < 0)
+            if (ballDirection.y === -1 && this.velocity.y < 0)
                 console.warn(`Ball reversed back into top wall: (${this.x}, ${this.y}), (${this.velocity.x}, ${this.velocity.y})`);
 
-            if (wallNormY === -1 && this.velocity.y > 0)
+            if (ballDirection.y === 1 && this.velocity.y > 0)
                 console.warn(`Ball reversed back into bottom wall: (${this.x}, ${this.y}), (${this.velocity.x}, ${this.velocity.y})`);
         }
     }
-
-    
-    // onCollision = (wallNormX, wallNormY) => {
-    //     const angle = this.velocity.angle;
-    //     const angleToWall = Math.abs(Math.abs(wallNormX !== 0 ? angle : Math.abs(angle) - Zon.Ball.pi2) - Zon.Ball.pi2);
-    //     const maxAngleChange = Math.min(angleToWall * 0.8, Zon.Ball.standardBounceValue);
-    //     const angleChange = (Math.random() * 2 - 1) * maxAngleChange;
-    //     const x = this.velocity.x;
-    //     const y = this.velocity.y;
-    //     const cos = Math.cos(angleChange);
-    //     const sin = Math.sin(angleChange);
-    //     this.velocity.x = x * cos - y * sin;
-    //     this.velocity.y = x * sin + y * cos;
-    //     // console.log('theta', theta, 'maxAngle', maxAngle, 'angle', angle, 'cos', cos, 'sin', sin, 'x', x, 'y', y);
-    // }
 
     draw = () => {
         this.ctx.beginPath();
@@ -287,5 +388,16 @@ Zon.Ball = class extends Struct.Circle {
         this.ctx.fillStyle = this.color;
         this.ctx.fill();
         this.ctx.closePath();
+    }
+
+    hitBlock = (tileX, tileY) => {
+        const block = Zon.blocksManager.getBlock(tileX, tileY);
+        if (Zon.debug) {
+            if (!block) {
+                console.error(`Hit block on a null block: ${block}, tileX: ${tileX}, tileY: ${tileY}`);
+            }
+        }
+        
+        const damage = block.hit(this.damage, this);
     }
 }
