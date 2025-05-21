@@ -6,6 +6,7 @@ const Struct = {};
 const Extensions = {};
 const Numbers = {};
 const Trig = {};
+const Algebra = {};
 
 Zon.name = "Zon";
 

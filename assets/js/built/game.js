@@ -21,6 +21,7 @@ Zon.Game = class {
     }
 
     loop = () => {
+        Zon.timeController.updateLoopTime();
         this.updateLoop(this.getUpdateSpeed());
         this.drawLoop();
         // Game loop logic

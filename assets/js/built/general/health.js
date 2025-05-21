@@ -29,7 +29,7 @@ Zon.Health = class {
 
     damage = (damage, source, overKill = false) => {
         if (damage.isZero)
-            return Zon.Triple.ZERO;
+            return Numbers.Triple.ZERO;
 
         if (damage.isNegative) {
             return -this.heal(-damage, source);
@@ -40,11 +40,11 @@ Zon.Health = class {
             damageReceived = damage;
         }
         else {
-            damageReceived = Zon.Triple.min(damage, this._hp);
+            damageReceived = Numbers.Triple.min(damage, this._hp);
         }
 
         if (damageReceived.isZero)
-            return Zon.Triple.ZERO;
+            return Numbers.Triple.ZERO;
 
         this._hp.subtract(damageReceived);
         this.onHPChanged.call(this.hp, -damageReceived, source);
@@ -57,7 +57,7 @@ Zon.Health = class {
 
     heal = (heal, source, overHeal = false) => {
         if (heal.isZero)
-            return Zon.Triple.ZERO;
+            return Numbers.Triple.ZERO;
 
         if (heal.isNegative) {
             return -this.damage(-heal, source);
@@ -68,11 +68,11 @@ Zon.Health = class {
             healingReceived = heal;
         }
         else {
-            healingReceived = Zon.Triple.min(heal, this.maxHP.subtract(this.hp));
+            healingReceived = Numbers.Triple.min(heal, this.maxHP.subtract(this.hp));
         }
 
         if (healingReceived.isZero)
-            return Zon.Triple.ZERO;
+            return Numbers.Triple.ZERO;
 
         this._hp.add(healingReceived);
         this.onHPChanged.call(this.hp, healingReceived, source);
@@ -117,7 +117,7 @@ Zon.Health = class {
         }
         else {
             if (!this._maxHP.isPositive) {
-                this._hp = Zon.Triple.ZERO;
+                this._hp = Numbers.Triple.ZERO;
             }
             else {
                 if (this.hp.greaterThan(this._maxHP)) {

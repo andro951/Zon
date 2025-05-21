@@ -132,7 +132,7 @@ Numbers.Triple = class {
         if (this._significand === 0n)
             return this.clone;
 
-        const newSignificandExponent = forAddition ? 61 : 62;//Adding could cause an overflow, so use 61 instead of full 62.
+        const newSignificandExponent = forAddition ? 61n : 62n;//Adding could cause an overflow, so use 61 instead of full 62.
 		const exp = newSignificandExponent - this._significandExponent;
 
         if (exp > 0) {

@@ -68,6 +68,8 @@ Vectors.Vector = class {
         return this.x * this.x + this.y * this.y;
     }
     reflect(axis) {
+        //Expects axis to be a surface vector being reflected off of, NOT A NORMAL!!!
+
         //Need to break appart this vector into a parallel (P) and perpendicular component (T) relative to the axis (A)
         //The reflection is then P - T
         //R = P - T
@@ -125,6 +127,9 @@ Vectors.Vector = class {
         const x = k * axis.x - this.x;
         const y = k * axis.y - this.y;
         return new Vectors.Vector(x, y);
+    }
+    get perpendicular() {
+        return new Vectors.Vector(-this.y, this.x);
     }
 }
 
