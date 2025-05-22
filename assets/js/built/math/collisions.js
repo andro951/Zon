@@ -380,7 +380,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
         yTileEndNonInc = tilesCount.y;
     }
 
-    console.log(`Checking line: ${lineStartX}, ${lineStartY} -> ${lineEndX}, ${lineEndY}, (x0: ${x0}, y0: ${y0}), (x1: ${x1}, y1: ${y1}), (dx: ${dx}, dy: ${dy}), (xTileStartInc: ${xTileStartInc}, xTileEndNonInc: ${xTileEndNonInc}), (yTileStartInc: ${yTileStartInc}, yTileEndNonInc: ${yTileEndNonInc})`);
+    //console.log(`Checking line: ${lineStartX}, ${lineStartY} -> ${lineEndX}, ${lineEndY}, (x0: ${x0}, y0: ${y0}), (x1: ${x1}, y1: ${y1}), (dx: ${dx}, dy: ${dy}), (xTileStartInc: ${xTileStartInc}, xTileEndNonInc: ${xTileEndNonInc}), (yTileStartInc: ${yTileStartInc}, yTileEndNonInc: ${yTileEndNonInc})`);
 
     //Currently does: If circle passes an x or y wall, check if any tile in that wall is solid, and reflect off the wall.
     let shortestTileX = -1;
@@ -388,8 +388,82 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     let t = Infinity;
     let directionOfHitX = 0;
     let directionOfHitY = 0;
-    for (let x = xTileStartInc; x !== xTileEndNonInc; x += xTileStep) {//for (let x = 0; x < tilesCount.x; x += 1) {
-        for (let y = 0; y < tilesCount.y; y += 1) {
+    let xTile = xTileStartInc;
+    let yTile = yTileStartInc;
+    while (true) {
+        const xOutOfBounds = xTile === xTileEndNonInc;
+        const yOutOfBounds = yTile === yTileEndNonInc;
+        if (xOutOfBounds && yOutOfBounds)
+            break;
+
+        let xT = null;
+        let yT = null;
+        if (!xOutOfBounds) {
+            const tileWorldX = xDirIsRight ? gridRect.left + xTile * tileWidth : gridRect.left + (xTile + 1) * tileWidth;
+            xT = Collision.crosses(lineStartX, lineEndX, tileWorldX);
+        }
+
+        if (!yOutOfBounds) {
+            const tileWorldY = yDirIsDown ? gridRect.top + yTile * tileHeight : gridRect.top + (yTile + 1) * tileHeight;
+            yT = Collision.crosses(lineStartY, lineEndY, tileWorldY);
+        }
+
+        if (xT !== null) {
+            if (xT < 0)
+                throw new Error(`xT is negative: ${xT}`);
+
+            if (yT === null || xT < yT) {
+                for (let y = yTileStartInc; y !== yTileEndNonInc; y += yTileStep) {//for (let y = 0; y < tilesCount.y; y += 1) {
+                    if (x < 0 || x >= tilesCount.x || y < 0 || y >= tilesCount.y)
+                        throw new Error(`Invalid tile coordinates: (${x}, ${y})`);
+
+                    if (isSolidTile(x, y)) {
+                        if (xT < t) {
+                            t = xT;
+                            shortestTileX = xTile;
+                            shortestTileY = y;
+                            directionOfHitX = xDir;
+                            directionOfHitY = 0;
+                            //console.log(`X Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+                        }
+
+                        break;
+                    }
+                }
+
+                xTile += xTileStep;
+            }
+        }
+
+        if (yT !== null) {
+            if (yT < 0)
+                throw new Error(`yT is negative: ${yT}`);
+
+            if (xT === null || yT < xT) {
+                for (let x = xTileStartInc; x !== xTileEndNonInc; x += xTileStep) {//for (let x = 0; x < tilesCount.x; x += 1) {
+                    if (x < 0 || x >= tilesCount.x || y < 0 || y >= tilesCount.y)
+                        throw new Error(`Invalid tile coordinates: (${x}, ${y})`);
+
+                    if (isSolidTile(x, y)) {
+                        if (yT < t) {
+                            t = yT;
+                            shortestTileX = x;
+                            shortestTileY = yTile;
+                            directionOfHitX = 0;
+                            directionOfHitY = yDir;
+                            //console.log(`Y Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+                        }
+                        
+                        break;
+                    }
+                }
+
+                yTile += yTileStep;
+            }
+        }
+    }
+    for (let x = xTileStartInc; x !== xTileEndNonInc; x += xTileStep) {
+        for (let y = yTileStartInc; y !== yTileEndNonInc; y += yTileStep) {//for (let y = 0; y < tilesCount.y; y += 1) {
             if (x < 0 || x >= tilesCount.x || y < 0 || y >= tilesCount.y)
                 throw new Error(`Invalid tile coordinates: (${x}, ${y})`);
 
@@ -406,15 +480,15 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         shortestTileY = y;
                         directionOfHitX = xDir;
                         directionOfHitY = 0;
-                        console.log(`X Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+                        //console.log(`X Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
                     }
                 }
             }
         }
     }
 
-    for (let y = yTileStartInc; y !== yTileEndNonInc; y += yTileStep) {//for (let y = 0; y < tilesCount.y; y += 1) {
-        for (let x = 0; x < tilesCount.x; x += 1) {
+    for (let y = yTileStartInc; y !== yTileEndNonInc; y += yTileStep) {
+        for (let x = xTileStartInc; x !== xTileEndNonInc; x += xTileStep) {//for (let x = 0; x < tilesCount.x; x += 1) {
             if (x < 0 || x >= tilesCount.x || y < 0 || y >= tilesCount.y)
                 throw new Error(`Invalid tile coordinates: (${x}, ${y})`);
             
@@ -431,7 +505,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         shortestTileY = y;
                         directionOfHitX = 0;
                         directionOfHitY = yDir;
-                        console.log(`Y Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+                        //console.log(`Y Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
                     }
                 }
             }
@@ -439,7 +513,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     }
 
     if (t !== Infinity) {
-        console.log(`Final Hit: ${shortestTileX}, ${shortestTileY}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, lineHitX: ${lineStartX + t * (lineEndX - lineStartX)}, lineHitY: ${lineStartY + t * (lineEndY - lineStartY)}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+        //console.log(`Final Hit: ${shortestTileX}, ${shortestTileY}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, lineHitX: ${lineStartX + t * (lineEndX - lineStartX)}, lineHitY: ${lineStartY + t * (lineEndY - lineStartY)}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
         if (directionOfHitX === 0 && directionOfHitY === 0)
             throw new Error(`Direction of hit is zero: (${directionOfHitX}, ${directionOfHitY})`);
 
