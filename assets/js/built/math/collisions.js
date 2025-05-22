@@ -309,6 +309,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
 
     const dx = x1 - x0;
     const dy = y1 - y0;
+    const dLength = Math.sqrt(dx * dx + dy * dy);
     if (dx === 0 && dy === 0)
         return null;
 
@@ -319,12 +320,17 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     const yDir = dy < 0 ? -1 : dy > 0 ? 1 : 0;
     const xTileStep = xDir === 0 ? 1 : xDir;
     const yTileStep = yDir === 0 ? 1 : yDir;
+    //Not correct.  r is the hypotenuse of the triangle, not the x or y distance.
+    //Use similar triangles to determine the start and end points of the line.
 
+    const hRatio = r / dLength;
+    const rX = dx * hRatio;
+    const rY = dy * hRatio;
     const line = {
-        startX: x0 + r * xDir,
-        endX: x1 + r * xDir,
-        startY: y0 - r * yDir,
-        endY: y1 + r * yDir
+        startX: x0 + rX,
+        endX: x1 + rX,
+        startY: y0 - rY,
+        endY: y1 + rY
     };
 
     const xTileStartInc = Math.floor((line.startX - gridRect.left) / tileWidth) + (xTileStep === -1 ? 1 : 0);
@@ -332,20 +338,46 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     const yTileStartInc = Math.floor((line.startY - gridRect.top) / tileHeight) + (yTileStep === -1 ? 1 : 0);
     const yTileEndNonInc = Math.floor((line.endY - gridRect.top) / tileHeight) + (yTileStep === 1 ? 2 : 1);
 
+    /*
+    Checking line: 153.05919732322522, 464.07538180559607 -> 176.1794985488792, 496.411450204164, (x0: 125.31483585244042, y0: 475.48811182862005), (x1: 148.4351370780944, y1: 484.99872018114), (rX: 27.744361470784792, rY: 11.412730023023961), (dx: 23.12030122565399, dy: 9.510608352519967), (xTileStartInc: 0, xTileEndNonInc: 2), (yTileStartInc: 3, yTileEndNonInc: 5)
+    collisions.js:348 Checking line: 176.1794985488792, 473.58599015811603 -> 199.2997997745332, 505.92205855668396, (x0: 148.4351370780944, y0: 484.99872018114), (x1: 171.55543830374842, y1: 494.50932853366), (rX: 27.744361470784792, rY: 11.412730023023956), (dx: 23.120301225654003, dy: 9.510608352519967), (xTileStartInc: 0, xTileEndNonInc: 2), (yTileStartInc: 3, yTileEndNonInc: 6)
+    collisions.js:387 Y Hit found: 6, 4, t: 0.8168590416221957, hitX: 167.32116417929862, hitY: 492.7675466052235, directionOfHit: (0, 1)
+    collisions.js:395 Final Hit: 6, 4, t: 0.8168590416221957, hitX: 167.32116417929862, hitY: 492.7675466052235, lineHitX: 195.0655256500834, lineHitY: 500, directionOfHit: (0, 1)
+    collisions.js:348 Checking line: 245.67798406759195, 518.3538546773657 -> 268.26329329357, 481.90816891279286, (x0: 218.57561299641839, y0: 505.49067146634), (x1: 241.16092222239638, y1: 494.7713521238186), (rX: 27.102371071173575, rY: -12.863183211025708), (dx: 22.585309225977994, dy: -10.71931934252143), (xTileStartInc: 1, xTileEndNonInc: 3), (yTileStartInc: 5, yTileEndNonInc: 4)
+    collisions.js:348 Checking line: 268.26329329357, 507.6345353348443 -> 290.84860251954797, 471.18884957027143, (x0: 241.16092222239638, y0: 494.7713521238186), (x1: 263.7462314483744, y1: 484.05203278129716), (rX: 27.102371071173575, rY: -12.863183211025708), (dx: 22.585309225977994, dy: -10.71931934252143), (xTileStartInc: 1, xTileEndNonInc: 3), (yTileStartInc: 5, yTileEndNonInc: 4)
+    collisions.js:348 Checking line: 290.84860251954797, 496.9152159923229 -> 313.43391174552596, 460.46953022775, (x0: 263.7462314483744, y0: 484.05203278129716), (x1: 286.33154067435237, y1: 473.3327134387757), (rX: 27.102371071173575, rY: -12.863183211025708), (dx: 22.585309225977994, dy: -10.71931934252143), (xTileStartInc: 1, xTileEndNonInc: 4), (yTileStartInc: 4, yTileEndNonInc: 4)
+    */
+
+    //Checking line: 290.84860251954797, 496.9152159923229 -> 313.43391174552596, 460.46953022775, 
+    // (x0: 263.7462314483744, y0: 484.05203278129716), (x1: 286.33154067435237, y1: 473.3327134387757), 
+    // (rX: 27.102371071173575, rY: -12.863183211025708), (dx: 22.585309225977994, dy: -10.71931934252143), 
+    // (xTileStartInc: 1, xTileEndNonInc: 4), (yTileStartInc: 4, yTileEndNonInc: 4)
+    //X Hit found: 2, 6, t: 0.4051924810454198, hitX: 272.8976289288264, hitY: 479.70864518178274, 
+    // directionOfHit: (1, 0)
+    //Final Hit: 2, 6, t: 0.4051924810454198, hitX: 272.8976289288264, hitY: 479.70864518178274, 
+    // lineHitX: 300, lineHitY: 482.14769815397386, directionOfHit: (1, 0)
+
+    console.log(`Checking line: ${line.startX}, ${line.startY} -> ${line.endX}, ${line.endY}, (x0: ${x0}, y0: ${y0}), (x1: ${x1}, y1: ${y1}), (rX: ${rX}, rY: ${rY}), (dx: ${dx}, dy: ${dy}), (xTileStartInc: ${xTileStartInc}, xTileEndNonInc: ${xTileEndNonInc}), (yTileStartInc: ${yTileStartInc}, yTileEndNonInc: ${yTileEndNonInc})`);
+
     //Currently does: If circle passes an x or y wall, check if any tile in that wall is solid, and reflect off the wall.
+    let shortestTileX = -1;
+    let shortestTileY = -1;
+    let t = Infinity;
+    let directionOfHitX = 0;
+    let directionOfHitY = 0;
     for (let x = xTileStartInc; x !== xTileEndNonInc; x += xTileStep) {
         for (let y = 0; y < tilesCount.y; y += 1) {
             if (isSolidTile(x, y)) {
                 const tileWorldX = gridRect.left + x * tileWidth;
-                const t = Collision.crossesX(line, tileWorldX);
-                if (t !== null) {
-                    return {
-                        tileX: x,
-                        tileY: y,
-                        t: t,
-                        hitX: line.startX + t * (line.endX - line.startX),
-                        hitY: line.startY + t * (line.endY - line.startY),
-                        directionOfHit: new Vectors.Vector(xDir, 0),
+                const newT = Collision.crossesX(line, tileWorldX);
+                if (newT !== null) {
+                    if (newT < t) {
+                        t = newT;
+                        shortestTileX = x;
+                        shortestTileY = y;
+                        directionOfHitX = xDir;
+                        directionOfHitY = 0;
+                        console.log(`X Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
                     }
                 }
             }
@@ -356,18 +388,30 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
         for (let x = 0; x < tilesCount.x; x += 1) {
             if (isSolidTile(x, y)) {
                 const tileWorldY = gridRect.top + y * tileHeight;
-                const t = Collision.crossesY(line, tileWorldY);
-                if (t !== null) {
-                    return {
-                        tileX: x,
-                        tileY: y,
-                        t: t,
-                        hitX: line.startX + t * (line.endX - line.startX),
-                        hitY: line.startY + t * (line.endY - line.startY),
-                        directionOfHit: new Vectors.Vector(0, yDir),
+                const newT = Collision.crossesY(line, tileWorldY);
+                if (newT !== null) {
+                    if (newT < t) {
+                        t = newT;
+                        shortestTileX = x;
+                        shortestTileY = y;
+                        directionOfHitX = 0;
+                        directionOfHitY = yDir;
+                        console.log(`Y Hit found: ${x}, ${y}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
                     }
                 }
             }
+        }
+    }
+
+    if (t !== Infinity) {
+        console.log(`Final Hit: ${shortestTileX}, ${shortestTileY}, t: ${t}, hitX: ${x0 + t * dx}, hitY: ${y0 + t * dy}, lineHitX: ${line.startX + t * (line.endX - line.startX)}, lineHitY: ${line.startY + t * (line.endY - line.startY)}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+        return {
+            tileX: shortestTileX,
+            tileY: shortestTileY,
+            t,
+            hitX: line.startX + t * (line.endX - line.startX),
+            hitY: line.startY + t * (line.endY - line.startY),
+            directionOfHit: new Vectors.Vector(directionOfHitX, directionOfHitY),
         }
     }
 }
