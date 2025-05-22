@@ -45,10 +45,10 @@ Zon.balls = [];
 // }
 
 const ballData = [
-    [ 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    //[ 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
     [ 35, 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    [ Zon.combatUI.element.width - 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    [ Zon.combatUI.element.width - 35, 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    //[ Zon.combatUI.element.width - 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    //[ Zon.combatUI.element.width - 35, 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
 ];
 
 for (let i = 0; i < ballData.length; i++) {
