@@ -457,7 +457,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     while (t <= 1) {
         if (xT < yT) {
             if (xT > 1)
-                return null;
+                break;
 
             t = xT;
             if (xT < 0)
@@ -490,7 +490,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             xT += tDeltaX;
         } else {
             if (yT > 1)
-                return null;
+                break;
 
             t = yT;
             if (yT < 0)
