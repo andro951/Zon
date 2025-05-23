@@ -328,10 +328,6 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     const yDir = dy < 0 ? -1 : dy > 0 ? 1 : 0;
     const xDirIsRight = xDir !== -1;
     const yDirIsDown = yDir !== -1;
-    const xTileStep = xDirIsRight ? 1 : -1;
-    const yTileStep = yDirIsDown ? 1 : -1;
-    //Not correct.  r is the hypotenuse of the triangle, not the x or y distance.
-    //Use similar triangles to determine the start and end points of the line.
 
     const lineStartX = x0 + r * xDir;
     const lineStartY = y0 + r * yDir;
@@ -349,6 +345,9 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
 
     if (yDirIsDown ? lineStartY > gridBottom - tileHeight && lineEndY > gridBottom - tileHeight : lineStartY > gridBottom && lineEndY > gridBottom)
         return null;
+
+    const invTileWidth = 1 / tileWidth;
+    const invTileHeight = 1 / tileHeight;
 
     //start needs to be inclusive.
     //end needs to be exclusive (1 more in the direction)
@@ -380,43 +379,17 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     //Left conclusion:
     //start should be floor - 1
     //end should be ceil - 2
-    let xTileStartInc2 = xDirIsRight ? Math.ceil((lineStartX - gridLeft) / tileWidth) : Math.floor((lineStartX - gridLeft) / tileWidth) - 1;
-    let xTileStartInc = xTileStartInc2;//TODO" remove this
-    let xTileEndNonInc2 = xDirIsRight ? Math.floor((lineEndX - gridLeft) / tileWidth) + 1 : Math.ceil((lineEndX - gridLeft) / tileWidth) - 2;
-    let xTileEndNonInc = xTileEndNonInc2;//TODO" remove this
 
-    let yTileStartInc2 = yDirIsDown ? Math.ceil((lineStartY - gridTop) / tileHeight) : Math.floor((lineStartY - gridTop) / tileHeight) - 1;
-    let yTileStartInc = yTileStartInc2;//TODO" remove this
-    let yTileEndNonInc2 = yDirIsDown ? Math.floor((lineEndY - gridTop) / tileHeight) + 1 : Math.ceil((lineEndY - gridTop) / tileHeight) - 2;
-    let yTileEndNonInc = yTileEndNonInc2;//TODO" remove this
 
-    if (xTileStartInc < 0) {
-        xTileStartInc = 0;
-    }
-    else if (xTileStartInc >= tileCountX) {
-        xTileStartInc = tileCountX - 1;
-    }
+    let xTileStartInc = xDirIsRight ? Math.ceil((lineStartX - gridLeft) * invTileWidth) : Math.floor((lineStartX - gridLeft) * invTileWidth) - 1;
+    let xTileEndNonInc = xDirIsRight ? Math.floor((lineEndX - gridLeft) * invTileWidth) + 1 : Math.ceil((lineEndX - gridLeft) * invTileWidth) - 2;
+    let yTileStartInc = yDirIsDown ? Math.ceil((lineStartY - gridTop) * invTileHeight) : Math.floor((lineStartY - gridTop) * invTileHeight) - 1;
+    let yTileEndNonInc = yDirIsDown ? Math.floor((lineEndY - gridTop) * invTileHeight) + 1 : Math.ceil((lineEndY - gridTop) * invTileHeight) - 2;
 
-    if (xTileEndNonInc < -1) {
-        xTileEndNonInc = -1;
-    }
-    else if (xTileEndNonInc > tileCountX) {
-        xTileEndNonInc = tileCountX;
-    }
-
-    if (yTileStartInc < 0) {
-        yTileStartInc = 0;
-    }
-    else if (yTileStartInc >= tileCountY) {
-        yTileStartInc = tileCountY - 1;
-    }
-
-    if (yTileEndNonInc < -1) {
-        yTileEndNonInc = -1;
-    }
-    else if (yTileEndNonInc > tileCountY) {
-        yTileEndNonInc = tileCountY;
-    }
+    xTileStartInc = Math.min(Math.max(xTileStartInc, 0), tileCountX - 1);
+    xTileEndNonInc = Math.min(Math.max(xTileEndNonInc, -1), tileCountX);
+    yTileStartInc = Math.min(Math.max(yTileStartInc, 0), tileCountY - 1);
+    yTileEndNonInc = Math.min(Math.max(yTileEndNonInc, -1), tileCountY);
 
     //console.log(`Checking line: ${lineStartX}, ${lineStartY} -> ${lineEndX}, ${lineEndY}, (x0: ${x0}, y0: ${y0}), (x1: ${x1}, y1: ${y1}), (dx: ${dx}, dy: ${dy}), (xTileStartInc: ${xTileStartInc}, xTileEndNonInc: ${xTileEndNonInc}), (yTileStartInc: ${yTileStartInc}, yTileEndNonInc: ${yTileEndNonInc})`);
 
@@ -466,8 +439,8 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             const ballCenterY = y0 + xT * dy;
             const ballTopY = ballCenterY - r;
             const ballBottomY = ballCenterY + r;
-            const ballTopTileY = Math.max(Math.floor((ballTopY - gridTop) / tileHeight), 0);
-            const ballBottomTileY = Math.min(Math.floor((ballBottomY - gridTop) / tileHeight), tileCountY - 1);
+            const ballTopTileY = Math.max(Math.floor((ballTopY - gridTop) * invTileHeight), 0);
+            const ballBottomTileY = Math.min(Math.floor((ballBottomY - gridTop) * invTileHeight), tileCountY - 1);
             for (let y = ballTopTileY; y <= ballBottomTileY; y += 1) {
                 if (tileX < 0 || tileX >= tileCountX || y < 0 || y >= tileCountY)
                     throw new Error(`Invalid tile coordinates: (${tileX}, ${y})`);
@@ -481,12 +454,12 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         directionOfHitY = 0;
                         console.log(`X Hit found: ${tileX}, ${y}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
                     }
-
+                    
                     break;
                 }
             }
 
-            tileX += xTileStep;
+            tileX += xDir;
             xT += tDeltaX;
         } else {
             if (yT > 1)
@@ -499,8 +472,8 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             const ballCenterX = x0 + yT * dx;
             const ballLeftX = ballCenterX - r;
             const ballRightX = ballCenterX + r;
-            const ballLeftTileX = Math.max(Math.floor((ballLeftX - gridLeft) / tileWidth), 0);
-            const ballRightTileX = Math.min(Math.floor((ballRightX - gridLeft) / tileWidth), tileCountX - 1);
+            const ballLeftTileX = Math.max(Math.floor((ballLeftX - gridLeft) * invTileWidth), 0);
+            const ballRightTileX = Math.min(Math.floor((ballRightX - gridLeft) * invTileWidth), tileCountX - 1);
             for (let x = ballLeftTileX; x <= ballRightTileX; x += 1) {
                 if (x < 0 || x >= tileCountX || tileY < 0 || tileY >= tileCountY)
                     throw new Error(`Invalid tile coordinates: (${x}, ${tileY})`);
@@ -519,7 +492,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                 }
             }
 
-            tileY += yTileStep;
+            tileY += yDir;
             yT += tDeltaY;
         }
     }

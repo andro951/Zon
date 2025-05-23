@@ -40,15 +40,15 @@
 // test3();
 
 Zon.balls = [];
-// for (let i = 0; i < 1; i++) {
-//     Zon.balls.push(new Zon.Ball((i + 1) * 50, Zon.combatUI.element.height - 50, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4)));//1 PI / 4 to 3 PI / 4
-// }
+for (let i = 0; i < 10; i++) {
+    Zon.balls.push(new Zon.Ball((i + 1) * 50, Zon.combatUI.element.height - 50, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4)));//1 PI / 4 to 3 PI / 4
+}
 
 const ballData = [
-    //[ 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
     [ 35, 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    //[ Zon.combatUI.element.width - 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    //[ Zon.combatUI.element.width - 35, 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ Zon.combatUI.element.width - 35, Zon.combatUI.element.height - 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ Zon.combatUI.element.width - 35, 35, new Vectors.Polar(25, (Math.random() * 2 + 1) * Math.PI / 4) ],
 ];
 
 for (let i = 0; i < ballData.length; i++) {
