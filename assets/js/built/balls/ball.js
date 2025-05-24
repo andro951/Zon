@@ -1,70 +1,29 @@
 "use strict";
 
 Zon.Ball = class extends Struct.Circle {
-    constructor(x, y, velocity) {
+    constructor(x, y, speed = 25, angle) {
         super(x, y, 30);
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
-        if (velocity instanceof Vectors.Vector) {
-            this.velocity = velocity;
-            this.speed = velocity.magnitude();
-        }
-        else {
-            this.velocity = velocity.toVector();
-            this.speed = velocity.radius;
-        }
-        
+        this.velocity = Vectors.Vector.fromPolar(speed, angle);
+        this.speed = speed;
+        this.lastPosition = new Vectors.Vector(0, 0);//Only updated when updateBallLastPosition() is called
         this.color = 'white';
     }
 
     get damage() {
-        return Numbers.Triple.create(1n, 0n);
+        return Numbers.Triple.create(10n, 0n);
     }
 
     correctVelocity = () => {
         this.velocity.magnitude = this.speed;
     }
 
-    // update = () => {
-    //     this.x += this.velocity.x;
-    //     this.y += this.velocity.y;
-
-    //     const leftDx = this.x - this.radius;
-    //     if (leftDx <= 0) {
-    //         this.x = this.radius - leftDx;
-    //         this.velocity.x = -this.velocity.x;
-    //         this.onCollision(true);
-    //     }
-    //     else {
-    //         const rightDx = this.canvas.width - this.x - this.radius;
-    //         if (rightDx <= 0) {
-    //             this.x = this.canvas.width - this.radius + rightDx;
-    //             this.velocity.x = -this.velocity.x;
-    //             this.onCollision(true);
-    //         }
-    //     }
-
-    //     const topDy = this.y - this.radius;
-    //     if (topDy <= 0) {
-    //         this.y = this.radius - topDy;
-    //         this.velocity.y = -this.velocity.y;
-    //         this.onCollision(false);
-    //     }
-    //     else {
-    //         const bottomDy = this.canvas.height - this.y - this.radius;
-    //         if (bottomDy <= 0) {
-    //             this.y = this.canvas.height - this.radius + bottomDy;
-    //             this.velocity.y = -this.velocity.y;
-    //             this.onCollision(false);
-    //         }
-    //     }
-    // }
-
     update = () => {
         const oldX = this.x;
         const oldY = this.y;
-        const originalVelocityX = this.velocity.x;
-        const originalVelocityY = this.velocity.y;
+        //const originalVelocityX = this.velocity.x;
+        //const originalVelocityY = this.velocity.y;
         let hadBlockCollision = false;
         const lastPos = new Vectors.Vector(this.x, this.y);
         this.x += this.velocity.x;
@@ -94,30 +53,44 @@ Zon.Ball = class extends Struct.Circle {
                 const oldVelocity = this.velocity;
                 this.velocity = this.velocity.reflect(directionOfHit.perpendicular);
                 this.varyReflectionAngle(directionOfHit);
-                //console.log(`Ball hit block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
+                if (zonDebug) {
+                    //console.log(`Ball hit block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
+                }
+                
                 if (oldVelocity.x === this.velocity.x && oldVelocity.y === this.velocity.y)
                     throw new Error(`Ball velocity did not change after collision with block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
                 
-                if (zonDebug && directionOfHit.x !== 0 && directionOfHit.y !== 0) {
-                    if (directionOfHit.x === -1 && this.velocity.x < 0)
-                        console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+                if (zonDebug) {
+                    if (directionOfHit.x !== 0 && directionOfHit.y !== 0) {
+                        if (directionOfHit.x === -1 && this.velocity.x < 0)
+                            console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
 
-                    if (directionOfHit.x === 1 && this.velocity.x > 0)
-                        console.warn(`Ball reversed back into right wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+                        if (directionOfHit.x === 1 && this.velocity.x > 0)
+                            console.warn(`Ball reversed back into right wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
 
-                    if (directionOfHit.y === -1 && this.velocity.y < 0)
-                        console.warn(`Ball reversed back into top wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+                        if (directionOfHit.y === -1 && this.velocity.y < 0)
+                            console.warn(`Ball reversed back into top wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
 
-                    if (directionOfHit.y === 1 && this.velocity.y > 0)
-                        console.warn(`Ball reversed back into bottom wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+                        if (directionOfHit.y === 1 && this.velocity.y > 0)
+                            console.warn(`Ball reversed back into bottom wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
+                    }
                 }
 
                 this.hitBlock(tileX, tileY);
                 hadBlockCollision = true;
+
+                //If ball killed the last block, it will trigger the ballManager to move them to the starting location
+                if (Zon.BallManager.ballsInStartingLocation)
+                    return;
             }
 
-            if (!collided)
-                collided ||= this.checkWallCollision(lastPos);
+            if (!collided) {
+                const hitWall = this.checkWallCollision(lastPos);
+                collided ||= hitWall;
+                if (hitWall) {
+                    Zon.BallManager.onBallCollisionWithNonHealthObject(this);
+                }
+            }
 
             if (zonDebug) {
                 if (collided && count > 1) {
@@ -137,8 +110,6 @@ Zon.Ball = class extends Struct.Circle {
                     console.warn('Potential infinite loop detected');
                     break;
                 }
-
-                break;//TODO: remove this line
             }
         } while (collided);
 
@@ -166,69 +137,6 @@ Zon.Ball = class extends Struct.Circle {
         //         }
         //     }
         // }
-    }
-
-    checkWallCollisionOld = (lastPos) => {
-        const leftDx = this.x - this.radius;
-        if (leftDx <= 0) {
-            const dx = this.x - lastPos.x;
-            if (dx !== 0) {
-                lastPos.y += Math.abs((this.radius - lastPos.x) / dx) * (this.y - lastPos.y);
-            }
-
-            lastPos.x = this.radius;
-            this.x = this.radius - leftDx;
-            this.velocity.x = -this.velocity.x;
-            this.varyReflectionAngle(new Vectors.Vector(-1, 0));
-            return true;
-        }
-        else {
-            const rightDx = this.canvas.width - this.x - this.radius;
-            if (rightDx <= 0) {
-                const dx = this.x - lastPos.x;
-                if (dx !== 0) {
-                    lastPos.y += Math.abs((this.canvas.width - this.radius - lastPos.x) / dx) * (this.y - lastPos.y);
-                }
-
-                lastPos.x = this.canvas.width - this.radius;
-                this.x = this.canvas.width - this.radius + rightDx;
-                this.velocity.x = -this.velocity.x;
-                this.varyReflectionAngle(new Vectors.Vector(1, 0));
-                return true;
-            }
-        }
-
-        const topDy = this.y - this.radius;
-        if (topDy <= 0) {
-            const dy = this.y - lastPos.y;
-            if (dy !== 0) {
-                const xAdd = Math.abs((this.radius - lastPos.y) / dy) * (this.x - lastPos.x);
-                lastPos.x += xAdd;
-            }
-
-            lastPos.y = this.radius;
-            this.y = this.radius - topDy;
-            this.velocity.y = -this.velocity.y;
-            this.varyReflectionAngle(new Vectors.Vector(0, -1));
-            return true;
-        }
-        else {
-            const bottomDy = this.canvas.height - this.y - this.radius;
-            if (bottomDy <= 0) {
-                const dy = this.y - lastPos.y;
-                if (dy !== 0) {
-                    lastPos.x += Math.abs((this.canvas.height - this.radius - lastPos.y) / dy) * (this.x - lastPos.x);
-                }
-
-                lastPos.y = this.canvas.height - this.radius;
-                this.y = this.canvas.height - this.radius + bottomDy;
-                this.velocity.y = -this.velocity.y;
-                this.varyReflectionAngle(new Vectors.Vector(0, 1));
-                return true;
-            }
-        }
-
-        return false;
     }
 
     checkWallCollision = (lastPos) => {
@@ -399,5 +307,10 @@ Zon.Ball = class extends Struct.Circle {
         }
         
         const damage = block.hit(this.damage, this);
+    }
+
+    updateBallLastPosition = () => {
+        this.lastPosition.x = this.x;
+        this.lastPosition.y = this.y;
     }
 }

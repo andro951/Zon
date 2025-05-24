@@ -8,10 +8,16 @@ Vectors.Vector = class {
         this.y = y;
     }
 
+    static fromPolar(radius, angle) {
+        const x = radius * Math.cos(angle);
+        const y = radius * Math.sin(angle);
+        return new Vectors.Vector(x, y);
+    }
+
     toPolar() {
         const radius = this.magnitude();
-        const theta = this.angle();
-        return new Vectors.Polar(radius, theta);
+        const angle = this.angle();
+        return new Vectors.Polar(radius, angle);
     }
 
     rotate(angle) {
@@ -134,14 +140,14 @@ Vectors.Vector = class {
 }
 
 Vectors.Polar = class {
-    constructor(radius, theta) {
+    constructor(radius, angle) {
         this.radius = radius;
-        this.theta = theta;
+        this.angle = angle;
     }
 
     toVector() {
-        const x = this.radius * Math.cos(this.theta);
-        const y = this.radius * Math.sin(this.theta);
+        const x = this.radius * Math.cos(this.angle);
+        const y = this.radius * Math.sin(this.angle);
         return new Vectors.Vector(x, y);
     }
 }

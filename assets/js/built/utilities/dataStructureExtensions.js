@@ -16,3 +16,13 @@ Set.prototype.getRandom = function() {
 
     throw new Error(`Random item not found in set.  ${this}, ${this.size}, ${randomIndex}`);
 }
+
+Array.prototype.swapPop = function(index) {
+    if (index < 0 || index >= this.length)
+        return null;
+
+    const item = this[index];
+    this[index] = this[this.length - 1];
+    this.pop();
+    return item;
+}

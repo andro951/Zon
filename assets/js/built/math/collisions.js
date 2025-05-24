@@ -772,7 +772,8 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
         }
 
         if (expectedT !== Infinity) {
-            if (Math.abs(expectedT - shortestT) > 0.000001) {
+            const epsilon = 0.000001;
+            if (Math.abs(expectedT - shortestT) > epsilon && Math.abs(expectedT) > epsilon) {
                 const msg = `Expected T is less than shortestT: ${expectedT} < ${shortestT}.\n\n
                     expectedTile: (${expectedXTile}, ${expectedYTile}),\n
                     shortestTile: (${shortestTileX}, ${shortestTileY}),\n\n

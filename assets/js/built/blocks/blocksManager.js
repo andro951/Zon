@@ -5,15 +5,15 @@ Zon.BlocksManager = class {
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.tileCount = new Vectors.Vector(16, 16);
-        const heightScaleNum = 8;
-        const heightScaleDenom = 9;
-        const widthScaleNum = 8;
-        const widthScaleDenom = 9;
+        this.heightScaleNum = 8;
+        this.heightScaleDenom = 9;
+        this.widthScaleNum = 8;
+        this.widthScaleDenom = 9;
         this.blockArea = new Struct.Rectangle(
-            this.canvas.width / widthScaleDenom / 2 * (widthScaleDenom - heightScaleNum),
-            this.canvas.height / heightScaleDenom / 2 * (heightScaleDenom - heightScaleNum),
-            this.canvas.width / widthScaleDenom * widthScaleNum,
-            this.canvas.height / heightScaleDenom * heightScaleNum
+            this.canvas.width / this.widthScaleDenom / 2 * (this.widthScaleDenom - this.heightScaleNum),
+            this.canvas.height / this.heightScaleDenom / 2 * (this.heightScaleDenom - this.heightScaleNum),
+            this.canvas.width / this.widthScaleDenom * this.widthScaleNum,
+            this.canvas.height / this.heightScaleDenom * this.heightScaleNum
         );
 
         this._levelData = null;
@@ -62,6 +62,7 @@ Zon.BlocksManager = class {
         this.clearAllBlocks();
         this._imagePixelsWidth = this._levelData.width();
         this._imagePixelsHeight = this._levelData.height();
+        this.tileCount = new Vectors.Vector(this._imagePixelsWidth, this._imagePixelsHeight);
         this._blockSize = new Vectors.Vector(this.blockArea.width / this.tileCount.x, this.blockArea.height / this.tileCount.y);//100, 100
         this._blocks = new Array(this._imagePixelsWidth * this._imagePixelsHeight);
 
@@ -81,7 +82,7 @@ Zon.BlocksManager = class {
         }
     }
     update = () => {
-        this.blocks.forEach(block => block.update());
+        //this.blocks.forEach(block => block.update());
     }
     draw = () => {
         this.blocks.forEach(block => block.draw());
@@ -186,3 +187,5 @@ Zon.BlocksManager = class {
         this.resetWeakPointBlock();
     }
 }
+
+Zon.blocksManager = new Zon.BlocksManager();

@@ -27,9 +27,6 @@ Zon.Game = class {
     }
 
     postLoadSetup = async () => {
-        Zon.blocksManager = new Zon.BlocksManager();
-        Zon.game.lateUpdate.add(Zon.blocksManager.update);
-        Zon.game.lateDraw.add(Zon.blocksManager.draw);
         await Zon.LevelData.allStageImagesLoadedPromise;
         this.setupLevel();
     }
@@ -49,14 +46,24 @@ Zon.Game = class {
 
     updateLoop = (updatesToRun) => {
         for (let i = 0; i < updatesToRun; i++) {
-            Zon.balls.forEach((ball) => ball.update());
-            this.lateUpdate.call();
+            this.update();
         }
     }
 
+    update = () => {
+        Zon.blocksManager.update();
+        Zon.BallManager.update();
+        this.lateUpdate.call();
+    }
+
     drawLoop = () => {
+        this.draw();
+    }
+
+    draw = () => {
         Zon.combatUI.clearCanvas();
-        Zon.balls.forEach((ball) => ball.draw());
+        Zon.blocksManager.draw();
+        Zon.BallManager.draw();
         this.lateDraw.call();
     }
 
