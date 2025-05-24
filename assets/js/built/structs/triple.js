@@ -137,7 +137,7 @@ Numbers.Triple = class {
 
         if (exp > 0) {
             const result = new Numbers.Triple(this._significand << exp, this._exponent - exp, newSignificandExponent);
-            if (Zon.debug) {
+            if (zonDebug) {
                 if (this.isPositive && result.isNegative || this.isNegative && result.isPositive) 
                     console.error("PadSignificand error; this: ", this.toFullString(), "result: ", result.toFullString());
             }
@@ -146,7 +146,7 @@ Numbers.Triple = class {
         }
         else if (exp < 0) {
             const result = new Numbers.Triple(this._significand >> -exp, this._exponent - exp, newSignificandExponent);
-            if (Zon.debug) {
+            if (zonDebug) {
                 if (this.isPositive && result.isNegative || this.isNegative && result.isPositive) 
                     console.error("PadSignificand error; this: ", this.toFullString(), "result: ", result.toFullString());
             }
@@ -167,7 +167,7 @@ Numbers.Triple = class {
                 return Numbers.Triple.ZERO;
 
             const result = new Numbers.Triple(this._significand >> expDiff, newExponent, this._significandExponent - expDiff);
-            if (Zon.debug) {
+            if (zonDebug) {
                 if (this.isPositive && result.isNegative || this.isNegative && result.isPositive || this.combinedExponent !== result.combinedExponent)
                     console.error("SetExponent error; this: ", this.toFullString(), "result: ", result.toFullString());
             }
@@ -179,7 +179,7 @@ Numbers.Triple = class {
             if (expDiff < -63n)
                 throw new RangeError(`Exponent difference is too large, causing a loss in data.  this: ${this.toFullString()}, significand << ${-expDiff} results in zero, causing a loss in data. expDiff: ${expDiff}, result: ${result.toFullString()}`);
 
-            if (Zon.debug) {
+            if (zonDebug) {
                 if (this.isPositive && result.isNegative || this.isNegative && result.isPositive || this.combinedExponent !== result.combinedExponent)
                     console.error("SetExponent error; this: ", this.toFullString(), "result: ", result.toFullString());
             }
@@ -308,7 +308,7 @@ Numbers.Triple = class {
 				return Numbers.Triple.create((this.significand >> 1n) + (right.significand >> 1n), this.exponent + 1n);
 			}
 		}
-        if (Zon.debug) {
+        if (zonDebug) {
             const newSignificand = this.significand + right.significand;
             let error;
             if (this._exponent !== right._exponent) {
@@ -377,7 +377,7 @@ Numbers.Triple = class {
         const totalSignificandExponent = this._significandExponent + right._significandExponent;
 		const significandExponentToReduceBy = totalSignificandExponent - 61n;
 		if (significandExponentToReduceBy <= 0n) {//61 instead of 63 to round the significands up to the next power of 2
-            if (Zon.debug) {
+            if (zonDebug) {
                 const mult = this.significand * right.significand;
                 let error;
                 if (mult > 0n) {
@@ -402,7 +402,7 @@ Numbers.Triple = class {
 			//left larger significandExponent
 			if (significandExpDiff >= significandExponentToReduceBy) {
 				const reducedLeft = this.setExponent(this._exponent + significandExponentToReduceBy);
-                if (Zon.debug) {
+                if (zonDebug) {
                     const mult = reducedLeft.significand * right.significand;
                     let error;
                     if (mult > 0n) {
@@ -427,7 +427,7 @@ Numbers.Triple = class {
 				const newLeftSignificandExponentReduction = significandExpDiff + significandExponentToReduceBy - newRightSignificandExponentReduction;
 				const reducedLeft = this.setExponent(this._exponent + newLeftSignificandExponentReduction);
 				const reducedRight = right.setExponent(right._exponent + newRightSignificandExponentReduction);
-                if (Zon.debug) {
+                if (zonDebug) {
                     const mult = reducedLeft.significand * reducedRight.significand;
                     let error;
                     if (mult > 0n) {
@@ -452,7 +452,7 @@ Numbers.Triple = class {
 			//right larger significandExponent
 			if (significandExpDiff >= significandExponentToReduceBy) {
 				const reducedRight = right.setExponent(right._exponent + significandExponentToReduceBy);
-                if (Zon.debug) {
+                if (zonDebug) {
                     const mult = this.significand * reducedRight.significand;
                     let error;
                     if (mult > 0n) {
@@ -477,7 +477,7 @@ Numbers.Triple = class {
 				const newRightSignificandExponentReduction = significandExpDiff + significandExponentToReduceBy - newLeftSignificandExponentReduction;
 				const reducedLeft = this.setExponent(this._exponent + newLeftSignificandExponentReduction);
 				const reducedRight = right.setExponent(right._exponent + newRightSignificandExponentReduction);
-                if (Zon.debug) {
+                if (zonDebug) {
                     const mult = reducedLeft.significand * reducedRight.significand;
                     let error;
                     if (mult > 0n) {

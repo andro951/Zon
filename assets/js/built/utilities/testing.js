@@ -41,15 +41,15 @@
 
 const speed = 25;
 Zon.balls = [];
-for (let i = 0; i < 1; i++) {
+for (let i = 0; i < 10; i++) {
     Zon.balls.push(new Zon.Ball((i + 1) * 50, Zon.combatUI.element.height - 50, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4)));//1 PI / 4 to 3 PI / 4
 }
 
 const ballData = [
-    // [ 35, Zon.combatUI.element.height - 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    // [ 35, 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    // [ Zon.combatUI.element.width - 35, Zon.combatUI.element.height - 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
-    // [ Zon.combatUI.element.width - 35, 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ 35, Zon.combatUI.element.height - 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ 35, 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ Zon.combatUI.element.width - 35, Zon.combatUI.element.height - 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
+    [ Zon.combatUI.element.width - 35, 35, new Vectors.Polar(speed, (Math.random() * 2 + 1) * Math.PI / 4) ],
 ];
 
 for (let i = 0; i < ballData.length; i++) {
@@ -185,9 +185,3 @@ for (let i = 0; i < ballData.length; i++) {
 // }
 
 // testReflect();
-
-const thisT = Collision.lineIntersectsRectPoints(
-  0, 0, 100, 100, // diagonal line
-  50, 50, 60, 60  // a known overlapping square
-);
-console.log(thisT); // Should return [t0, t1] values between 0 and 1

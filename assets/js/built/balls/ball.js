@@ -98,7 +98,7 @@ Zon.Ball = class extends Struct.Circle {
                 if (oldVelocity.x === this.velocity.x && oldVelocity.y === this.velocity.y)
                     throw new Error(`Ball velocity did not change after collision with block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
                 
-                if (Zon.debug && directionOfHit.x !== 0 && directionOfHit.y !== 0) {
+                if (zonDebug && directionOfHit.x !== 0 && directionOfHit.y !== 0) {
                     if (directionOfHit.x === -1 && this.velocity.x < 0)
                         console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
 
@@ -119,7 +119,7 @@ Zon.Ball = class extends Struct.Circle {
             if (!collided)
                 collided ||= this.checkWallCollision(lastPos);
 
-            if (Zon.debug) {
+            if (zonDebug) {
                 if (collided && count > 1) {
                     const dx = this.x - lastPos.x;
                     const dy = this.y - lastPos.y;
@@ -289,7 +289,7 @@ Zon.Ball = class extends Struct.Circle {
             const direction = new Vectors.Vector(xDir ?? 0, yDir ?? 0);
             const oldVelocity = this.velocity;
             this.velocity = this.velocity.reflect(direction.perpendicular);
-            if (Zon.debug && direction.x !== 0 && direction.y !== 0) {
+            if (zonDebug && direction.x !== 0 && direction.y !== 0) {
                 if (direction.x === -1 && this.velocity.x < 0)
                     console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), old: (${oldVelocity.x}, ${oldVelocity.y}), new: (${this.velocity.x}, ${this.velocity.y})`);
 
@@ -367,7 +367,7 @@ Zon.Ball = class extends Struct.Circle {
 
         // console.log('theta', theta, 'maxAngle', maxAngle, 'angle', angle, 'cos', cos, 'sin', sin, 'x', x, 'y', y);
 
-        if (Zon.debug) {
+        if (zonDebug) {
             if (ballDirection.x === -1 && this.velocity.x < 0)
                 console.warn(`Ball reversed back into left wall: (${this.x}, ${this.y}), (${this.velocity.x}, ${this.velocity.y})`);
 
@@ -392,7 +392,7 @@ Zon.Ball = class extends Struct.Circle {
 
     hitBlock = (tileX, tileY) => {
         const block = Zon.blocksManager.getBlock(tileX, tileY);
-        if (Zon.debug) {
+        if (zonDebug) {
             if (!block) {
                 console.error(`Hit block on a null block: ${block}, tileX: ${tileX}, tileY: ${tileY}`);
             }

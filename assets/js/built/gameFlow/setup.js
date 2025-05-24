@@ -10,7 +10,11 @@ const Algebra = {};
 
 Zon.name = "Zon";
 
-Zon.debug = true;
+const zonDebug = true;
+
+if (zonDebug) {
+    console.log("Zon Debugging Enabled");
+}
 
 // Zon.init = function() {
 //     Zon.game = new this.Game();
