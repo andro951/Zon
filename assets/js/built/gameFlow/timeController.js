@@ -2,15 +2,32 @@
 
 Zon.TimeController = class {
     constructor() {
-        this.deltaTimeMilliseconds = 0;
         this.skipSetupLevel = false;
+        this.startTimeMilliseconds = 0;
+        this.timeMilliseconds = 0;
+        this.lastTimeMilliseconds = 0;
+        this.deltaTimeMilliseconds = 0;
+        this.timeSeconds = 0;
+        this.lastTimeSeconds = 0;
+        this.deltaTimeSeconds = 0;
+        this.gameStarted = false;
+        this.paused = false;
+    }
+
+    postLoadSetup = () => {
+        
+    }
+
+    onStartGame = () => {
+        this.deltaTimeMilliseconds = 0;
         this.startTimeMilliseconds = performance.now();
         this.timeMilliseconds = this.startTimeMilliseconds;
         this.lastTimeMilliseconds = this.timeMilliseconds;
-        this.deltaTimeMilliseconds = 0;
         this.timeSeconds = this.startTimeMilliseconds / 1000;
         this.lastTimeSeconds = this.timeSeconds;
         this.deltaTimeSeconds = 0;
+        this.resume();
+        this.gameStarted = true;
     }
 
     updateLoopTime = () => {
@@ -23,4 +40,30 @@ Zon.TimeController = class {
         this.lastTimeSeconds = this.timeSeconds;
         this.timeSeconds = currentTimeMilliseconds / 1000;
     }
+
+    onLevelCompleted = (levelData) => {
+
+    }
+
+    onSetupLevelBeforeBlocksManager = () => {
+
+    }
+
+    pause = () => {
+        if (this.paused)
+            return;
+
+        this.paused = true;
+        Zon.GameManager.onPause();
+    }
+
+    resume = () => {
+        if (!this.paused)
+            return;
+
+        this.paused = false;
+        Zon.GameManager.onResume();
+    }
 }
+
+Zon.timeController = new Zon.TimeController();

@@ -32,7 +32,7 @@ Zon.Health = class {
             return Numbers.Triple.ZERO;
 
         if (damage.isNegative) {
-            return -this.heal(-damage, source);
+            return this.heal(damage.negative(), source).negative();
         }
 
         let damageReceived;
@@ -46,8 +46,8 @@ Zon.Health = class {
         if (damageReceived.isZero)
             return Numbers.Triple.ZERO;
 
-        this._hp.subtract(damageReceived);
-        this.onHPChanged.call(this.hp, -damageReceived, source);
+        this._hp = this._hp.subtract(damageReceived);
+        this.onHPChanged.call(this.hp, damageReceived.negative(), source);
         this.onDamaged.call(this.hp, damageReceived, source);
         if (!this.hp.isPositive)
             this.onHPZero.call(source);
@@ -60,7 +60,7 @@ Zon.Health = class {
             return Numbers.Triple.ZERO;
 
         if (heal.isNegative) {
-            return -this.damage(-heal, source);
+            return this.damage(heal.negative(), source).negative();
         }
 
         let healingReceived;
@@ -74,7 +74,7 @@ Zon.Health = class {
         if (healingReceived.isZero)
             return Numbers.Triple.ZERO;
 
-        this._hp.add(healingReceived);
+        this._hp = this._hp.add(healingReceived);
         this.onHPChanged.call(this.hp, healingReceived, source);
         this.onHealed.call(this.hp, healingReceived, source);
         if (this.hp.equals(this.maxHP))

@@ -7,5 +7,14 @@ Zon.Settings = class {
         this.combatLayoutBottom = 'bottom';
         this.combatLayout = new Variable.Value(this.combatLayoutDefault);
     }
+
+    preLoadSetup = () => {
+        
+    }
+
+    postLoadSetup = () => {
+        
+    }
 }
+
 Zon.settings = new Zon.Settings();

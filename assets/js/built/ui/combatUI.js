@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.updateCombatLayout = function() {
+Zon.updateCombatLayout = () => {
     Zon.topUI.updateCombatLayout(Zon.settings.combatLayout.value);
     Zon.combatUI.updateCombatLayout(Zon.settings.combatLayout.value);
     Zon.bottomUI.updateCombatLayout(Zon.settings.combatLayout.value);
@@ -13,10 +13,16 @@ Zon.updateCombatLayout = function() {
     if (Zon.bottomUI.visible)
         Zon.bottomUI.updateAllValues();
 }
-Zon.showCombatUI = function() {
+Zon.showCombatUI = () => {
     Zon.topUI.show();
     Zon.combatUI.show();
     Zon.bottomUI.show();
+}
+
+Zon.hideCombatUI = () => {
+    Zon.topUI.hide();
+    Zon.combatUI.hide();
+    Zon.bottomUI.hide();
 }
 
 Zon.TopUI = class extends Zon.UIPanel {

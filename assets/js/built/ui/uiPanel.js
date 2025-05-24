@@ -2,6 +2,10 @@
 
 Zon.UIPanel = class {
     constructor(element) {
+        if (new.target === Zon.UIPanel) {
+            throw new TypeError("Cannot construct UIPanel instances directly");
+        }
+        
         this.element = element;
         this.element.style.position = "absolute";
         this.element.style.display = "none";
@@ -10,7 +14,7 @@ Zon.UIPanel = class {
         Zon.Setup.postConstructors.add(this.postConstructor);
     }
     postConstructor = () => {
-        Zon.Setup.onSetupUI.add(this.setup);
+        Zon.Setup.linkAndFinalizeUISetupActions.add(this.setup);
     }
     get _top() {
         return this.rect._top;

@@ -55,14 +55,13 @@ Variable.Value = class extends Variable.Base {
         this._value = initialValue;
     }
 
-    set(value) {
-        if (this._value === value)
+    set value(newValue) {
+        if (this._value === newValue)
             return;
 
-        this._value = value;
+        this._value = newValue;
         this.onChanged();
     }
-
     get value() {
         return this._value;
     }
@@ -220,7 +219,7 @@ Variable.Dependent = class extends Variable.Base {
             return false;
         }
     }
-    set(value) {
+    set value(newValue) {
         throw new Error("Cannot set value of DependentVariable");
     }
     get value() {

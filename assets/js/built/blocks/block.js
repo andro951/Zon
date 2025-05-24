@@ -6,6 +6,7 @@ Zon.Block = class extends Struct.Rectangle {
         this.blocksManager = blocksManager;
         this.index = index;
         this.health = new Zon.Health(health, this);
+        this.health.onHPZero.add(this.kill);
         this.color = color;
         this.isWeakPoint = false;
         this.canvas = document.getElementById('combatAreaCanvas');
@@ -19,6 +20,10 @@ Zon.Block = class extends Struct.Rectangle {
     kill = () => {
         this.blocksManager.onKilled(this);
         this.destroy();
+    }
+
+    destroy = () => {
+        this.health = null;
     }
 
     setWeakPoint = () => {

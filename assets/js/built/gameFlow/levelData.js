@@ -34,7 +34,7 @@ Zon.LevelData = class {
     static baseBlockHealth = Numbers.Triple.ONE;
     static {
         this.getStageIndex = function(stageID, stageNum) {
-            return (stageID - Zon.StageID.NONE) * this.maxStageNum + stageNum - this.startingStageNum;
+            return (stageID - this.startingStage) * this.maxStageNum + stageNum - this.startingStageNum;
         };
 
         this.stageCount = this.maxStage + 1;
@@ -155,7 +155,7 @@ Zon.LevelData = class {
 
     static allLevelTextures = {};
     static allStageImagesLoadedPromise;
-    static preSetLoadedValuesSetup() {
+    static startAsyncLoading() {
         Zon.LevelData.allLevelTextures = {};
         const stagePromises = [];
         for (let stageId = Zon.LevelData.startingStage; stageId <= Zon.LevelData.maxStage; stageId++) {
