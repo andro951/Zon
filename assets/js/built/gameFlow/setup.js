@@ -10,8 +10,6 @@ const Algebra = {};
 
 Zon.name = "Zon";
 
-const zonDebug = true;
-
 if (zonDebug) {
     console.log("Zon Debugging Enabled");
 }

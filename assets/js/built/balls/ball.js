@@ -9,6 +9,7 @@ Zon.Ball = class extends Struct.Circle {
         this.speed = speed;
         this.lastPosition = new Vectors.Vector(0, 0);//Only updated when updateBallLastPosition() is called
         this.color = 'white';
+        //this.color = 'red';
     }
 
     get damage() {
