@@ -9,7 +9,6 @@ const Trig = {};
 const Algebra = {};
 Zon.UI = {};
 const Enum = {};
-const Nodes = {};
 
 Zon.name = "Zon";
 

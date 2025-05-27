@@ -1,6 +1,6 @@
 "use strict";
 
-Nodes.Queue = class Queue {
+Struct.Queue = class Queue {
     constructor() {
         this._head = null;
         this._tail = null;

@@ -2,9 +2,9 @@
 
 Zon.ProcessManager = class {
     constructor() {
-        this.processes = new Nodes.Queue();
-        this.saveProcesses = new Nodes.Queue();
-        this.loadProcesses = new Nodes.Queue();
+        this.processes = new Struct.Queue();
+        this.saveProcesses = new Struct.Queue();
+        this.loadProcesses = new Struct.Queue();
         this.processCount = 0;
     }
     
