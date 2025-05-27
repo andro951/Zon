@@ -10,9 +10,8 @@ h1 {
     color: #303030;
 }
 
-#topUI, #bottomUI {
+#bottomUI {
     width: 100%;
-    background-color: #d0d0d0;
     box-sizing: border-box;
     display: none;
 }

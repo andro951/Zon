@@ -148,6 +148,6 @@ Zon.BallManager.checkBallCount = (ballID, count) => {
 
 Zon.BallID = {
     BASIC: 0,
-    COUNT: 1,
-    NONE: 2,
 };
+Zon.BallIDNames = [];
+Enum.createEnum(Zon.BallID, Zon.BallIDNames);

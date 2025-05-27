@@ -1,8 +1,8 @@
 "use strict";
 
 Zon.Ball = class extends Struct.Circle {
-    constructor(x, y, speed = 25, angle) {
-        super(x, y, 30);
+    constructor(x, y, speed = 12, angle) {
+        super(x, y, 16);
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.velocity = Vectors.Vector.fromPolar(speed, angle);

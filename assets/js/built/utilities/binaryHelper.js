@@ -2,8 +2,8 @@
 
 const Binary = {};
 
-//internal static string ToBinaryString(this long l, int length = longNum) => l > 0 ? "0" + Convert.ToString(l, 2).PadLeft(length, '0') : "1" + Convert.ToString(l, 2).Substring(1).PadLeft(length, '0');
-BigInt.prototype.ToBinaryString = function (length = null) {
+//internal static string toBinaryString(this long l, int length = longNum) => l > 0 ? "0" + Convert.ToString(l, 2).PadLeft(length, '0') : "1" + Convert.ToString(l, 2).Substring(1).PadLeft(length, '0');
+BigInt.prototype.toBinaryString = function (length = null) {
     const value = this;
     if (length === null) {
         // Default to minimal required length
@@ -15,7 +15,7 @@ BigInt.prototype.ToBinaryString = function (length = null) {
     const prefix = isNegative ? '1' : '0';
     return prefix + binary;
 };
-Number.prototype.ToUInt32BinaryString = function (length = null) {
+Number.prototype.toUInt32BinaryString = function (length = null) {
     const value = this >>> 0; // Convert to unsigned 32-bit integer
     if (length === null) {
         length = Binary.BitExtractor.UINT_32_BITS; // Default to 32 bits
@@ -24,7 +24,7 @@ Number.prototype.ToUInt32BinaryString = function (length = null) {
     const binary = value.toString(2).padStart(length, '0');
     return binary;
 };
-Number.prototype.ToBinaryString = function () {
+Number.prototype.toBinaryString = function () {
     const buffer = new ArrayBuffer(8);
     const view = new DataView(buffer);
     view.setFloat64(0, this, false); // Big endian for standard layout
@@ -98,7 +98,7 @@ Number.prototype.ceilPow2 = function () {
     return n + 1;
 }
 
-Binary.BitExtractor = class {
+Binary.BitExtractor = class BitExtractor {
     constructor() {
         this.buffer = new ArrayBuffer(8);
         this.dataView = new DataView(this.buffer);
@@ -139,14 +139,14 @@ Binary.BitExtractor = class {
             intHigh = (high & Binary.BitExtractor.INT_53_UPPER_32_MASK) | Binary.BitExtractor.INT_53_UPPER_32_HIDDEN_1_MASK;
             intLow = (intHigh << -expShift) | (low >>> leftShift);
             intHigh = intHigh >>> leftShift;
-            //console.log(`intHigh: ${intHigh.ToUInt32BinaryString()}, intLow: ${intLow.ToUInt32BinaryString()}`);
+            //console.log(`intHigh: ${intHigh.toUInt32BinaryString()}, intLow: ${intLow.toUInt32BinaryString()}`);
         }
 
-        const numString = `${num.ToBinaryString()}`;
-        const splitString = `${intHigh.ToUInt32BinaryString()} ${intLow.ToUInt32BinaryString()}`;
+        const numString = `${num.toBinaryString()}`;
+        const splitString = `${intHigh.toUInt32BinaryString()} ${intLow.toUInt32BinaryString()}`;
         // console.log(`Num String: ${numString}`);
         // console.log(`Split String: ${splitString}`);
-        // console.log(`exp: ${exp} + 1023 = ${exp + Binary.BitExtractor.INT_53_EXP_BIAS} (${(exp + Binary.BitExtractor.INT_53_EXP_BIAS).ToUInt32BinaryString(11)})`);
+        // console.log(`exp: ${exp} + 1023 = ${exp + Binary.BitExtractor.INT_53_EXP_BIAS} (${(exp + Binary.BitExtractor.INT_53_EXP_BIAS).toUInt32BinaryString(11)})`);
 
         return [ intLow, intHigh ];
     }
@@ -177,11 +177,11 @@ Binary.BitExtractor = class {
 
         const result = this.dataView.getFloat64(0, true);
 
-        const inString = `${intHigh.ToUInt32BinaryString()} ${intLow.ToUInt32BinaryString()}`;
-        const outString = `${result.ToBinaryString()}`;
+        const inString = `${intHigh.toUInt32BinaryString()} ${intLow.toUInt32BinaryString()}`;
+        const outString = `${result.toBinaryString()}`;
         // console.log(`In String: ${inString}`);
         // console.log(`Out String: ${outString}`);
-        // console.log(`exp: ${exp} + 1023 = ${exp + Binary.BitExtractor.INT_53_EXP_BIAS} (${(exp + Binary.BitExtractor.INT_53_EXP_BIAS).ToUInt32BinaryString(11)})`);
+        // console.log(`exp: ${exp} + 1023 = ${exp + Binary.BitExtractor.INT_53_EXP_BIAS} (${(exp + Binary.BitExtractor.INT_53_EXP_BIAS).toUInt32BinaryString(11)})`);
 
         return this.dataView.getFloat64(0, true);
     }
@@ -207,7 +207,7 @@ Binary.BitExtractor = class {
 }
 Binary.extractor = new Binary.BitExtractor();
 
-Binary.Stream = class {
+Binary.Stream = class Stream {
     constructor(buffer) {
         this.buffer = buffer;
         this.dataView = new DataView(this.buffer);
@@ -239,7 +239,7 @@ Binary.Stream = class {
     }
 }
 
-Binary.Writer = class {
+Binary.Writer = class Writer {
     constructor() {
         this.numBuffer = 0;
         this.currentBit = 0;
@@ -249,6 +249,7 @@ Binary.Writer = class {
         this.stream = Binary.Stream.makeEmptyStream(initialSize << 1);//initialSize * 2
         this.numBuffer = 0;
         this.currentBit = 0;
+        return this;
     }
 
     get bytesRemaining() {
@@ -410,7 +411,7 @@ Binary.Writer = class {
         const doubleWords = length.bitsToDoubleWord();
         for (let i = 0n; i < doubleWords - 1n; i++) {
             const num = Number(bigUInt & Binary.BitExtractor.BIG_UINT_32_MASK) >>> 0;
-            //console.log(`writeBigUInt: i: ${i}, num: ${num}, bigUInt: ${bigUInt.ToBinaryString()}`);
+            //console.log(`writeBigUInt: i: ${i}, num: ${num}, bigUInt: ${bigUInt.toBinaryString()}`);
             this.writeUInt32(num, Binary.extractor.UINT_32_BITS);
             bigUInt >>= Binary.BitExtractor.BIG_UINT_32_BITS;
         }
@@ -418,7 +419,7 @@ Binary.Writer = class {
         const lastBits = length - ((doubleWords - 1n) << Binary.BitExtractor.BIG_UINT_32_MULT_SHIFT);
         const mask = Binary.BitExtractor.BIG_UINT_32_MASK >> (Binary.BitExtractor.BIG_UINT_32_BITS - lastBits);
         const number = Number(bigUInt & mask);
-        //console.log(`writeBigUInt: lastBits: ${lastBits}, mask: ${mask.ToBinaryString()}, number: ${number}, bigUInt: ${bigUInt.ToBinaryString()}`);
+        //console.log(`writeBigUInt: lastBits: ${lastBits}, mask: ${mask.toBinaryString()}, number: ${number}, bigUInt: ${bigUInt.toBinaryString()}`);
         this.writeUInt32(number, Number(lastBits));
     }
 
@@ -447,7 +448,7 @@ Binary.Writer = class {
     }
 }
 
-Binary.Reader = class {
+Binary.Reader = class Reader {
     constructor() {
         this.numBuffer = 0;
         this.currentBit = Binary.BitExtractor.UINT_32_BITS;
@@ -489,6 +490,24 @@ Binary.Reader = class {
         }
     }
 
+    verifyFullyRead = () => {
+        if (this.bytesRemaining > 0) {
+            const error = `Stream not fully read — ${this.bytesRemaining} bytes remaining.`;
+            console.error(error);
+            throw new Error(error);
+        }   
+        
+        if (this.currentBit === Binary.BitExtractor.UINT_32_BITS)
+            return;
+
+        const remainingBits = this.numBuffer >>> this.currentBit;
+        if (remainingBits !== 0) {
+            const error = `Bit buffer not fully read — currentBit is at ${this.currentBit}/32.  buffer: ${this.numBuffer.toUInt32BinaryString()}`;
+            console.error(error);
+            throw new Error(error);
+        }
+    };
+
     checkEmptyBuffer = () => {
         if (this.currentBit === Binary.BitExtractor.UINT_32_BITS) {
             this._readStreamIntoBuffer();
@@ -501,7 +520,7 @@ Binary.Reader = class {
 
         const bit = (this.numBuffer >> this.currentBit) & 1;
         this.currentBit++;
-        //console.log(`readBool: numBuffer: ${this.numBuffer.ToUInt32BinaryString()}, currentBit: ${this.currentBit}, bit: ${bit}`);
+        //console.log(`readBool: numBuffer: ${this.numBuffer.toUInt32BinaryString()}, currentBit: ${this.currentBit}, bit: ${bit}`);
         return bit === 1;
     }
 
@@ -522,12 +541,12 @@ Binary.Reader = class {
             const right = right1 >>> right2;
             const result2 = left | right;
             result = ((originalNumBuffer >>> originalBit) | ((this.numBuffer << leftShift) >>> (leftShift - (Binary.BitExtractor.UINT_32_BITS - originalBit)))) >>> 0;
-            //console.log(`readUInt: length: ${length}, originalNumBuffer: ${originalNumBuffer.ToUInt32BinaryString()}, originalBit: ${originalBit}, numBuffer: ${this.numBuffer.ToUInt32BinaryString()}, leftShift: ${leftShift}, result: ${result}`);
+            //console.log(`readUInt: length: ${length}, originalNumBuffer: ${originalNumBuffer.toUInt32BinaryString()}, originalBit: ${originalBit}, numBuffer: ${this.numBuffer.toUInt32BinaryString()}, leftShift: ${leftShift}, result: ${result}`);
         }
         else {
             const leftShift = Binary.BitExtractor.UINT_32_BITS - this.currentBit;
             result = ((this.numBuffer << leftShift) >>> (leftShift + originalBit)) >>> 0;
-            //console.log(`readUInt: length: ${length}, numBuffer: ${this.numBuffer.ToUInt32BinaryString()}, originalBit: ${originalBit}, leftShift: ${leftShift}, result: ${result}`);
+            //console.log(`readUInt: length: ${length}, numBuffer: ${this.numBuffer.toUInt32BinaryString()}, originalBit: ${originalBit}, leftShift: ${leftShift}, result: ${result}`);
         }
 
         return result; // Convert to unsigned 32-bit integer

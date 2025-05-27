@@ -131,6 +131,9 @@ Zon.BlocksManager = class {
     }
     updateLevelDataPixelsAndHP = () => {
         //TODO: switch to using the set to iterate and store as a map instead of an array.
+        if (!this._blocks || !this._levelData || !this._levelData.pixels || !this._levelData.blockHP)
+            return;
+
         this._levelData.blockHP = new Array(this._blocks.length);
         for (let yPixel = 0; yPixel < this._imagePixelsHeight; yPixel++) {
             for (let xPixel = 0; xPixel < this._imagePixelsWidth; xPixel++) {

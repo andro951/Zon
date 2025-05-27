@@ -16,7 +16,7 @@ Zon.DevCheats.onStartGame = () => {
 }
 
 Zon.DevCheats.makeBalls = () => {
-    const speed = 25;
+    const speed = 12;
 
     const ballData = [
         [ Zon.BallID.BASIC, 35, Zon.combatUI.element.height - 35, speed, (Math.random() * 2 + 1) * Math.PI / 4 ],
@@ -36,5 +36,12 @@ Zon.DevCheats.makeBalls = () => {
 }
 
 Zon.DevCheats.runTests = () => {
-    
+    //BinaryTests.allTests();
+    //Zon.DevCheats.runSaveLoadTests();
+}
+
+Zon.DevCheats.runSaveLoadTests = () => {
+    Zon.IOManager.saveSettingsAsync(0);
+    Zon.IOManager.saveSettingsAsync(1);
+    Zon.IOManager.saveSettingsImmediate(1);
 }

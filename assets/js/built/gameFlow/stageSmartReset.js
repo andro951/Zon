@@ -17,3 +17,7 @@ Zon.StageSmartReset.preSetLoadedValuesSetup = () => {
 Zon.StageSmartReset.postLoadSetup = () => {
     
 }
+
+Zon.StageSmartReset.onSetSmartReturnSettingToTrue = () => {
+
+}

@@ -2,7 +2,7 @@
 
 const Vectors = {};
 
-Vectors.Vector = class {
+Vectors.Vector = class Vector {
     constructor(x, y) {
         this.x = x;
         this.y = y;
@@ -137,9 +137,20 @@ Vectors.Vector = class {
     get perpendicular() {
         return new Vectors.Vector(-this.y, this.x);
     }
+
+    static read(reader) {
+        const x = reader.readNumber();
+        const y = reader.readNumber();
+        return new Vectors.Vector(x, y);
+    }
+
+    write(writer) {
+        writer.writeNumber(this.x);
+        writer.writeNumber(this.y);
+    }
 }
 
-Vectors.Polar = class {
+Vectors.Polar = class Polar {
     constructor(radius, angle) {
         this.radius = radius;
         this.angle = angle;

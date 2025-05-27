@@ -1,6 +1,6 @@
 "use strict";
 
-Numbers.Triple = class {
+Numbers.Triple = class Triple {
     static get ZERO() {
         return new Numbers.Triple(0n, 0n, 0n);
     }
@@ -662,6 +662,15 @@ Numbers.Triple = class {
 
         return this.clone;
     }
+    write(writer) {
+        writer.writeBigIntAutoLength(this.significand);
+        writer.writeBigIntAutoLength(this.exponent);
+    }
+    static read(reader) {
+        const significand = reader.readBigIntAutoLength();
+        const exponent = reader.readBigIntAutoLength();
+        return Numbers.Triple.create(significand, exponent);
+    }
     toString() {
         return this.s();
     }
@@ -669,7 +678,7 @@ Numbers.Triple = class {
         return `${this.s()} (${this.significand} * 2^${this.exponent})`;
     }
     toBinaryFullString() {
-        return `${this.toFullString()} S: ${this.significand.ToBinaryString()}, E: ${this.exponent.ToBinaryString()}`;
+        return `${this.toFullString()} S: ${this.significand.toBinaryString()}, E: ${this.exponent.toBinaryString()}`;
     }
     percentString(decimals = 2) {
         return this.multiply(Numbers.Triple.HUNDRED).s(decimals, false, true) + "%";

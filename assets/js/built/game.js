@@ -3,10 +3,6 @@
 Zon.Game = class {
     constructor() {
         this.loopStarted = false;
-        this.loopInterval = undefined;
-        this.TICK_INTERVAL = 10;// 100 FPS
-        this.FPS = 1000 / this.TICK_INTERVAL;
-        this.prestigeCount = 0;
         this.lateUpdate = new Actions.Action();
         this.lateDraw = new Actions.Action();
         this.onCompleteStageActions = new Actions.Action();
@@ -17,36 +13,163 @@ Zon.Game = class {
         this.stageNum = new Variable.Value(Zon.LevelData.startingStageNum);
         this.highestStageAvailable = new Variable.Value(Zon.LevelData.startingStage);
         this.highestStageNumAvailable = new Variable.Value(Zon.LevelData.startingStageNum);
+        this.prestigeCount = new Variable.Value(0);
+        this.tickRemainder = 0;
+        this.lastTickStart = performance.now();
+        this.timePerTick = 0.00000000001;
+        Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
+    }
+
+    GameSaveLoadInfo = class GameSaveLoadInfo extends Zon.SaveLoadInfo {
+        constructor() {
+            super(Zon.SaveLoadID.SETTINGS, [
+                Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.stageID, Zon.IOManager.commonDataHelper.stageBits),
+                Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.stageNum, Zon.IOManager.commonDataHelper.stageNumBits),
+                Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.highestStageAvailable, Zon.IOManager.commonDataHelper.stageBits),
+                Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.highestStageNumAvailable, Zon.IOManager.commonDataHelper.stageNumBits),
+                Zon.SaveLoadHelper_UI32_AL.fromVariable(Zon.game.prestigeCount),
+            ]);
+        }
+    }
+
+    preLoadSetup = () => {
+        Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.GAME, new this.GameSaveLoadInfo());
+        Zon.Settings.getVariable(Zon.SettingsID.STAGE_TO_RETURN_TO_STAGE_1).onChangedAction.add(this.onStageToReturnToStage1SettingChanged);
+        Zon.Settings.getVariable(Zon.SettingsID.AUTOMATICALLY_RETURN_TO_STAGE_1).onChangedAction.add(this.onAutomaticallyReturnToStage1SettingChanged);
+    }
+
+    preSetLoadedValuesSetup = () => {
+
+    }
+
+    postLoadSetup = () => {
+        this.setupLevel();
     }
 
     start = () => {
-        // Game start logic
         console.log("Game started");
-
-        this.loopInterval = window.setInterval(this.loop.bind(this), this.TICK_INTERVAL);
-    }
-
-    postLoadSetup = async () => {
-        await Zon.LevelData.allStageImagesLoadedPromise;
-        this.setupLevel();
+        requestAnimationFrame(this.loop);
     }
 
     loop = () => {
         Zon.timeController.updateLoopTime();
-        this.updateLoop(this.getUpdateSpeed());
+        this.updateLoop(this.getTickSpeed());
         this.drawLoop();
-        // Game loop logic
-        //console.log("Game loop running", performance.now());
-        //this.dummyGame.update();
+
+        if (this.tickRemainder >= 1) {
+            requestAnimationFrame(this.loop);
+            return;
+        }
+
+        const timeSpentOnLoop = performance.now() - Zon.timeController.timeMilliseconds;
+        const timeLeftToNextFrame = Zon.timeController.targetTimePerFrameMilliseconds.value - timeSpentOnLoop;
+        if (timeLeftToNextFrame > 0) {
+            setTimeout(this.loop, timeLeftToNextFrame);
+        }
+        else {
+            requestAnimationFrame(this.loop);
+        }
     }
 
-    getUpdateSpeed = () => {
+    //The number of updates to run per updateLoop call.  (Game speed)  Allows fractional values, tracking remainder with this.tickRemainder.
+    getTickSpeed = () => {
         return 1;
     }
 
-    updateLoop = (updatesToRun) => {
-        for (let i = 0; i < updatesToRun; i++) {
-            this.update();
+    updateLoop = (ticksToRun) => {
+        if (ticksToRun < 0)
+            throw new Error("ticksToRun must be a positive number");
+
+        let ticksToRunInt;
+
+        {
+            const totalTicks = Math.min(ticksToRun + this.tickRemainder, Number.MAX_SAFE_INTEGER);
+            ticksToRunInt = Math.floor(totalTicks);
+            this.tickRemainder = totalTicks - ticksToRunInt;
+        }
+
+        if (ticksToRunInt <= 0)
+            return;
+
+        let start = performance.now();
+        const targetTimePerFrame = Zon.timeController.targetTimePerFrameMilliseconds.value;
+        let effectiveStart = this.lastTickStart + targetTimePerFrame;
+        if (effectiveStart < start) {
+            if (start - effectiveStart < targetTimePerFrame)
+                start = effectiveStart;
+        }
+
+        const endTime = start + targetTimePerFrame;
+        const maxTimeToStartProcess = start + targetTimePerFrame * 0.9;
+        
+        let ticks = 0;
+        const ticksPerTimeCheck = 200;
+        let iEnd = Math.min(ticksPerTimeCheck, ticksToRunInt - ticks);
+        while ((ticks < ticksToRunInt || Zon.processManager.hasProcesses) && performance.now() < endTime) {
+            const loopStart = performance.now();
+            for (let i = 0; i < iEnd; i++) {
+                this.update();
+            }
+
+            ticks += iEnd;
+
+            if (Zon.processManager.hasProcesses && performance.now() < maxTimeToStartProcess) {
+                const now = performance.now();
+                const yieldTime = ticks < ticksToRunInt ? now + (endTime - now) / 2 : endTime;
+                Zon.processManager.executeProcesses(yieldTime);
+            }
+            else {
+                if (ticks >= ticksToRunInt)
+                    break;
+
+                const tEnd = performance.now();
+                const tDiff = tEnd - start;
+                if (tDiff >= targetTimePerFrame)
+                    break;
+
+                this.timePerTick = (tEnd - loopStart) / iEnd;
+                iEnd = Math.min(ticksPerTimeCheck, ticksToRunInt - ticks, Math.ceil((targetTimePerFrame - tDiff) / this.timePerTick));
+                if (iEnd <= ticksPerTimeCheck)
+                    break;
+            }
+        }
+
+        if (zonDebug) {
+            //console.log(`Ran ${ticks} of ${ticksToRunInt} ticks in ${performance.now() - start} ms.  (remainder: ${this.tickRemainder})`);
+        }
+
+        this.tickRemainder += ticksToRun - ticks;
+
+        return ticks;
+    }
+
+    startLoad = (newGame, gameSaveNum, settingsSaveNum) => {
+        if (newGame) {
+            Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME, gameSaveNum);
+            Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.SETTINGS, settingsSaveNum);
+        }
+
+        Zon.IOManager.loadGameAsync(gameSaveNum);
+        Zon.IOManager.loadSettingsAsync(settingsSaveNum);
+        requestAnimationFrame(this._loadLoop);
+    }
+
+    _loadLoop = () => {
+        let start = performance.now();
+        const targetTimePerFrame = Zon.timeController.targetTimePerFrameMilliseconds.value;
+        let effectiveStart = this.lastTickStart + targetTimePerFrame;
+        if (effectiveStart < start) {
+            if (start - effectiveStart < targetTimePerFrame)
+                start = effectiveStart;
+        }
+
+        const yieldTime = start + targetTimePerFrame;
+        Zon.processManager.executeProcesses(yieldTime);
+        if (Zon.processManager.hasProcesses) {
+            requestAnimationFrame(this._loadLoop);
+        }
+        else {
+            Zon.Setup.finishedLoading();
         }
     }
 
@@ -143,7 +266,11 @@ Zon.Game = class {
         return this.levelDatas[stageIndex];
     }
 
-    preSetLoadedValuesSetup = () => {
+    onStageToReturnToStage1SettingChanged = () => {
+
+    }
+
+    onAutomaticallyReturnToStage1SettingChanged = () => {
 
     }
 };

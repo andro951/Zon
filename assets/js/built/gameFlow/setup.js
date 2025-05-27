@@ -7,6 +7,9 @@ const Extensions = {};
 const Numbers = {};
 const Trig = {};
 const Algebra = {};
+Zon.UI = {};
+const Enum = {};
+const Nodes = {};
 
 Zon.name = "Zon";
 
@@ -15,6 +18,5 @@ if (zonDebug) {
 }
 
 Zon.init = async function() {
-    await Zon.Setup.setupAndStartGame();
-    Zon.GameManager.start();
+    Zon.Setup.setupAndStartGame();
 }

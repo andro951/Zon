@@ -1,30 +1,22 @@
 "use strict";
 
 Zon.StageID = {
-    NONE: 0,
-    MONSTERS_WILD_CREATURES: 1,
-    BUGS: 2,
-    MONSTERS_ASSORTED_LV2: 3,
-    MONSTERS_UNDEAD: 4,
-    ARMOR: 5,
-    MONSTERS_ASSORTED_LV3: 6,
-    MONSTERS_ASSORTED_LV4: 7,
-    MONSTERS_MAGES: 8,
-    HELMETS: 9,
-    MONSTERS_DEMONS: 10,
-    COUNT: 11,
+    MONSTERS_WILD_CREATURES: 0,
+    BUGS: 1,
+    MONSTERS_ASSORTED_LV2: 2,
+    MONSTERS_UNDEAD: 3,
+    ARMOR: 4,
+    MONSTERS_ASSORTED_LV3: 5,
+    MONSTERS_ASSORTED_LV4: 6,
+    MONSTERS_MAGES: 7,
+    HELMETS: 8,
+    MONSTERS_DEMONS: 9,
 };
+Zon.StageIDNames = [];
+Enum.createEnum(Zon.StageID, Zon.StageIDNames);
 
-Zon.StageIDMap = Zon.StageIDNames = Object.entries(Zon.StageID)
-    .filter(([k]) => k !== "COUNT")
-    .reduce((acc, [k, v]) => {
-        acc[v] = k;
-        return acc;
-    }, {});
-
-
-Zon.LevelData = class {
-    static maxStage = Zon.StageID.COUNT - 1;
+Zon.LevelData = class LevelData {
+    static maxStage = Zon.StageID.COUNT;
     static maxStageNum = 10;
     static startingStage = Zon.StageID.MONSTERS_WILD_CREATURES;
     static startingStageNum = 1;
@@ -37,11 +29,11 @@ Zon.LevelData = class {
             return (stageID - this.startingStage) * this.maxStageNum + stageNum - this.startingStageNum;
         };
 
-        this.stageCount = this.maxStage + 1;
         this.maxStageDisplayedNum = this.maxStage * this.maxStageNum;
         this.blockHealthMultiplePerPrestige = this.maxStageDisplayedNum;
         this.stageCompletionAetherBonusPerPrestige = this.maxStageDisplayedNum;
         this.maxStageIndex = this.getStageIndex(this.maxStage, this.maxStageNum);
+        this.stageCount = this.maxStageIndex + 1;
     }
     
     constructor(stageID, stageNum) {
@@ -98,9 +90,10 @@ Zon.LevelData = class {
     }
 
     getRandomPngFile = () => {
-        const textures = Zon.LevelData.allLevelTextures[this.stageID];
-        const randomIndex = Math.floor(Math.random() * textures.length);
-        this.imageWrapper = textures[randomIndex];
+        const textures = Zon.LevelData.allLevelTextures[Zon.StageIDNames[this.stageID]];
+        const keys = Object.keys(textures);
+        const randomIndex = Math.floor(Math.random() * keys.length);
+        this.imageWrapper = textures[keys[randomIndex]];
         this.forwardMethodsFrom(this.imageWrapper, !!this.imgName);//Ignore duplicates error if this.imgName is already defined.  !! is to cast to boolean.
     }
 
@@ -144,7 +137,7 @@ Zon.LevelData = class {
     }
 
     static toStageIDAndNum(displayedStageIndex) {
-        const stageID = Math.floor(displayedStageIndex / Zon.LevelData.maxStageNum) + Zon.StageID.NONE;
+        const stageID = Math.floor(displayedStageIndex / Zon.LevelData.maxStageNum) + Zon.LevelData.startingStage;
         const stageNum = displayedStageIndex % Zon.LevelData.maxStageNum + Zon.LevelData.startingStageNum;
         return { stageID, stageNum };
     }
@@ -153,46 +146,8 @@ Zon.LevelData = class {
         return displayedStageNum - Zon.LevelData.startingStageDisplayedNum;
     }
 
-    static allLevelTextures = {};
-    static allStageImagesLoadedPromise;
-    static startAsyncLoading() {
-        Zon.LevelData.allLevelTextures = {};
-        const stagePromises = [];
-        for (let stageId = Zon.LevelData.startingStage; stageId <= Zon.LevelData.maxStage; stageId++) {
-            const stageName = Zon.StageIDMap[stageId];
-            const folder = `assets/textures/levels/${stageName}`;
-            const manifestUrl = `${folder}/manifest.json`;
-
-            const stagePromise = fetch(manifestUrl)
-                .then(response => response.json())
-                .then(manifest => {
-                    return Promise.all(
-                        manifest.files.map(filename =>
-                            Zon.LevelData.loadImageWithPixels(`${folder}/${filename}`)
-                        )
-                    );
-                })
-                .catch(err => {
-                    console.error(`Failed to load manifest for stage ${stageId}:`, err);
-                    return [];
-                })
-                .then(textures => {
-                    Zon.LevelData.allLevelTextures[stageId] = textures;
-                });
-
-            stagePromises.push(stagePromise);
-        }
-
-        Zon.LevelData.allStageImagesLoadedPromise = Promise.all(stagePromises);
-    }
-    static loadImageWithPixels(src) {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.src = src;
-
-            img.onload = () => resolve(new Struct.ImageDataWrapper(img));
-            img.onerror = () => reject(new Error(`Failed to load ${src}`));
-        });
+    static allLevelTextures;
+    static postLoadTextures() {
+        Zon.LevelData.allLevelTextures = Zon.allTextures[Zon.TextureFolders.levels];
     }
 }

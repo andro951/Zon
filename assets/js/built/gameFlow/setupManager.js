@@ -2,22 +2,22 @@
 
 Zon.Setup.postConstructors = new Actions.Action();
 
-Zon.Setup.setupAndStartGame = async () => {
+Zon.Setup.setupAndStartGame = () => {
     Variable.Base.pause();
     Zon.Setup.postConstructors.call();
     Zon.Setup.startAsyncLoading();
     Zon.Setup.preLoadSetup();
-    Zon.Setup.load();
-    Zon.Setup.preSetLoadedValuesSetup();
-    await Zon.Setup.setLoadedValues();
+    //Zon.Setup.loadOrNewGame(true);//true for new game
+    Zon.Setup.loadOrNewGame();
 }
 
 Zon.Setup.startAsyncLoading = () => {
-    Zon.LevelData.startAsyncLoading();
+    Zon.TextureLoader.startAsyncLoading();
 }
 
 Zon.Setup.postLoadSetValuesStartGame = async () => {
-    await Zon.Setup.postLoadSetup();
+    await Zon.TextureLoader.allTexturesLoadedPromise;
+    Zon.Setup.postLoadSetup();
     Zon.Setup.finalizeUI();
     Variable.Base.resume();
 }
@@ -25,11 +25,13 @@ Zon.Setup.postLoadSetValuesStartGame = async () => {
 Zon.Setup.preLoadSetupActions = new Actions.Action();
 
 Zon.Setup.preLoadSetup = () => {
+    Zon.IOManager.preLoadSetup();
+
     if (zonDebug) {
         Zon.DevCheats.preLoadSetup();
     }
 
-    Zon.settings.preLoadSetup();
+    Zon.Settings.preLoadSetup();
     Zon.StageBonusManager.preLoadSetup();
     Zon.StageSmartReset.preLoadSetup();
     Zon.Blueprint.preLoadSetup();
@@ -38,8 +40,13 @@ Zon.Setup.preLoadSetup = () => {
     Zon.talentManager.preLoadSetup();
 }
 
-Zon.Setup.load = () => {
-    Zon.IOManager.LoadGameAsync();
+Zon.Setup.loadOrNewGame = (newGame) => {
+    Zon.game.startLoad(newGame, 0, 0);//TODO: saveNums
+}
+
+Zon.Setup.finishedLoading = () => {
+    Zon.Setup.preSetLoadedValuesSetup();
+    Zon.Setup.setLoadedValuesAndStartGame();
 }
 
 Zon.Setup.preSetLoadedValuesSetupActions = new Actions.Action();
@@ -65,30 +72,18 @@ Zon.Setup.preSetLoadedValuesUISetup = () => {
     Zon.Setup.preSetLoadedValuesSetupUIActions.call();
 }
 
-Zon.Setup.waitingForLoadedValues = false;
-
-Zon.Setup.onLoadDataReady = () => {
-    if (Zon.Setup.waitingForLoadedValues) {
-        Zon.Setup.waitingForLoadedValues = false;
-        Zon.Setup.setLoadedValues();
-    }
-}
-
-Zon.Setup.setLoadedValues = async () => {
-    if (!Zon.IOManager.loadDataReady) {
-        Zon.Setup.waitingForLoadedValues = true;
-        return;
-    }
+Zon.Setup.setLoadedValuesAndStartGame = async () => {
 
     Zon.IOManager.setAllLoadedValues();
     await Zon.Setup.postLoadSetValuesStartGame();
+    Zon.GameManager.start();
 }
 
 Zon.Setup.postLoadSetupActions = new Actions.Action();
 
-Zon.Setup.postLoadSetup = async () => {
-    Zon.settings.postLoadSetup();
-    await Zon.game.postLoadSetup();
+Zon.Setup.postLoadSetup = () => {
+    Zon.Settings.postLoadSetup();
+    Zon.game.postLoadSetup();
     Zon.manaBar.postLoadSetup();
     Zon.staminaBar.postLoadSetup();
     Zon.coreManager.postLoadSetup();
@@ -124,6 +119,6 @@ Zon.Setup.start = () => {
     Zon.DevCheats.onStartGame();
 }
 
-Zon.Setup.preSave = () => {
+Zon.Setup.preSaveGame = () => {
     Zon.blocksManager.preSave();
 }

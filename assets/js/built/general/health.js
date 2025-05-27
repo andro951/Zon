@@ -24,7 +24,7 @@ Zon.Health = class {
         return this._hp;
     }
     get percentFull() {
-        return this._hp.Divide(this._maxHP).ToNumber();
+        return this._hp.divide(this._maxHP).toNumber();
     }
 
     damage = (damage, source, overKill = false) => {
