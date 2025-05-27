@@ -5,7 +5,8 @@ Zon.Block = class extends Struct.Rectangle {
         super(left, top, width, height);
         this.blocksManager = blocksManager;
         this.index = index;
-        this.health = new Zon.Health(health, this);// new Zon.Health(health.multiply(Numbers.Triple.create(20n, 0n)), this);
+        //this.health = new Zon.Health(health, this);
+        this.health = new Zon.Health(health.multiply(Numbers.Triple.create(20n, 0n)), this);
         this.health.onHPZero.add(this.kill);
         this.color = color;
         this.isWeakPoint = false;
@@ -56,7 +57,75 @@ Zon.Block = class extends Struct.Rectangle {
     static HALF_SIDE_PERCENT = 0.125;
     static INV_SIDE_PERCENT = 4;
 
+    //TODO: this doesn't work for Rect, convert to only using width
     drawRadialRectFill(ctx, x, y, width, height, ratio, fillStyle = 'red') {
+        if (ratio <= 0)
+            return;
+
+        if (ratio >= 1) {
+            ctx.fillStyle = fillStyle;
+            ctx.fillRect(x, y, width, height);
+            return;
+        }
+
+        ctx.save();
+        ctx.imageSmoothingEnabled = false;
+        ctx.beginPath();
+        const halfWidth = width / 2;
+        const halfHeight = height / 2;
+        const centerX = x + halfWidth;
+        const centerY = y + halfHeight;
+        const right = x + width;
+        const bottom = y + height;
+        ctx.moveTo(centerX, centerY); //Start at center
+        ctx.lineTo(centerX, y); //Line to top center
+        if (ratio <= Zon.Block.HALF_SIDE_PERCENT) {
+            //Line to top left
+            const topLeftX = x + width * (0.5 - ratio * Zon.Block.INV_SIDE_PERCENT);
+            ctx.lineTo(topLeftX, y);
+        }
+        else {
+            ctx.lineTo(x, y); //Line to top left
+            let remainingRatio = ratio - Zon.Block.HALF_SIDE_PERCENT;
+            if (remainingRatio <= Zon.Block.SIDE_PERCENT) {
+                //Line to botom left
+                const botomLeftY = y + height * (remainingRatio * Zon.Block.INV_SIDE_PERCENT);
+                ctx.lineTo(x, botomLeftY);
+            }
+            else {
+                ctx.lineTo(x, bottom); //Line to botom left
+                remainingRatio -= Zon.Block.SIDE_PERCENT;
+                if (remainingRatio <= Zon.Block.SIDE_PERCENT) {
+                    //Line to botom right
+                    const botomRightX = x + width * (remainingRatio * Zon.Block.INV_SIDE_PERCENT);
+                    ctx.lineTo(botomRightX, bottom);
+                }
+                else {
+                    ctx.lineTo(right, bottom); //Line to botom right
+                    remainingRatio -= Zon.Block.SIDE_PERCENT;
+                    if (remainingRatio <= Zon.Block.SIDE_PERCENT) {
+                        //Line to top right
+                        const topRightY = y + height * (1 - remainingRatio * Zon.Block.INV_SIDE_PERCENT);
+                        ctx.lineTo(right, topRightY);
+                    }
+                    else {
+                        ctx.lineTo(right, y); //Line to top right
+                        remainingRatio -= Zon.Block.SIDE_PERCENT;
+                        const lastX = x + width * (1 - remainingRatio * Zon.Block.INV_SIDE_PERCENT);
+                        ctx.lineTo(lastX, y);//Line to center-right
+                    }
+                }
+            }
+        }
+
+        ctx.lineTo(centerX, centerY); //Line back to center
+        ctx.closePath();
+        ctx.fillStyle = fillStyle;
+        ctx.fill();
+        ctx.restore();
+    }
+    
+    drawRadialRectFillOld(ctx, x, y, width, height, ratio, fillStyle = 'red') {
         if (ratio <= 0)
             return;
 
