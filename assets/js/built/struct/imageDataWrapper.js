@@ -39,7 +39,7 @@ Struct.ColorArrayWrapper = class {
         if (index >= this.pixelUint32Array.length)
             throw new Error("Index out of bounds");
 
-        return Struct.Color.fromInt(this.pixelUint32Array[index]);
+        return Struct.Color.fromUInt(this.pixelUint32Array[index]);
     }
     setColor = (index, color) => {
         if (index >= this.pixelUint32Array.length)
@@ -48,46 +48,41 @@ Struct.ColorArrayWrapper = class {
         this.pixelUint32Array[index] = color.uint;
     }
 }
-Struct.PixelWrapper = class {
+Struct.PixelWrapper = class PixelWrapper extends Struct.ColorBase {
     constructor(colorArrayWrapper, index) {
+        super();
         this.colorArrayWrapper = colorArrayWrapper;
         this.index = index << 2;
     }
 
     get r() {
-        return this.colorArrayWrapper.pixelUint8Array[this.index];
-    }
-    set r(value) {
-        this.colorArrayWrapper.pixelUint8Array[this.index] = value;
-    }
-    get g() {
-        return this.colorArrayWrapper.pixelUint8Array[this.index + 1];
-    }
-    set g(value) {
-        this.colorArrayWrapper.pixelUint8Array[this.index + 1] = value;
-    }
-    get b() {
-        return this.colorArrayWrapper.pixelUint8Array[this.index + 2];
-    }
-    set b(value) {
-        this.colorArrayWrapper.pixelUint8Array[this.index + 2] = value;
-    }
-    get a() {
         return this.colorArrayWrapper.pixelUint8Array[this.index + 3];
     }
-    set a(value) {
+    set r(value) {
         this.colorArrayWrapper.pixelUint8Array[this.index + 3] = value;
     }
-    get colorInt() {
+    get g() {
+        return this.colorArrayWrapper.pixelUint8Array[this.index + 2];
+    }
+    set g(value) {
+        this.colorArrayWrapper.pixelUint8Array[this.index + 2] = value;
+    }
+    get b() {
+        return this.colorArrayWrapper.pixelUint8Array[this.index + 1];
+    }
+    set b(value) {
+        this.colorArrayWrapper.pixelUint8Array[this.index + 1] = value;
+    }
+    get a() {
+        return this.colorArrayWrapper.pixelUint8Array[this.index + 0];
+    }
+    set a(value) {
+        this.colorArrayWrapper.pixelUint8Array[this.index + 0] = value;
+    }
+    get uint() {
         return this.colorArrayWrapper.pixelUint32Array[this.index >>> 2];
     }
-    set colorInt(value) {
+    set uint(value) {
         this.colorArrayWrapper.pixelUint32Array[this.index >>> 2] = value;
-    }
-    get cssString() {
-        return Struct.Color.cssString(this);
-    }
-    blend(otherColor, ratio) {
-        return Struct.Color.blend(this, otherColor, ratio);
     }
 }

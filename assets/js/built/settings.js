@@ -342,6 +342,47 @@ Zon.Settings.settingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             }
         }
     }
+
+    Zon.ColorSetting = class extends Zon.Setting {
+        static minValue = 0;
+        static maxValue = 0xFFFFFFFF;
+
+        constructor(id, defaultValue, name = null) {
+            if (defaultValue < Zon.ColorSetting.minValue || defaultValue > Zon.ColorSetting.maxValue)
+                throw new Error(`Default value ${defaultValue} is out of range [${Zon.ColorSetting.minValue}, ${Zon.ColorSetting.maxValue}]`);
+
+            super(id, defaultValue, name);
+            this._value.value = Struct.Color.fromUInt(defaultValue);
+        }
+
+        get value() {
+            return this._value.value;
+        }
+
+        set value(newValue) {
+            let newValueUint = newValue.uint;
+            if (newValueUint < Zon.ColorSetting.minValue) {
+                newValueUint = Zon.ColorSetting.minValue;
+            }
+            else if (newValueUint > Zon.ColorSetting.maxValue) {
+                newValueUint = Zon.ColorSetting.maxValue;
+            }
+
+            this._value.value.uint = newValueUint;
+        }
+
+        get isDefaultValue() {
+            return this._value.value.uint === this.defaultValue;
+        }
+
+        createButton = (canvas, x, y, width, height) => {//TODO
+            throw new Error("createButton not implemented");
+        }
+
+        valueSaveLoadHelper = () => {
+            return Zon.SaveLoadHelper_Color.fromVariable(this._value);
+        }
+    }
 }//Settings classes
 
 {
@@ -352,6 +393,14 @@ Zon.Settings.settingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
     }
     Zon.Settings.CombatUILayoutIDNames = [];
     Enum.createEnum(Zon.Settings.CombatUILayoutID, Zon.Settings.CombatUILayoutIDNames);
+
+    Zon.Settings.BlockHealthDrawModeID = {
+        RADIAL_ACCURATE: 0,
+        RADIAL_FAST: 1,
+        LEFT_TO_RIGHT: 2,
+    }
+    Zon.Settings.BlockHealthDrawModeIDNames = [];
+    Enum.createEnum(Zon.Settings.BlockHealthDrawModeID, Zon.Settings.BlockHealthDrawModeIDNames);
 }//Settings enums
 
 Zon.SettingsID = {
@@ -363,7 +412,11 @@ Zon.SettingsID = {
     SCIENTIFIC_NOTATION: 5,
     STAGE_TO_RETURN_TO_STAGE_1: 6,
     COMBAT_UI_LAYOUT: 7,
-    BLOCK_HEALTH_RADIAL_FAST: 8,
+    BLOCK_HEALTH_DRAW_MODE: 8,
+    BLOCK_HEALTH_DIM: 9,
+    BLOCK_DAMAGED_COLOR_STRENGTH: 10,
+    BLOCK_DAMAGED_COLOR: 11,
+    BLOCK_DAMAGED_FADE_TIME: 12,
 };
 Zon.SettingsIDNames = [];
 Enum.createEnum(Zon.SettingsID, Zon.SettingsIDNames);
@@ -382,7 +435,11 @@ Zon.Settings.createAllSettings = () => {
         new Zon.BoolSetting(Zon.SettingsID.SCIENTIFIC_NOTATION, false),
         new Zon.IntSetting(Zon.SettingsID.STAGE_TO_RETURN_TO_STAGE_1, 2, 1, Zon.LevelData.maxStageDisplayedNum),
         new Zon.DropDownSetting(Zon.SettingsID.COMBAT_UI_LAYOUT, Zon.Settings.CombatUILayoutID.DEFAULT, Zon.Settings.CombatUILayoutID, Zon.Settings.CombatUILayoutIDNames),
-        new Zon.BoolSetting(Zon.SettingsID.BLOCK_HEALTH_RADIAL_FAST, true),
+        new Zon.DropDownSetting(Zon.SettingsID.BLOCK_HEALTH_DRAW_MODE, Zon.Settings.BlockHealthDrawModeID.RADIAL_ACCURATE, Zon.Settings.BlockHealthDrawModeID, Zon.Settings.BlockHealthDrawModeIDNames),
+        new Zon.NumberSetting(Zon.SettingsID.BLOCK_HEALTH_DIM, 0.2, 0, 1),
+        new Zon.NumberSetting(Zon.SettingsID.BLOCK_DAMAGED_COLOR_STRENGTH, 0.7, 0, 1),
+        new Zon.ColorSetting(Zon.SettingsID.BLOCK_DAMAGED_COLOR, 0xFF0000FF),
+        new Zon.NumberSetting(Zon.SettingsID.BLOCK_DAMAGED_FADE_TIME, 2, 0, 10000),//seconds
     ];
 
     Zon.Settings.ScientificNotation = Zon.Settings.allSettings[Zon.SettingsID.SCIENTIFIC_NOTATION].variable;
@@ -396,5 +453,10 @@ Zon.Settings.displayOrder = [
     Zon.SettingsID.DOUBLE_CLICK_HOLD_MAX_SPEED,
     Zon.SettingsID.CLICK_AND_HOLD_BUTTONS,
     Zon.SettingsID.SCIENTIFIC_NOTATION,
-    Zon.SettingsID.BLOCK_HEALTH_RADIAL_FAST,
+    Zon.SettingsID.COMBAT_UI_LAYOUT,
+    Zon.SettingsID.BLOCK_HEALTH_DRAW_MODE,
+    Zon.SettingsID.BLOCK_HEALTH_DIM,
+    Zon.SettingsID.BLOCK_DAMAGED_COLOR_STRENGTH,
+    Zon.SettingsID.BLOCK_DAMAGED_COLOR,
+    Zon.SettingsID.BLOCK_DAMAGED_FADE_TIME,
 ];

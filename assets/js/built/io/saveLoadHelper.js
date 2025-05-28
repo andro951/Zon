@@ -169,6 +169,21 @@ Zon.SaveLoadHelper_UI32_AL = class SaveLoadHelper_UI32_AL extends Zon.SaveLoadHe
     }
 }
 
+Zon.SaveLoadHelper_Color = class SaveLoadHelper_Color extends Zon.SaveLoadHelper {
+    constructor(get, set) {
+        super(get, set);
+    }
+    static fromVariable(variable) {
+        return new Zon.SaveLoadHelper_Color(() => variable.value.uint, (value) => variable.value.uint = value);
+    }
+    _write = (writer, value) => {
+        writer.writeUInt32(value.uint >>> 0);
+    }
+    _read = (reader) => {
+        return reader.readUInt32();
+    }
+}
+
 Zon.SaveLoadHelper_I53 = class SaveLoadHelper_I53 extends Zon.SaveLoadHelper {
     constructor(get, set, length = Binary.BitExtractor.INT_53_PREFIX_BITS, includeSign = true) {
         super(get, set);

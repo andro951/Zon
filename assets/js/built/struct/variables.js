@@ -70,6 +70,9 @@ Variable.Value = class extends Variable.Base {
 Variable.Dependent = class extends Variable.Base {
     constructor(getValue, thisObj = undefined) {
         super();
+        if (typeof getValue !== 'function')
+            throw new Error(`getValue must be a function, got ${typeof getValue}: ${getValue}`);
+
         this.getValue = getValue;
         this.needsRecalculate = true;
         this.extractVariables(getValue, thisObj);

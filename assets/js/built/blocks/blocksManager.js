@@ -23,6 +23,25 @@ Zon.BlocksManager = class {
         this._blocks = null;
         this._blocksSet = new Set();
         this.weakPointBlock = null;
+        
+        Zon.Setup.preSetLoadedValuesSetupActions.add(this.preSetLoadedValues);
+    }
+
+    preSetLoadedValues = () => {
+        Zon.Settings.getVariable(Zon.SettingsID.BLOCK_HEALTH_DIM).onChangedAction.add(this.updateAllBlockDullColors);
+        this.blockDrawModeSetting = Zon.Settings.getVariable(Zon.SettingsID.BLOCK_HEALTH_DRAW_MODE);
+        this.blockHealthDimSetting = Zon.Settings.getVariable(Zon.SettingsID.BLOCK_HEALTH_DIM);
+        this.blockDamagedColorStrengthSetting = Zon.Settings.getVariable(Zon.SettingsID.BLOCK_DAMAGED_COLOR_STRENGTH);
+        this.blockDamagedColorSetting = Zon.Settings.getVariable(Zon.SettingsID.BLOCK_DAMAGED_COLOR);
+        this.blockDamagedFadeTimeSetting = Zon.Settings.getVariable(Zon.SettingsID.BLOCK_DAMAGED_FADE_TIME);
+        this.blockDamagedFadeTimeSettingInv = new Variable.Dependent(() => 1 / this.blockDamagedFadeTimeSetting, this);
+    }
+
+    updateAllBlockDullColors = () => {
+        const dimAmount = this.blockHealthDimSetting.value;
+        for (const block of this._blocksSet) {
+            block.updateDullColor(dimAmount);
+        }
     }
 
     getBlockX = (xPixel) => {

@@ -27,6 +27,10 @@ Zon.Health = class {
         return this._hp.divide(this._maxHP).toNumber();
     }
 
+    get isMax() {
+        return this._hp.greaterThanOrEqual(this._maxHP);
+    }
+
     damage = (damage, source, overKill = false) => {
         if (damage.isZero)
             return Numbers.Triple.ZERO;
