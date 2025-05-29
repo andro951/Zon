@@ -22,21 +22,31 @@ Zon.IOManager.tryMakeNewSaveFile = (saveFileTypeID, saveNum) => {
     Zon.IOManager.saveAsync(saveFileTypeID, saveNum);
 }
 
-Zon.IOManager.saveGameImmediate = (saveNum) => {
-    Zon.IOManager.saveImmediate(Zon.SaveFileTypeID.GAME, saveNum);
-}
+{
+    Zon.IOManager.saveGameImmediate = (saveNum) => {
+        Zon.IOManager.saveImmediate(Zon.SaveFileTypeID.GAME, saveNum);
+    }
 
-Zon.IOManager.saveGameAsync = (saveNum) => {
-    Zon.IOManager.saveAsync(Zon.SaveFileTypeID.GAME, saveNum);
-}
+    Zon.IOManager.saveGameAsync = (saveNum) => {
+        Zon.IOManager.saveAsync(Zon.SaveFileTypeID.GAME, saveNum);
+    }
 
-Zon.IOManager.saveSettingsImmediate = (saveNum) => {
-    Zon.IOManager.saveImmediate(Zon.SaveFileTypeID.SETTINGS, saveNum);
-}
+    Zon.IOManager.saveGameSettingsImmediate = (saveNum) => {
+        Zon.IOManager.saveImmediate(Zon.SaveFileTypeID.GAME_SETTINGS, saveNum);
+    }
 
-Zon.IOManager.saveSettingsAsync = (saveNum) => {
-    Zon.IOManager.saveAsync(Zon.SaveFileTypeID.SETTINGS, saveNum);
-}
+    Zon.IOManager.saveGameSettingsAsync = (saveNum) => {
+        Zon.IOManager.saveAsync(Zon.SaveFileTypeID.GAME_SETTINGS, saveNum);
+    }
+
+    Zon.IOManager.saveDisplaySettingsImmediate = (saveNum) => {
+        Zon.IOManager.saveImmediate(Zon.SaveFileTypeID.DISPLAY_SETTINGS, saveNum);
+    }
+
+    Zon.IOManager.saveDisplaySettingsAsync = (saveNum) => {
+        Zon.IOManager.saveAsync(Zon.SaveFileTypeID.DISPLAY_SETTINGS, saveNum);
+    }
+}//Imm/Async saves
 
 Zon.IOManager.saveImmediate = (saveFileTypeID, saveNum) => {
     Zon.IOManager.saveAsync(saveFileTypeID, saveNum);
@@ -162,8 +172,10 @@ Zon.IOManager.getSaveName = (saveFileTypeID, saveNum) => {
     switch (saveFileTypeID) {
         case Zon.SaveFileTypeID.GAME:
             return `zon_save_game_${saveNum}`;
-        case Zon.SaveFileTypeID.SETTINGS:
-            return `zon_save_settings_${saveNum}`;
+        case Zon.SaveFileTypeID.GAME_SETTINGS:
+            return `zon_save_game_settings_${saveNum}`;
+        case Zon.SaveFileTypeID.DISPLAY_SETTINGS:
+            return `zon_save_display_settings_${saveNum}`;
         case Zon.SaveFileTypeID.MODS:
             return `zon_save_mods_${saveNum}`;
         case Zon.SaveFileTypeID.MOD_SETTINGS:
@@ -196,21 +208,31 @@ Zon.IOManager.registerSaveLoadInfo = (saveFileTypeID, saveLoadInfo) => {
 Zon.IOManager.loadDataReady = new Set();
 Zon.IOManager.loadingInProgress = new Set();
 
-Zon.IOManager.loadGameImmediate = (saveNum) => {
-    Zon.IOManager.loadImmediate(Zon.SaveFileTypeID.GAME, saveNum);
-}
+{
+    Zon.IOManager.loadGameImmediate = (saveNum) => {
+        Zon.IOManager.loadImmediate(Zon.SaveFileTypeID.GAME, saveNum);
+    }
 
-Zon.IOManager.loadGameAsync = (saveNum) => {
-    Zon.IOManager.loadAsync(Zon.SaveFileTypeID.GAME, saveNum);
-}
+    Zon.IOManager.loadGameAsync = (saveNum) => {
+        Zon.IOManager.loadAsync(Zon.SaveFileTypeID.GAME, saveNum);
+    }
 
-Zon.IOManager.loadSettingsImmediate = (saveNum) => {
-    Zon.IOManager.loadImmediate(Zon.SaveFileTypeID.SETTINGS, saveNum);
-}
+    Zon.IOManager.loadGameSettingsImmediate = (saveNum) => {
+        Zon.IOManager.loadImmediate(Zon.SaveFileTypeID.GAME_SETTINGS, saveNum);
+    }
 
-Zon.IOManager.loadSettingsAsync = (saveNum) => {
-    Zon.IOManager.loadAsync(Zon.SaveFileTypeID.SETTINGS, saveNum);
-}
+    Zon.IOManager.loadGameSettingsAsync = (saveNum) => {
+        Zon.IOManager.loadAsync(Zon.SaveFileTypeID.GAME_SETTINGS, saveNum);
+    }
+
+    Zon.IOManager.loadDisplaySettingsImmediate = (saveNum) => {
+        Zon.IOManager.loadImmediate(Zon.SaveFileTypeID.DISPLAY_SETTINGS, saveNum);
+    }
+
+    Zon.IOManager.loadDisplaySettingsAsync = (saveNum) => {
+        Zon.IOManager.loadAsync(Zon.SaveFileTypeID.DISPLAY_SETTINGS, saveNum);
+    }
+}//Imm/Async loads
 
 Zon.IOManager.loadImmediate = (saveFileTypeID, saveNum) => {
     Zon.IOManager.startLoading(saveFileTypeID, saveNum);
@@ -360,9 +382,10 @@ Zon.IOManager._setLoadedValues = (saveFileTypeID) => {
 
 Zon.SaveFileTypeID = {
     GAME: 0,
-    SETTINGS: 1,
-    MODS: 2,
-    MOD_SETTINGS: 3,
+    GAME_SETTINGS: 1,
+    DISPLAY_SETTINGS: 2,
+    MODS: 3,
+    MOD_SETTINGS: 4,
 }
 Zon.SaveFileTypeIDNames = [];
 Enum.createEnum(Zon.SaveFileTypeID, Zon.SaveFileTypeIDNames, false);
@@ -397,7 +420,7 @@ Zon.IOManager.CommonDataHelper = class CommonDataHelper extends Zon.SaveLoadInfo
     //The number of bits can safely be changed between versions if more space is needed.
     stageBits = new Zon.LoadConstantHelper_UI32((Zon.StageID.COUNT - 1).bitLength32());
     stageNumBits = new Zon.LoadConstantHelper_UI32(Zon.LevelData.maxStageNum.bitLength32());
-    settingsEnumBits = new Zon.LoadConstantHelper_UI32((Zon.SettingsID.COUNT - 1).bitLength32());
+    settingsEnumBits = new Zon.LoadConstantHelper_UI32((Zon.GameSettingsID.COUNT - 1).bitLength32());
 
     addHelpers = () => {
         for (const key of Object.keys(this)) {

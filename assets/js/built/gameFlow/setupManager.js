@@ -7,8 +7,8 @@ Zon.Setup.setupAndStartGame = () => {
     Zon.Setup.postConstructors.call();
     Zon.Setup.startAsyncLoading();
     Zon.Setup.preLoadSetup();
-    //Zon.Setup.loadOrNewGame(true);//true for new game
-    Zon.Setup.loadOrNewGame();
+    Zon.Setup.loadOrNewGame(true);//true for new game
+    //Zon.Setup.loadOrNewGame();
 }
 
 Zon.Setup.startAsyncLoading = () => {

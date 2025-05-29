@@ -34,8 +34,8 @@ Zon.Game = class {
 
     preLoadSetup = () => {
         Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.GAME, new this.GameSaveLoadInfo());
-        Zon.Settings.getVariable(Zon.SettingsID.STAGE_TO_RETURN_TO_STAGE_1).onChangedAction.add(this.onStageToReturnToStage1SettingChanged);
-        Zon.Settings.getVariable(Zon.SettingsID.AUTOMATICALLY_RETURN_TO_STAGE_1).onChangedAction.add(this.onAutomaticallyReturnToStage1SettingChanged);
+        Zon.Settings.getGameVariable(Zon.GameSettingsID.STAGE_TO_RETURN_TO_STAGE_1).onChangedAction.add(this.onStageToReturnToStage1SettingChanged);
+        Zon.Settings.getGameVariable(Zon.GameSettingsID.AUTOMATICALLY_RETURN_TO_STAGE_1).onChangedAction.add(this.onAutomaticallyReturnToStage1SettingChanged);
     }
 
     preSetLoadedValuesSetup = () => {
@@ -146,11 +146,13 @@ Zon.Game = class {
     startLoad = (newGame, gameSaveNum, settingsSaveNum) => {
         if (newGame) {
             Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME, gameSaveNum);
-            Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.SETTINGS, settingsSaveNum);
+            Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME_SETTINGS, settingsSaveNum);
+            Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.DISPLAY_SETTINGS, settingsSaveNum);
         }
 
         Zon.IOManager.loadGameAsync(gameSaveNum);
-        Zon.IOManager.loadSettingsAsync(settingsSaveNum);
+        Zon.IOManager.loadGameSettingsAsync(settingsSaveNum);
+        Zon.IOManager.loadDisplaySettingsAsync(settingsSaveNum);
         requestAnimationFrame(this._loadLoop);
     }
 
