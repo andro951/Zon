@@ -401,6 +401,28 @@ Zon.Settings.settingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
     }
     Zon.Settings.BlockHealthDrawModeIDNames = [];
     Enum.createEnum(Zon.Settings.BlockHealthDrawModeID, Zon.Settings.BlockHealthDrawModeIDNames);
+
+    Zon.Settings.BlockHealthTextFontID = {
+        MICHROMA: 0,
+        ORBITRON: 1,
+        BRUNO_ACE_SC: 2,
+        AUDIOWIDE: 3,
+    }
+    Zon.Settings.BlockHealthTextFontIDNames = [];
+    Enum.createEnum(Zon.Settings.BlockHealthTextFontID, Zon.Settings.BlockHealthTextFontIDNames);
+    Zon.Settings.BlockHealthTextFonts = Object.freeze([
+        "Michroma",
+        "Orbitron",
+        "Bruno Ace SC",
+        "Audiowide",
+    ]);
+
+    Zon.Settings.BlockHealthTextOutlineStyleID = {
+        SHADOW: 0,
+        OUTLINE: 1,
+    }
+    Zon.Settings.BlockHealthTextOutlineStyleIDNames = [];
+    Enum.createEnum(Zon.Settings.BlockHealthTextOutlineStyleID, Zon.Settings.BlockHealthTextOutlineStyleIDNames);
 }//Settings enums
 
 Zon.SettingsID = {
@@ -417,6 +439,13 @@ Zon.SettingsID = {
     BLOCK_DAMAGED_COLOR_STRENGTH: 10,
     BLOCK_DAMAGED_COLOR: 11,
     BLOCK_DAMAGED_FADE_TIME: 12,
+    BLOCK_HEALTH_TEXT_FONT: 13,
+    BLOCK_HEALTH_TEXT_COLOR: 14,
+    BLOCK_HEALTH_TEXT_OUTLINE_STYLE: 15,
+    BLOCK_HEALTH_TEXT_OUTLINE_COLOR: 16,
+    BLOCK_HEALTH_TEXT_OUTLINE_WIDTH: 17,
+    BLOCK_HEALTH_TEXT: 18,
+    BLOCK_HEALTH_OUTLINE: 19,
 };
 Zon.SettingsIDNames = [];
 Enum.createEnum(Zon.SettingsID, Zon.SettingsIDNames);
@@ -440,6 +469,13 @@ Zon.Settings.createAllSettings = () => {
         new Zon.NumberSetting(Zon.SettingsID.BLOCK_DAMAGED_COLOR_STRENGTH, 0.7, 0, 1),
         new Zon.ColorSetting(Zon.SettingsID.BLOCK_DAMAGED_COLOR, 0xFF0000FF),
         new Zon.NumberSetting(Zon.SettingsID.BLOCK_DAMAGED_FADE_TIME, 2, 0, 10000),//seconds
+        new Zon.DropDownSetting(Zon.SettingsID.BLOCK_HEALTH_TEXT_FONT, Zon.Settings.BlockHealthTextFontID.MICHROMA, Zon.Settings.BlockHealthTextFontID, Zon.Settings.BlockHealthTextFontIDNames),
+        new Zon.ColorSetting(Zon.SettingsID.BLOCK_HEALTH_TEXT_COLOR, 0xFFFFFFFF),
+        new Zon.DropDownSetting(Zon.SettingsID.BLOCK_HEALTH_TEXT_OUTLINE_STYLE, Zon.Settings.BlockHealthTextOutlineStyleID.OUTLINE, Zon.Settings.BlockHealthTextOutlineStyleID, Zon.Settings.BlockHealthTextOutlineStyleIDNames),
+        new Zon.ColorSetting(Zon.SettingsID.BLOCK_HEALTH_TEXT_OUTLINE_COLOR, 0x000000FF),
+        new Zon.UIntSetting(Zon.SettingsID.BLOCK_HEALTH_TEXT_OUTLINE_WIDTH, 3, 0, 15, 4),
+        new Zon.BoolSetting(Zon.SettingsID.BLOCK_HEALTH_TEXT, true),
+        new Zon.BoolSetting(Zon.SettingsID.BLOCK_HEALTH_OUTLINE, true),
     ];
 
     Zon.Settings.ScientificNotation = Zon.Settings.allSettings[Zon.SettingsID.SCIENTIFIC_NOTATION].variable;
@@ -459,4 +495,11 @@ Zon.Settings.displayOrder = [
     Zon.SettingsID.BLOCK_DAMAGED_COLOR_STRENGTH,
     Zon.SettingsID.BLOCK_DAMAGED_COLOR,
     Zon.SettingsID.BLOCK_DAMAGED_FADE_TIME,
+    Zon.SettingsID.BLOCK_HEALTH_OUTLINE,
+    Zon.SettingsID.BLOCK_HEALTH_TEXT,
+    Zon.SettingsID.BLOCK_HEALTH_TEXT_FONT,
+    Zon.SettingsID.BLOCK_HEALTH_TEXT_COLOR,
+    Zon.SettingsID.BLOCK_HEALTH_TEXT_OUTLINE_STYLE,
+    Zon.SettingsID.BLOCK_HEALTH_TEXT_OUTLINE_COLOR,
+    Zon.SettingsID.BLOCK_HEALTH_TEXT_OUTLINE_WIDTH,
 ];

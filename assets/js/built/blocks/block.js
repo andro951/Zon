@@ -15,6 +15,7 @@ Zon.Block = class extends Struct.Rectangle {
         this.ctx = this.canvas.getContext('2d');
         this.ctx.imageSmoothingEnabled = false;
         this.hitColorTimer = 0;
+        this.ctx.font = Zon.blocksManager.blockHealthTextFont.value;
         this.updateDullColor(Zon.blocksManager.blockHealthDimSetting.value);
     }
 
@@ -59,6 +60,7 @@ Zon.Block = class extends Struct.Rectangle {
             normalColor = this.normalColorString;
         }
 
+        const percentFull = this.health.percentFull;
         if (Zon.blocksManager.blockDrawModeSetting.value === Zon.Settings.BlockHealthDrawModeID.NONE) {
             this.ctx.fillStyle = normalColor;
             this.ctx.fillRect(this.left, this.top, this.width, this.height);
@@ -69,42 +71,83 @@ Zon.Block = class extends Struct.Rectangle {
                 this.ctx.fillRect(this.left, this.top, this.width, this.height);
             }
 
+            this._setHealthOverlayCTX(normalColor);
             switch (Zon.blocksManager.blockDrawModeSetting.value) {
                 case Zon.Settings.BlockHealthDrawModeID.RADIAL_ACCURATE:
-                    this.drawRadialSquareFillSlow(this.ctx, this.left, this.top, this.width, this.health.percentFull, normalColor);
+                    this.drawRadialSquareFillSlow(this.ctx, this.left, this.top, this.width, percentFull);
                     break;
                 case Zon.Settings.BlockHealthDrawModeID.RADIAL_FAST:
-                    this.drawRadialSquareFillFast(this.ctx, this.left, this.top, this.width, this.health.percentFull, normalColor);
+                    this.drawRadialSquareFillFast(this.ctx, this.left, this.top, this.width, percentFull);
                     break;
                 case Zon.Settings.BlockHealthDrawModeID.LEFT_TO_RIGHT:
-                    this.drawRectFillLeftToRight(this.ctx, this.left, this.top, this.width, this.height, this.health.percentFull, normalColor);
+                    this.drawRectFillLeftToRight(this.ctx, this.left, this.top, this.width, this.height, percentFull);
                     break;
-                case Zon.Settings.BlockHealthDrawModeID.NONE:
-                    // Do nothing
-                    break;
+                default:
+                    throw new Error(`Unknown block draw mode: ${Zon.blocksManager.blockDrawModeSetting.value}`);
             }
+
+            this.ctx.restore();
+        }
+
+        if (Zon.blocksManager.blockHealthTextSetting.value && percentFull < 1) {
+            const healthText = (percentFull * 100).toFixed(0);
+            this.drawTechText(healthText);
         }
     }
 
-    drawRectFillLeftToRight(ctx, x, y, width, height, ratio, fillStyle) {
-        const originalFillStyle = ctx.fillStyle;
-        ctx.fillStyle = fillStyle;
+    _setHealthOverlayCTX = (normalColor) => {
+        this.ctx.save();
+        this.ctx.fillStyle = normalColor;
+        if (Zon.blocksManager.blockHealthOutlineSetting.value) {
+            this.ctx.shadowColor = "black";
+            this.ctx.shadowBlur = 4;
+            this.ctx.shadowOffsetX = 1;
+            this.ctx.shadowOffsetY = 1;
+        }
+    }
+
+    drawTechText = (text) => {
+        const x = this.left + this.width * 0.5;
+        const y = this.top + this.height * 0.5 + 8;
+        this.ctx.save();
+        this.ctx.textAlign = "center";
+
+        switch (Zon.blocksManager.blockHealthTextOutlineStyleSetting.value) {
+            case Zon.Settings.BlockHealthTextOutlineStyleID.SHADOW:
+                this.ctx.shadowColor = Zon.blocksManager.blockHealthTextOutlineColorString.value;
+                this.ctx.shadowBlur = Zon.blocksManager.blockHealthTextOutlineWidthSetting.value;
+                this.ctx.shadowOffsetX = 1;
+                this.ctx.shadowOffsetY = 1;
+                break;
+            case Zon.Settings.BlockHealthTextOutlineStyleID.OUTLINE:
+                this.ctx.lineWidth = Zon.blocksManager.blockHealthTextOutlineWidthSetting.value;
+                this.ctx.strokeStyle = Zon.blocksManager.blockHealthTextOutlineColorString.value;
+                this.ctx.strokeText(text, x, y);
+                break;
+            case Zon.Settings.BlockHealthTextOutlineStyleID.NONE:
+                break;
+            default:
+                throw new Error(`Unknown block health text outline style: ${Zon.blocksManager.blockHealthTextOutlineStyleSetting.value}`);
+        }
+        
+        this.ctx.fillStyle = Zon.blocksManager.blockHealthTextColorString.value;
+        this.ctx.fillText(text, x, y);
+        this.ctx.restore();
+    };
+
+    drawRectFillLeftToRight(ctx, x, y, width, height, ratio) {
         ctx.fillRect(x, y, width * ratio, height);
-        ctx.fillStyle = originalFillStyle;
     }
 
     static SIDE_PERCENT = 0.25;
     static HALF_SIDE_PERCENT = 0.125;
     static INV_SIDE_PERCENT = 4;
-    drawRadialSquareFillSlow(ctx, x, y, width, ratio, fillStyle) {
+    drawRadialSquareFillSlow(ctx, x, y, width, ratio) {
         if (ratio <= 0)
             return;
 
-        const originalFillStyle = ctx.fillStyle;
-        ctx.fillStyle = fillStyle;
         if (ratio >= 1) {
             ctx.fillRect(x, y, width, width);
-            ctx.fillStyle = originalFillStyle;
             return;
         }
 
@@ -164,15 +207,12 @@ Zon.Block = class extends Struct.Rectangle {
         ctx.lineTo(centerX, centerY); //Line back to center
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = originalFillStyle;
     }
 
-    drawRadialSquareFillFast(ctx, x, y, width, ratio, fillStyle) {
+    drawRadialSquareFillFast(ctx, x, y, width, ratio) {
         if (ratio <= 0)
             return;
 
-        const originalFillStyle = ctx.fillStyle;
-        ctx.fillStyle = fillStyle;
         if (ratio >= 1) {
             ctx.fillRect(x, y, width, width);
             ctx.fillStyle = originalFillStyle;
@@ -229,7 +269,6 @@ Zon.Block = class extends Struct.Rectangle {
         ctx.lineTo(centerX, centerY); //Line back to center
         ctx.closePath();
         ctx.fill();
-        ctx.fillStyle = originalFillStyle;
     }
 
     hit = (damage, source) => {
