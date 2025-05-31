@@ -69,42 +69,42 @@ Zon.UI.UIElementBase = class UIElementBase {
     get bottom() {
         return this.rect.bottom;
     }
-    _updateTop = () => {
+    _updateTop() {
         this.element.style.top = `${this.top}px`;
     }
-    _updateLeft = () => {
+    _updateLeft() {
         this.element.style.left = `${this.left}px`;
     }
-    _updateWidth = () => {
+    _updateWidth() {
         this.element.style.width = `${this.width}px`;
     }
-    _updateHeight = () => {
+    _updateHeight() {
         this.element.style.height = `${this.height}px`;
     }
-    _updateAllValues = () => {
+    _updateAllValues() {
         this._updateWidth();
         this._updateHeight();
         this._updateLeft();
         this._updateTop();
     }
-    replaceTop = (func) => {
+    replaceTop (func) {
         this.rect._top.replaceEquation(func);
         //this.rect._top = this.rect._top.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
-    replaceLeft = (func) => {
+    replaceLeft (func) {
         this.rect._left.replaceEquation(func);
         //this.rect._left = this.rect._left.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
-    replaceWidth = (func) => {
+    replaceWidth (func) {
         this.rect._width.replaceEquation(func);
         //this.rect._width = this.rect._width.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
-    replaceHeight = (func) => {
+    replaceHeight (func) {
         this.rect._height.replaceEquation(func);
         //this.rect._height = this.rect._height.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
 
-    updateUIContent = () => {
+    updateUIContent() {
         if (!this.shown.value)
             return;
 
@@ -119,7 +119,7 @@ Zon.UI.UIElementBase = class UIElementBase {
     hide = () => {
         this.shown.value = false;
     }
-    _updateShown = () => {
+    _updateShown() {
         if (this.shown.value) {
             for (const dependentVariable of this.dependentVariables) {
                 dependentVariable.linkDependentActions();
