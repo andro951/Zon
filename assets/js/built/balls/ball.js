@@ -102,7 +102,9 @@ Zon.Ball = class extends Struct.Circle {
                         collided = false;
                     }
                     else {
-                        console.log(`len: ${len}, dx: ${dx}, dy: ${dy}, lastPos: ${lastPos.x}, ${lastPos.y}, x: ${this.x}, y: ${this.y}`);
+                        if (zonDebug) {
+                            console.log(`len: ${len}, dx: ${dx}, dy: ${dy}, lastPos: ${lastPos.x}, ${lastPos.y}, x: ${this.x}, y: ${this.y}`);
+                        }
                     }
                 }
 

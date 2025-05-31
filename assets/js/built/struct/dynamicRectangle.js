@@ -14,6 +14,15 @@ Struct.DynamicRectangle = class {
         return new Struct.DynamicRectangle(new Variable.Value(0), new Variable.Value(0), new Variable.Value(0), new Variable.Value(0));
     }
 
+    static dependent(thisObj = undefined, linkDependentActions = false) {
+        return new Struct.DynamicRectangle(
+            Variable.Dependent.empty(thisObj, linkDependentActions),
+            Variable.Dependent.empty(thisObj, linkDependentActions),
+            Variable.Dependent.empty(thisObj, linkDependentActions),
+            Variable.Dependent.empty(thisObj, linkDependentActions)
+        );
+    }
+
     static base() {
         return new Struct.DynamicRectangle(new Variable.Base(), new Variable.Base(), new Variable.Base(), new Variable.Base());
     }

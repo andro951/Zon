@@ -5,14 +5,6 @@ Zon.updateCombatLayout = () => {
     Zon.topUI.updateCombatLayout(combatLayoutSetting);
     Zon.combatUI.updateCombatLayout(combatLayoutSetting);
     Zon.bottomUI.updateCombatLayout(combatLayoutSetting);
-    if (Zon.topUI.visible)
-        Zon.topUI.updateAllValues();
-
-    if (Zon.combatUI.visible)
-        Zon.combatUI.updateAllValues();
-
-    if (Zon.bottomUI.visible)
-        Zon.bottomUI.updateAllValues();
 }
 Zon.Setup.preLoadSetupActions.add(() => 
     Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT).onChangedAction.add(Zon.updateCombatLayout)
@@ -30,15 +22,9 @@ Zon.hideCombatUI = () => {
     Zon.bottomUI.hide();
 }
 
-Zon.TopUI = class extends Zon.UIPanel {
+Zon.TopUI = class TopUI extends Zon.UI.UIElementCanvas {
     constructor() {
-        const canvas = document.createElement('canvas');
-        canvas.id = 'topUI';
-        document.body.appendChild(canvas);
-        super(canvas);
-        this.element.width = 960;
-        this.element.height = 420;
-        this.ctx = this.element.getContext('2d');
+        super('topUI', 960, 420);
         this.topUIPercentOfHeight = 0.2;
         this.topUIAspectRatio = 3;
     }
@@ -50,6 +36,18 @@ Zon.TopUI = class extends Zon.UIPanel {
         this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT));
         this.draw();
         Zon.device.onResize.add(this.draw);
+
+        const panel = document.createElement('div');
+        panel.id = 'someBasicPanel';
+        panel.style.position = 'absolute';
+        panel.style.left = '0px';
+        panel.style.top = '0px';
+        panel.style.width = '200px';
+        panel.style.height = '150px';
+        panel.style.backgroundColor = 'rgba(30, 30, 30, 1)';
+        panel.style.border = '2px solid white';
+        panel.style.borderRadius = '8px';
+        document.body.appendChild(panel);
     }
 
     draw = () => {
@@ -96,15 +94,9 @@ Zon.TopUI = class extends Zon.UIPanel {
 }
 Zon.topUI = new Zon.TopUI();
 
-Zon.CombatUI = class extends Zon.UIPanel {
+Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
     constructor() {
-        const canvas = document.createElement('canvas');
-        canvas.id = 'combatAreaCanvas';
-        document.body.appendChild(canvas);
-        super(canvas);
-        this.element.width = 960;
-        this.element.height = 960;
-        this.ctx = this.element.getContext('2d');
+        super('combatAreaCanvas', 960, 960);
         this.combatAreaPercentOfHeight = 0.6;
         this.combatUIAspectRatio = 9 / 9;
     }
@@ -127,16 +119,12 @@ Zon.CombatUI = class extends Zon.UIPanel {
                 break;
         }
     }
-
-    clearCanvas = () => {
-        this.ctx.clearRect(0, 0, this.element.width, this.element.height);
-    }
 }
 Zon.combatUI = new Zon.CombatUI();
 
-Zon.BottomUI = class extends Zon.UIPanel {
+Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
     constructor() {
-        super(document.getElementById('bottomUI'));
+        super('bottomUI', 960, 420);
         this.bottomUIPercentOfHeight = 0.2;
         this.bottomUIAspectRatio = 3;
     }

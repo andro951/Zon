@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.ShowHideUI = class {
+Zon.ShowHideUI = class {//TODO: replace with uiElements.
     constructor() {
         
     }

@@ -22,3 +22,33 @@ h1 {
     background-color: #030303;
     display: none;
 }
+
+#ui-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: rgba(30, 30, 30, 1);
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  z-index: 10; /* above canvas */
+}
+
+#ui-panel button {
+  background: #0af;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 6px;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.3s;
+}
+
+#ui-panel button:hover {
+  background: #09c;
+}

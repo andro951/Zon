@@ -2,7 +2,7 @@
 
 const Variable = {}
 
-Variable.Base = class {
+Variable.Base = class VariableBase {
     constructor() {
         this.onChangedAction = new Actions.Action();
     }
@@ -27,11 +27,11 @@ Variable.Base = class {
         this.onChangedAction.call();
     }
 
-    copyData(newVariable) {
+    transferDataToNewVariable(newVariable) {
         if (!(newVariable instanceof Variable.Base))
             throw new Error("newVariable must be a VariableBase", newVariable);
 
-        newVariable.onChangedAction.setCallbacks(this.onChangedAction.callbacks);
+        newVariable.onChangedAction = this.onChangedAction;
         
         return newVariable;
     }
@@ -49,7 +49,7 @@ Variable.Base = class {
     }
 }
 
-Variable.Value = class extends Variable.Base {
+Variable.Value = class VariableValue extends Variable.Base {
     constructor(initialValue) {
         super();
         this._value = initialValue;
@@ -67,18 +67,129 @@ Variable.Value = class extends Variable.Base {
     }
 }
 
-Variable.Dependent = class extends Variable.Base {
-    constructor(getValue, thisObj = undefined) {
+Variable.ColorVar = class ColorVar extends Variable.Base {
+    constructor(initialColor = 0) {
+        super();
+        this._value = Struct.Color.fromUInt(initialColor);
+    }
+
+    set value(newValue) {
+        if (this._value.uint === newValue.uint)
+            return;
+
+        this._value.uint = newValue.uint;
+        this.onChanged();
+    }
+    get r() {
+        return this._value.r;
+    }
+    set r(value) {
+        if (this._value.r === value)
+            return;
+
+        this._value.r = value;
+        this.onChanged();
+    }
+    get g() {
+        return this._value.g;
+    }
+    set g(value) {
+        if (this._value.g === value)
+            return;
+
+        this._value.g = value;
+        this.onChanged();
+    }
+    get b() {
+        return this._value.b;
+    }
+    set b(value) {
+        if (this._value.b === value)
+            return;
+        
+        this._value.b = value;
+        this.onChanged();
+    }
+    get a() {
+        return this._value.a;
+    }
+    set a(value) {
+        if (this._value.a === value)
+            return;
+
+        this._value.a = value;
+        this.onChanged();
+    }
+    get uint() {
+        return this._value.uint;
+    }
+    set uint(value) {
+        if (this._value.uint === value)
+            return;
+
+        this._value.uint = value;
+        this.onChanged();
+    }
+    get value() {
+        return this._value;
+    }
+}
+
+Variable.Dependent = class DependentVariable extends Variable.Base {
+    constructor(getValue, thisObj = undefined, linkDependentActions = true) {
         super();
         if (typeof getValue !== 'function')
             throw new Error(`getValue must be a function, got ${typeof getValue}: ${getValue}`);
 
-        this.getValue = getValue;
+        this.dependentActions = new Set();
+        this._dependentActionsLinked = linkDependentActions;
+        this._thisObj = thisObj;
+        this.replaceEquation(getValue, thisObj);
+    }
+    static empty = (thisObj = undefined, linkDependentActions = false) => {
+        return new Variable.Dependent(Variable.Dependent.defaultEquation, thisObj, linkDependentActions);
+    }
+    static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
+    replaceEquation(newGetValue, thisObj = undefined) {
+        if (typeof newGetValue !== 'function')
+            throw new Error(`newGetValue must be a function, got ${typeof newGetValue}: ${newGetValue}`);
+
+        this.getValue = newGetValue;
+        if (newGetValue === Variable.Dependent.defaultEquation)
+            return;
+
+        const linked = this._dependentActionsLinked;
+        if (linked)
+            this.unlinkDependentActions();
+
+        this.dependentActions.clear();
         this.needsRecalculate = true;
-        this.extractVariables(getValue, thisObj);
+        this.extractVariables(newGetValue, thisObj);
+        this._dependentActionsLinked = false;
+        if (linked)
+            this.linkDependentActions();
+        
         this._value = undefined;
     }
-    static debuggExtractVariables = false;
+    linkDependentActions() {
+        if (this._dependentActionsLinked)
+            return;
+
+        this._dependentActionsLinked = true;
+        for (const action of this.dependentActions) {
+            action.add(this.onChanged);
+        }
+    }
+    unlinkDependentActions() {
+        if (!this._dependentActionsLinked)
+            return;
+
+        this._dependentActionsLinked = false;
+        for (const action of this.dependentActions) {
+            action.remove(this.onChanged);
+        }
+    }
+    static debuggExtractVariables = zonDebug && false;
     extractVariables(fn, thisContext = undefined) {
         if (Variable.Dependent.debuggExtractVariables) console.log(`Extracting variables from function: ${fn}`);
         const fnStr = fn.toString();
@@ -210,12 +321,14 @@ Variable.Dependent = class extends Variable.Base {
     tryExtractVariablesFromObject(current) {
         if (current instanceof Variable.Base) {
             if (Variable.Dependent.debuggExtractVariables) console.log(`Adding onChangedAction to object: ${current}`);
-            current.onChangedAction.add(this.onChanged);
+            //current.onChangedAction.add(this.onChanged);
+            this.dependentActions.add(current.onChangedAction);
             return true;
         }
         else if (current instanceof Actions.Action) {
             if (Variable.Dependent.debuggExtractVariables) console.warn(`Adding onChangedAction to Action object: ${current}`);
-            current.add(this.onChanged);
+            this.dependentActions.add(current);
+            //current.add(this.onChanged);
             return true;
         }
         else {

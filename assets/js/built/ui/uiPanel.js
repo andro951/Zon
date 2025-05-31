@@ -110,7 +110,7 @@ Zon.UIPanel = class {
         if (this.visible)
             this.removeTopListener();
 
-        this.rect._top = this.rect._top.copyData(new Variable.Dependent(func, this));
+        this.rect._top = this.rect._top.transferDataToNewVariable(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addTopListener();
@@ -119,7 +119,7 @@ Zon.UIPanel = class {
         if (this.visible)
             this.removeLeftListener();
 
-        this.rect._left = this.rect._left.copyData(new Variable.Dependent(func, this));
+        this.rect._left = this.rect._left.transferDataToNewVariable(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addLeftListener();
@@ -128,7 +128,7 @@ Zon.UIPanel = class {
         if (this.visible)
             this.removeWidthListener();
 
-        this.rect._width = this.rect._width.copyData(new Variable.Dependent(func, this));
+        this.rect._width = this.rect._width.transferDataToNewVariable(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addWidthListener();
@@ -137,7 +137,7 @@ Zon.UIPanel = class {
         if (this.visible)
             this.removeHeightListener();
 
-        this.rect._height = this.rect._height.copyData(new Variable.Dependent(func, this));
+        this.rect._height = this.rect._height.transferDataToNewVariable(new Variable.Dependent(func, this));
 
         if (this.visible)
             this.addHeightListener();

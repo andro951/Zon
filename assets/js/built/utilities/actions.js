@@ -39,8 +39,4 @@ Actions.Action = class {
         this.call(...args);
         this.clear();
     }
-
-    setCallbacks(callbacks) {
-        this.callbacks = new Set(callbacks);
-    }
 }
