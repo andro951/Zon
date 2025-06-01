@@ -17,12 +17,14 @@ Zon.Game = class {
         this.tickRemainder = 0;
         this.lastTickStart = performance.now();
         this.timePerTick = 0.00000000001;
+        this.lastPerSecondUpdate = this.lastTickStart - 1000;
+        this.autoSavedThisSecond = false;
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
     }
 
     GameSaveLoadInfo = class GameSaveLoadInfo extends Zon.SaveLoadInfo {
         constructor() {
-            super(Zon.SaveLoadID.SETTINGS, [
+            super(Zon.SaveLoadID.GAME, [
                 Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.stageID, Zon.IOManager.commonDataHelper.stageBits),
                 Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.stageNum, Zon.IOManager.commonDataHelper.stageNumBits),
                 Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.highestStageAvailable, Zon.IOManager.commonDataHelper.stageBits),
@@ -88,6 +90,8 @@ Zon.Game = class {
             this.tickRemainder = totalTicks - ticksToRunInt;
         }
 
+        this.realTimeUpdate();
+
         if (ticksToRunInt <= 0)
             return;
 
@@ -143,6 +147,46 @@ Zon.Game = class {
         return ticks;
     }
 
+    realTimeUpdateActions = new Actions.Action();
+    oncePerSecondUpdateActions = new Actions.Action();
+
+    realTimeUpdate = () => {
+        const timeSinceLastPerSecondUpdate = Zon.timeController.timeMilliseconds - this.lastPerSecondUpdate;
+        this.realTimeUpdateActions.call();
+        if (!this.autoSavedThisSecond && timeSinceLastPerSecondUpdate >= 100) {
+            this.autoSavedThisSecond = true;
+            Zon.IOManager.saveGameAsync(0);//TODO: saveNum
+        }
+
+        if (timeSinceLastPerSecondUpdate < 1000)
+            return;
+
+        if (timeSinceLastPerSecondUpdate >= 2000) {
+            console.error(`Game realTimeUpdate: More than 2 seconds since last per second update! (${timeSinceLastPerSecondUpdate} ms)`);
+            this.lastPerSecondUpdate = Zon.timeController.timeMilliseconds;
+        }
+        else {
+            this.lastPerSecondUpdate += 1000;
+        }
+        
+        this.oncePerSecondUpdate();
+    }
+
+    oncePerSecondUpdate = () => {
+        if (!this.autoSavedThisSecond)
+            console.error("Game oncePerSecondUpdate: autoSavedThisSecond should be true at this point!");
+
+        this.autoSavedThisSecond = false;
+        this.oncePerSecondUpdateActions.call();
+    }
+
+    update = () => {
+        Zon.blocksManager.update();
+        Zon.BallManager.update();
+        Zon.playerInventory.update();
+        this.lateUpdate.call();
+    }
+
     startLoad = (newGame, gameSaveNum, settingsSaveNum) => {
         if (newGame) {
             Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME, gameSaveNum);
@@ -175,21 +219,17 @@ Zon.Game = class {
         }
     }
 
-    update = () => {
-        Zon.blocksManager.update();
-        Zon.BallManager.update();
-        this.lateUpdate.call();
-    }
-
     drawLoop = () => {
         this.draw();
     }
 
+    onNextDrawActions = new Actions.Action();
     draw = () => {
         Zon.combatUI.clearCanvas();
         Zon.blocksManager.draw();
         Zon.BallManager.draw();
         this.lateDraw.call();
+        this.onNextDrawActions.callAndClear();
     }
 
     onCompleteStage = (levelData) => {
@@ -214,7 +254,7 @@ Zon.Game = class {
     }
 
     giveLevelRewards = (levelData) => {
-        
+        levelData.giveLevelRewards();
     }
 
     updateAvailableStageIDAndNum = () => {

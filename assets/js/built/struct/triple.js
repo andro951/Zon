@@ -176,15 +176,15 @@ Numbers.Triple = class Triple {
         }
         else {
             const result = new Numbers.Triple(this._significand << -expDiff, newExponent, this._significandExponent - expDiff);
-            if (expDiff < -63n)
-                throw new RangeError(`Exponent difference is too large, causing a loss in data.  this: ${this.toFullString()}, significand << ${-expDiff} results in zero, causing a loss in data. expDiff: ${expDiff}, result: ${result.toFullString()}`);
+            if (expDiff < -63n) {
+                return Numbers.Triple.ZERO;
+                //throw new RangeError(`Exponent difference is too large, causing a loss in data.  this: ${this.toFullString()}, significand << ${-expDiff} results in zero, causing a loss in data. expDiff: ${expDiff}, result: ${result.toFullString()}`);
+            }
 
             if (zonDebug) {
                 if (this.isPositive && result.isNegative || this.isNegative && result.isPositive || this.combinedExponent !== result.combinedExponent)
                     console.error("SetExponent error; this: ", this.toFullString(), "result: ", result.toFullString());
             }
-
-            
 
             return result;
         }
@@ -375,7 +375,7 @@ Numbers.Triple = class Triple {
     }
     multiply(right) {
         const totalSignificandExponent = this._significandExponent + right._significandExponent;
-		const significandExponentToReduceBy = totalSignificandExponent - 61n;
+		let significandExponentToReduceBy = totalSignificandExponent - 61n;
 		if (significandExponentToReduceBy <= 0n) {//61 instead of 63 to round the significands up to the next power of 2
             if (zonDebug) {
                 const mult = this.significand * right.significand;
@@ -397,7 +397,7 @@ Numbers.Triple = class Triple {
 			return Numbers.Triple.create(this.significand * right.significand, this.exponent + right.exponent);
 		}
 
-		const significandExpDiff = this._significandExponent - right._significandExponent;
+		let significandExpDiff = this._significandExponent - right._significandExponent;
 		if (significandExpDiff >= 0n) {
 			//left larger significandExponent
 			if (significandExpDiff >= significandExponentToReduceBy) {
@@ -423,7 +423,7 @@ Numbers.Triple = class Triple {
 			}
 			else {
 				significandExponentToReduceBy -= significandExpDiff;
-				const newRightSignificandExponentReduction = significandExponentToReduceBy / 2;
+				const newRightSignificandExponentReduction = significandExponentToReduceBy / 2n;
 				const newLeftSignificandExponentReduction = significandExpDiff + significandExponentToReduceBy - newRightSignificandExponentReduction;
 				const reducedLeft = this.setExponent(this._exponent + newLeftSignificandExponentReduction);
 				const reducedRight = right.setExponent(right._exponent + newRightSignificandExponentReduction);
@@ -473,7 +473,7 @@ Numbers.Triple = class Triple {
 			}
 			else {
 				significandExponentToReduceBy -= significandExpDiff;
-				const newLeftSignificandExponentReduction = significandExponentToReduceBy / 2;
+				const newLeftSignificandExponentReduction = significandExponentToReduceBy / 2n;
 				const newRightSignificandExponentReduction = significandExpDiff + significandExponentToReduceBy - newLeftSignificandExponentReduction;
 				const reducedLeft = this.setExponent(this._exponent + newLeftSignificandExponentReduction);
 				const reducedRight = right.setExponent(right._exponent + newRightSignificandExponentReduction);
@@ -581,17 +581,17 @@ Numbers.Triple = class Triple {
             return Numbers.Triple.ZERO;
 
         if (thisBumped.isNegative) {
-            return new Numbers.Triple.create(-((-thisBumped.significand) >> -thisBumped.exponent));
+            return Numbers.Triple.create(-((-thisBumped.significand) >> -thisBumped.exponent));
         }
 
         const wholeNumberSignificand = thisBumped.significand >> -thisBumped.exponent;
-        return new Numbers.Triple.create(wholeNumberSignificand);
+        return Numbers.Triple.create(wholeNumberSignificand);
     }
     static round(triple) {
         return triple.round();
     }
     round() {
-        const { wholeNumber, remainder } = toWholeNumber(this);
+        const { wholeNumber, remainder } = this.toWholeNumber();
         if (remainder.greaterThanOrEqual(Numbers.Triple.HALF))
             return wholeNumber.add(Numbers.Triple.ONE);
 
@@ -612,13 +612,13 @@ Numbers.Triple = class Triple {
         const shift = 63n + thisBumped.exponent;
 
         if (thisBumped.isNegative) {
-            const remainder = new Numbers.Triple.create((-thisBumped.significand) & (Numbers.Triple.LONG_MAX_VALUE >> shift), thisBumped.exponent);
-            return { wholeNumber: new Numbers.Triple.create(-((-thisBumped.significand) >> -thisBumped.exponent)), remainder };
+            const remainder = Numbers.Triple.create((-thisBumped.significand) & (Numbers.Triple.LONG_MAX_VALUE >> shift), thisBumped.exponent);
+            return { wholeNumber: Numbers.Triple.create(-((-thisBumped.significand) >> -thisBumped.exponent)), remainder };
         }
 
         const wholeNumberSignificand = thisBumped.significand >> -thisBumped.exponent;
-        const remainder = new Numbers.Triple.create(thisBumped.significand & (Numbers.Triple.LONG_MAX_VALUE >> shift), thisBumped.exponent);
-        return { wholeNumber: new Numbers.Triple.create(wholeNumberSignificand), remainder };
+        const remainder = Numbers.Triple.create(thisBumped.significand & (Numbers.Triple.LONG_MAX_VALUE >> shift), thisBumped.exponent);
+        return { wholeNumber: Numbers.Triple.create(wholeNumberSignificand), remainder };
     }
     static min(left, right) {
         if (left.lessThan(right))
@@ -658,9 +658,22 @@ Numbers.Triple = class Triple {
 
         const mask = Numbers.Triple.LONG_MAX_VALUE >> (62n - this._significandExponent);
         if ((mask & this.significand) === mask)
-            return new Numbers.Triple.create(this.significand + 1n, this.exponent);
+            return Numbers.Triple.create(this.significand + 1n, this.exponent);
 
         return this.clone;
+    }
+    logarithmicProgress = (start, end) => {
+        if (start.greaterThanOrEqual(end))
+            return Numbers.Triple.ZERO;
+            
+        if (this.lessThanOrEqual(start))
+            return Numbers.Triple.ZERO;
+
+        if (this.greaterThanOrEqual(end))
+            return Numbers.Triple.ONE;
+
+        const startLog = start.log10Number();
+        return (this.log10Number() - startLog) / (end.log10Number() - startLog);
     }
     write(writer) {
         writer.writeBigIntAutoLength(this.significand);
@@ -925,6 +938,9 @@ Numbers.Triple = class Triple {
     }
     static log10(triple) {
         return Numbers.Triple.fromNumber(log10Number(triple));
+    }
+    log10Number() {
+        return Numbers.Triple.log10Number(this);
     }
     static log10Number(triple) {
         if (triple.isZero)

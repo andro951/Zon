@@ -108,9 +108,9 @@ Zon.LevelData = class LevelData {
 
     static getStageCompletionAetherReward(displayedStageIndex, prestigeCount) {
         const stageCompletionAetherBonus = Zon.LevelData.getStageCompletionBaseAetherReward(displayedStageIndex, prestigeCount);
-        const finalStageCompletionAetherBonus = stageCompletionAetherBonus.multiplyByPow10(Zon.AetherBonusManager.aetherBonus.value);
+        const finalStageCompletionAetherBonus = stageCompletionAetherBonus.multiply(Zon.AetherBonusManager.aetherBonus.value);
         if (finalStageCompletionAetherBonus.isNegative) {
-            throw new Error("finalStageCompletionAetherBonus is negative: " + finalStageCompletionAetherBonus);
+            throw new Error(`finalStageCompletionAetherBonus is negative: ${finalStageCompletionAetherBonus}`);
         }
 
         return finalStageCompletionAetherBonus;
@@ -121,7 +121,7 @@ Zon.LevelData = class LevelData {
     }
 
     giveResourceRewards = () => {
-        Zon.PlayerInventory.receiveAether(this.aetherStageCompletionReward);
+        Zon.playerInventory.receiveAether(this.aetherStageCompletionReward);
     }
 
     givePostResourceRewards = () => {

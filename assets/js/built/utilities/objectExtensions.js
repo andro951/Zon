@@ -1,5 +1,15 @@
 const ObjectExtensions = {}
 
+Object.defineProperty(Object.prototype, "bindAll", {
+    value: function() {
+        const prototypeFunctions = Object.prototype.getPrototypeFunctions.call(this);
+        for (const [functionName, funct] of prototypeFunctions) {
+            this[functionName] = funct.bind(this);
+        }
+    },
+    enumerable: false, // This hides it from for...in and Object.keys
+});
+
 Object.defineProperty(Object.prototype, "forwardMethodsFrom", {
     value:
     /**
@@ -55,7 +65,7 @@ Object.defineProperty(Object.prototype, "getInstanceFunctionNames", {
 Object.defineProperty(Object.prototype, "getPrototypeFunctionNames", {
     value: function(filterConstructor = true) {
         const prototype = Object.getPrototypeOf(this);
-        if (!prototype)
+        if (!prototype || prototype === Object.prototype)
             return new Set();
 
         const names = new Set();
@@ -75,7 +85,7 @@ Object.defineProperty(Object.prototype, "getPrototypeFunctionNames", {
             names.add(key);
         }
 
-        return names;
+        return new Set([...names, ...Object.prototype.getPrototypeFunctionNames.call(prototype, filterConstructor)]);
     },
     enumerable: false,
 });

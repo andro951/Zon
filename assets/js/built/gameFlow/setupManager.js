@@ -93,7 +93,6 @@ Zon.Setup.postLoadSetup = () => {
     Zon.stageUIState.postLoadSetup();
     Zon.timeController.postLoadSetup();
     Zon.StageSmartReset.postLoadSetup();
-    Zon.playerInventory.postLoadSetup();
     Zon.craftingManager.postLoadSetup();//After playerInventory
     Zon.assemblersUIState.postLoadSetup();//After craftingManager
     Zon.coreUIState.postLoadSetup();

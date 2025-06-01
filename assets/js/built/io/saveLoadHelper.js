@@ -80,7 +80,7 @@ Zon.SaveLoadHelper_T = class SaveLoadHelper_T extends Zon.SaveLoadHelper {
         value.write(writer);
     }
     _read = (reader) => {
-        return Zon.Triple.read(reader);
+        return Numbers.Triple.read(reader);
     }
 }
 
@@ -353,27 +353,28 @@ Zon.LoadConstantHelper_UI53 = class LoadConstantHelper_UI53 extends Zon.LoadCons
 Zon.SaveLoadHelper_List = class SaveLoadHelper_List {
     constructor(saveLoadHelpers = null) {
         this.saveLoadHelpers = saveLoadHelpers ?? [];
+        this.bindAll();
     }
 
-    add = (saveLoadHelper) => {
+    add(saveLoadHelper) {
         this.saveLoadHelpers.push(saveLoadHelper);
     }
-    write = (writer) => {
+    write(writer) {
         for (const item of this.saveLoadHelpers) {
             item.write(writer);
         }
     }
-    read = (reader) => {
+    read(reader) {
         for (const item of this.saveLoadHelpers) {
             item.read(reader);
         }
     }
-    get = () => {
+    get() {
         for (const item of this.saveLoadHelpers) {
             item.get();
         }
     }
-    set = () => {
+    set() {
         for (const item of this.saveLoadHelpers) {
             item.set();
         }
@@ -397,4 +398,47 @@ Zon.SaveLoadInfo = class SaveLoadInfo extends Zon.SaveLoadHelper_List {
     toString() {
         return this.name;
     }
+}
+
+Zon.SaveLoadHelper_KeyValuePair = class SaveLoadHelper_KeyValuePair {
+    constructor(map, toSaveLoadHelper, length) {
+        this.length = typeof length === "number" ? { value: length } : length; // Ensure length is an object with a value property
+        this.map = [...map].map(([item, key]) => [key, toSaveLoadHelper(item)]);
+    }
+
+    write(writer) {
+        writer.writeUInt32AutoLength(this.map.length);
+        const bits = this.length.value;
+        for (const [key, item] of this.map) {
+            writer.writeUInt32(key, bits);
+            item.write(writer);
+        }
+    }
+    read(reader) {
+        const length = reader.readUInt32AutoLength();
+        const bits = this.length.value;
+        for (let i = 0; i < length; i++) {
+            const key = reader.readUInt32(bits);
+            const item = this.map.get(key);
+            if (item === undefined) {
+                throw new Error(`SaveLoadHelper_KeyValuePair: Key ${key} not found in dictionary.`);
+            }
+
+            item.read(reader);
+        }
+    }
+    get() {
+        for (const [key, item] of this.map) {
+            item.get();
+        }
+    }
+    set() {
+        for (const [key, item] of this.map) {
+            item.set();
+        }
+    }
+}
+
+Map.prototype.getSaveLoadHelper = function(toSaveLoadHelper, length) {
+    return new Zon.SaveLoadHelper_KeyValuePair(this, toSaveLoadHelper, length);
 }

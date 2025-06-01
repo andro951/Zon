@@ -1,0 +1,10 @@
+"use strict";
+
+Zon.AetherBonusManager = {};
+
+Zon.AetherBonusManager.aetherBonus = Variable.Dependent.empty();
+
+Zon.AetherBonusManager.postLoadSetup = () => {
+    Zon.AetherBonusManager.aetherBonus.replaceEquation(() => Zon.StageBonusManager.totalStageBonus.value.multiply(Zon.AetherGained.totalMultiplier.value));
+}
+Zon.Setup.postLoadSetupActions.add(Zon.AetherBonusManager.postLoadSetup);

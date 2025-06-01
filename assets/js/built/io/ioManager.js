@@ -417,18 +417,49 @@ Zon.IOManager.CommonDataHelper = class CommonDataHelper extends Zon.SaveLoadInfo
         this.addHelpers();
     }
 
+    write = (writer) => {
+        writer.writeUInt32AutoLength(this.saveLoadHelpers.length);
+        for (let id = 0; id < this.saveLoadHelpers.length; id++) {
+            const item = this.saveLoadHelpers[id];
+            item.write(writer);
+        }
+    }
+    read = (reader) => {
+        this.count = reader.readUInt32AutoLength();
+        for (let id = 0; id < this.count; id++) {
+            const item = this.saveLoadHelpers[id];
+            item.read(reader);
+        }
+    }
+    get = () => {
+        for (const item of this.saveLoadHelpers) {
+            item.get();
+        }
+    }
+    set = () => {
+        for (let id = 0; id < this.count; id++) {
+            const item = this.saveLoadHelpers[id];
+            item.set();
+        }
+    }
+
     //The number of bits can safely be changed between versions if more space is needed.
     stageBits = new Zon.LoadConstantHelper_UI32((Zon.StageID.COUNT - 1).bitLength32());
     stageNumBits = new Zon.LoadConstantHelper_UI32(Zon.LevelData.maxStageNum.bitLength32());
     settingsEnumBits = new Zon.LoadConstantHelper_UI32((Zon.GameSettingsID.COUNT - 1).bitLength32());
+    itemIDBits = new Zon.LoadConstantHelper_UI32((Zon.ItemType.COUNT).bitLength32());
 
     addHelpers = () => {
-        for (const key of Object.keys(this)) {
-            const value = this[key];
-            if (value instanceof Zon.LoadConstantHelper) {
-                this.add(value);
-            }
-        }
+        // for (const key of Object.keys(this)) {
+        //     const value = this[key];
+        //     if (value instanceof Zon.LoadConstantHelper) {
+        //         this.add(value);
+        //     }
+        // }
+        this.add(this.stageBits);
+        this.add(this.stageNumBits);
+        this.add(this.settingsEnumBits);
+        this.add(this.itemIDBits);
     }
 }
 

@@ -1,11 +1,14 @@
-
+"use strict";
 
 Zon.UI.UIElementBase = class UIElementBase {
-    constructor(element, parent = null) {
+    constructor(element, zIndex, parent) {
         if (new.target === Zon.UI.UIElementBase)
             throw new TypeError("Cannot construct UIElementBase instances directly");
 
+        this.bindAll();
+        this.parent = parent;
         this.element = element;
+        this.element.style.zIndex = zIndex.toString();
         this.element.style.position = "absolute";
         this.position = new Variable.Value(this.element.style.position);
         this.position.onChangedAction.add(() => this.element.style.position = this.position.value);
@@ -15,14 +18,20 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.rect._top.onChangedAction.add(this._updateTop);
         this.rect._width.onChangedAction.add(this._updateWidth);
         this.rect._height.onChangedAction.add(this._updateHeight);
-        this.shown = new Variable.Value(false);
+        if (this.parent) {
+            this.shown = new Variable.Dependent(() => this.parent.shown.value, this);
+        }
+        else {
+            this.shown = new Variable.Value(false);
+        }
+        
         this.shown.onChangedAction.add(this._updateShown);
         this.backGroundColor = new Variable.ColorVar();
         this.backGroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backGroundColor.value.cssString);
         this.border = new Variable.Value(this.element.style.border);
         this.border.onChangedAction.add(() => this.element.style.border = this.border.value);
         Zon.Setup.postConstructors.add(this.postConstructor);
-        (parent ?? window.document.body).appendChild(this.element);
+        (parent?.element ?? window.document.body).appendChild(this.element);
         this.dependentVariables = [
             this.rect._left,
             this.rect._top,
@@ -87,21 +96,17 @@ Zon.UI.UIElementBase = class UIElementBase {
         this._updateLeft();
         this._updateTop();
     }
-    replaceTop (func) {
+    replaceTop(func) {
         this.rect._top.replaceEquation(func);
-        //this.rect._top = this.rect._top.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
-    replaceLeft (func) {
+    replaceLeft(func) {
         this.rect._left.replaceEquation(func);
-        //this.rect._left = this.rect._left.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
-    replaceWidth (func) {
+    replaceWidth(func) {
         this.rect._width.replaceEquation(func);
-        //this.rect._width = this.rect._width.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
-    replaceHeight (func) {
+    replaceHeight(func) {
         this.rect._height.replaceEquation(func);
-        //this.rect._height = this.rect._height.transferDataToNewVariable(new Variable.Dependent(func, this));
     }
 
     updateUIContent() {
@@ -111,12 +116,12 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.updateUIActions.call();
     }
     updateUIActions = new Actions.Action();
-    show = () => {
+    show() {
         this.shown.value = true;
     }
     onHideActions = new Actions.Action();
     onShowActions = new Actions.Action();
-    hide = () => {
+    hide() {
         this.shown.value = false;
     }
     _updateShown() {
@@ -125,7 +130,7 @@ Zon.UI.UIElementBase = class UIElementBase {
                 dependentVariable.linkDependentActions();
             }
             
-            this.element.style.display = "block";
+            this.element.style.display = this._display ?? "block";
             this._updateAllValues();
             this.onShowActions.call();
             this.updateUIContent();
@@ -134,11 +139,14 @@ Zon.UI.UIElementBase = class UIElementBase {
                 dependentVariable.unlinkDependentActions();
             }
 
+            if (this.element.style.display !== "none")
+                this._display = this.element.style.display;
+
             this.element.style.display = "none";
             this.onHideActions.call();
         }
     }
-    toggle = () => {
+    toggle() {
         if (this.shown.value) {
             this.hide();
         } else {
@@ -148,10 +156,10 @@ Zon.UI.UIElementBase = class UIElementBase {
 }
 
 Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
-    constructor(canvasId, width = 300, height = 150) {
+    constructor(canvasId, width = 300, height = 150, zIndex = 0, parent = null) {
         const newCanvas = document.createElement("canvas");
         newCanvas.id = canvasId;
-        super(newCanvas);
+        super(newCanvas, zIndex, parent);
         this.element.width = width;
         this.element.height = height;
         this.canvasWidth = new Variable.Value(newCanvas.width);
@@ -173,9 +181,23 @@ Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
 }
 
 Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
-    constructor(divId) {
+    constructor(divId, zIndex = 0, parent = null) {
         const newDiv = document.createElement("div");
         newDiv.id = divId;
-        super(newDiv);
+        super(newDiv, zIndex, parent);
+        this.fontSize = new Variable.Dependent(() => this.height * 0.8, this);
+        this.fontSize.onChangedAction.add(() => this.element.style.fontSize = `${this.fontSize.value}px`);
+    }
+
+    setup() {
+        this.fontSize.onChangedAction.call();
     }
 }
+
+Zon.UI.UIElementZID = {
+    COMBAT_UI: 0,
+    MAIN_UI: 1,
+
+};
+Zon.UI.UIElementZIDNames = [];
+Enum.createEnum(Zon.UI.UIElementZID, Zon.UI.UIElementZIDNames, false);

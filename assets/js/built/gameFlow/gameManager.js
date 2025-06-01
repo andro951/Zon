@@ -9,10 +9,6 @@ Zon.GameManager.start = () => {
     Zon.GameManager.gameState.construct();
 }
 
-Zon.GameManager.saveGame = () => {
-    Zon.IOManager.saveGameAsync();
-}
-
 Zon.GameManager.preLoadSetup = () => {
     Zon.GameManager.gameState = new Zon.GameStateMainMenu();
 }

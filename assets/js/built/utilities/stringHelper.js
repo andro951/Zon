@@ -129,3 +129,73 @@ StringHelper.ToTime = function(daysGreaterThanZero, days, time, secondsDecimal =
 StringHelper.ToTime2 = function(triple, remainingTime, decimals = 2, scientific = false, removeTrailingZeros = true) {
     return StringHelper.ToTime(triple > Numbers.Triple.Zero, triple.S(decimals, scientific, removeTrailingZeros), remainingTime);
 }
+
+String.prototype.isUpper = function(c) {
+    const code = c.charCodeAt(0);
+    return code >= 65 && code <= 90; // 'A' - 'Z'
+}
+
+String.prototype.isLower = function(c) {
+    const code = c.charCodeAt(0);
+    return code >= 97 && code <= 122; // 'a' - 'z'
+}
+
+String.prototype.isNumber = function(c) {
+    const code = c.charCodeAt(0);
+    return code >= 48 && code <= 57; // '0' - '9'
+}
+
+String.prototype.isUpperOrNumber = function(c) {
+    const code = c.charCodeAt(0);
+    return (code >= 65 && code <= 90) || (code >= 48 && code <= 57);
+}
+
+StringHelper.lowerCaseAddSpacesStringWords = ["of"];
+
+String.prototype.addSpaces = function(s, checkLowerCaseWords = false, space = " ") {
+    if (!s || s.length < 2)
+        return s;
+
+    let result = "";
+    let start = 0;
+    let prev = s[0];
+    let curr = s[1];
+
+    for (let i = 2; i < s.length; i++) {
+        const prev2 = prev;
+        prev = curr;
+        curr = s[i];
+
+        const prevIsUpperOrNum = prev.isUpperOrNumber();
+        const currIsUpperOrNum = curr.isUpperOrNumber();
+
+        if (!prevIsUpperOrNum && currIsUpperOrNum) {
+            if (prev === ' ') continue;
+            result += s.slice(start, i - 1 + 1) + space;
+            start = i;
+        } else if (prevIsUpperOrNum && prev2.isUpperOrNumber() && !currIsUpperOrNum) {
+            if (curr === ' ') continue;
+            result += s.slice(start, i - 2 + 1) + space;
+            start = i - 1;
+        }
+    }
+
+    result += s.slice(start);
+
+    if (checkLowerCaseWords) {
+        for (const word of StringHelper.lowerCaseAddSpacesStringWords) {
+            const pattern = `${word} `;
+            let index = result.indexOf(pattern);
+            while (index > 0) {
+                if (result[index - 1] !== ' ') {
+                    result = result.slice(0, index) + space + result.slice(index);
+                    index += space.length + word.length + 1;
+                } else {
+                    index = result.indexOf(pattern, index + 1);
+                }
+            }
+        }
+    }
+
+    return result;
+}

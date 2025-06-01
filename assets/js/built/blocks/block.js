@@ -5,8 +5,8 @@ Zon.Block = class extends Struct.Rectangle {
         super(left, top, width, height);
         this.blocksManager = blocksManager;
         this.index = index;
-        //this.health = new Zon.Health(health, this);
-        this.health = new Zon.Health(health.multiply(Numbers.Triple.create(20n, 0n)), this);
+        this.health = new Zon.Health(health, this);
+        //this.health = new Zon.Health(health.multiply(Numbers.Triple.create(20n, 0n)), this);
         this.health.onHPZero.add(this.kill);
         this.color = color;
         this.normalColorString = this.color.cssString;

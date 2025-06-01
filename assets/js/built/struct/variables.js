@@ -4,6 +4,7 @@ const Variable = {}
 
 Variable.Base = class VariableBase {
     constructor() {
+        this.onChanged = this.onChanged.bind(this);
         this.onChangedAction = new Actions.Action();
     }
 
@@ -47,12 +48,20 @@ Variable.Base = class VariableBase {
         Variable.Base.paused = false;
         Variable.Base.pausedCallbacks.callAndClear();
     }
+
+    addOnChangedDrawAction(funct) {
+        if (typeof funct !== 'function')
+            throw new Error(`funct must be a function, got ${typeof funct}: ${funct}`);
+
+        this.onChangedAction.add(() => Zon.game.onNextDrawActions.add(funct));
+    }
 }
 
 Variable.Value = class VariableValue extends Variable.Base {
-    constructor(initialValue) {
+    constructor(defaultValue) {
         super();
-        this._value = initialValue;
+        this._defaultValue = defaultValue;
+        this._value = defaultValue;
     }
 
     set value(newValue) {
@@ -65,12 +74,54 @@ Variable.Value = class VariableValue extends Variable.Base {
     get value() {
         return this._value;
     }
+
+    reset() {
+        this.value = this._defaultValue;
+    }
+}
+
+Variable.TripleVar = class TripleVar extends Variable.Base {
+    constructor(defaultValue) {
+        super();
+        this._defaultValue = defaultValue;
+        this._value = defaultValue.clone;
+    }
+
+    static get ZERO() {
+        return new Variable.TripleVar(Numbers.Triple.ZERO);
+    }
+    static get ONE() {
+        return new Variable.TripleVar(Numbers.Triple.ONE);
+    }
+    static create(significand, exponent = 0n) {
+        return new Variable.TripleVar(Numbers.Triple.create(significand, exponent));
+    }
+    static fromNumber(num, exponent = 0n) {
+        return new Variable.TripleVar(Numbers.Triple.fromNumber(num, exponent));
+    }
+
+    set value(newValue) {
+        if (this._value.equals(newValue))
+            return;
+
+        this._value = newValue.clone;
+        this.onChanged();
+    }
+
+    get value() {
+        return this._value;
+    }
+
+    reset() {
+        this.value = this._defaultValue.clone;
+    }
 }
 
 Variable.ColorVar = class ColorVar extends Variable.Base {
-    constructor(initialColor = 0) {
+    constructor(defaultColor = 0) {
         super();
-        this._value = Struct.Color.fromUInt(initialColor);
+        this._defaultValue = defaultColor;
+        this._value = Struct.Color.fromUInt(defaultColor);
     }
 
     set value(newValue) {
@@ -133,6 +184,10 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
     get value() {
         return this._value;
     }
+
+    reset() {
+        this.uint = this._defaultValue;
+    }
 }
 
 Variable.Dependent = class DependentVariable extends Variable.Base {
@@ -155,6 +210,8 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             throw new Error(`newGetValue must be a function, got ${typeof newGetValue}: ${newGetValue}`);
 
         this.getValue = newGetValue;
+        this._value = undefined;
+        this.needsRecalculate = true;
         if (newGetValue === Variable.Dependent.defaultEquation)
             return;
 
@@ -163,13 +220,10 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             this.unlinkDependentActions();
 
         this.dependentActions.clear();
-        this.needsRecalculate = true;
         this.extractVariables(newGetValue, thisObj);
         this._dependentActionsLinked = false;
         if (linked)
             this.linkDependentActions();
-        
-        this._value = undefined;
     }
     linkDependentActions() {
         if (this._dependentActionsLinked)
@@ -226,6 +280,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             for (; i < parts.length - 1; i++) {
                 current = this.trygetPart(current, parts[i]);
                 if (!current)
+                    break;
+
+                if (current instanceof Variable.Base)
                     break;
             }
 

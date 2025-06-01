@@ -289,9 +289,6 @@ Binary.Writer = class Writer {
             this.stream.currentByte += bytes;
             this.numBuffer = 0;
         }
-        else {
-            console.log("No bits to write");
-        }
     }
 
     _checkSpace = (bytes) => {

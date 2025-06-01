@@ -22,55 +22,60 @@ Zon.hideCombatUI = () => {
     Zon.bottomUI.hide();
 }
 
-Zon.TopUI = class TopUI extends Zon.UI.UIElementCanvas {
+Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
     constructor() {
-        super('topUI', 960, 420);
+        super('topUI', Zon.UI.UIElementZID.MAIN_UI);
         this.topUIPercentOfHeight = 0.2;
         this.topUIAspectRatio = 3;
+        this.levelBar = new Zon.UI.PlayerLevelBar(this);
+        this.aetherUI = new Zon.UI.AetherUI(this);
     }
 
     setup = () => {
+        this.backGroundColor.uint = 0x060606FF;
         this.replaceLeft(() => Zon.device.left);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Math.min(Zon.device.height * this.topUIPercentOfHeight, Zon.device.width / this.topUIAspectRatio));
         this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT));
-        this.draw();
-        Zon.device.onResize.add(this.draw);
+        // this.draw();
+        // Zon.device.onResize.add(this.draw);
 
-        const panel = document.createElement('div');
-        panel.id = 'someBasicPanel';
-        panel.style.position = 'absolute';
-        panel.style.left = '0px';
-        panel.style.top = '0px';
-        panel.style.width = '200px';
-        panel.style.height = '150px';
-        panel.style.backgroundColor = 'rgba(30, 30, 30, 1)';
-        panel.style.border = '2px solid white';
-        panel.style.borderRadius = '8px';
-        document.body.appendChild(panel);
+        // const panel = document.createElement('div');
+        // panel.id = 'someBasicPanel';
+        // panel.style.position = 'absolute';
+        // panel.style.left = '0px';
+        // panel.style.top = '0px';
+        // panel.style.width = '200px';
+        // panel.style.height = '150px';
+        // panel.style.backgroundColor = 'rgba(30, 30, 30, 1)';
+        // panel.style.border = '2px solid white';
+        // panel.style.borderRadius = '8px';
+        // document.body.appendChild(panel);
+        
+        //super.setup();
     }
 
-    draw = () => {
-        this.clearCanvas();
-        this.ctx.save();
-        this.ctx.globalAlpha = 0.5;
-        Zon.UI.drawNineSliceImage(this.ctx, Zon.allTextures.ui.buttonSquare_grey_pressed_NoRips.img(), 0, 0, this.element.width, this.element.height, 8, 4);
-        this.ctx.restore();
-        this.ctx.globalAlpha = 0.2;
-        this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
-        this.ctx.globalCompositeOperation = 'multiply';
-        this.ctx.fillRect(0, 0, this.element.width, this.element.height);
-        this.ctx.restore();
-        this.drawTechText(1000);
-    }
+    // draw = () => {
+    //     this.clearCanvas();
+    //     this.ctx.save();
+    //     this.ctx.globalAlpha = 0.5;
+    //     Zon.UI.drawNineSliceImage(this.ctx, Zon.allTextures.ui.buttonSquare_grey_pressed_NoRips.img(), 0, 0, this.element.width, this.element.height, 8, 4);
+    //     this.ctx.restore();
+    //     this.ctx.globalAlpha = 0.2;
+    //     this.ctx.fillStyle = 'rgba(255, 0, 0, 0.3)';
+    //     this.ctx.globalCompositeOperation = 'multiply';
+    //     this.ctx.fillRect(0, 0, this.element.width, this.element.height);
+    //     this.ctx.restore();
+    //     this.drawTechText(1000);
+    // }
 
-    drawTechText = (text) => {
-        //this.ctx.clearRect(0, 0, this.element.width, this.element.height);
-        this.ctx.font = "24px Orbitron";
-        this.ctx.fillStyle = "#00ffff"; // neon cyan
-        //this.ctx.textAlign = "center";
-        this.ctx.fillText(text, 24, 24);
-    };
+    // drawTechText = (text) => {
+    //     //this.ctx.clearRect(0, 0, this.element.width, this.element.height);
+    //     this.ctx.font = "24px Orbitron";
+    //     this.ctx.fillStyle = "#00ffff"; // neon cyan
+    //     //this.ctx.textAlign = "center";
+    //     this.ctx.fillText(text, 24, 24);
+    // };
 
     clearCanvas = () => {
         this.ctx.clearRect(0, 0, this.element.width, this.element.height);
@@ -96,7 +101,7 @@ Zon.topUI = new Zon.TopUI();
 
 Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
     constructor() {
-        super('combatAreaCanvas', 960, 960);
+        super('combatAreaCanvas', 960, 960, Zon.UI.UIElementZID.COMBAT_UI);
         this.combatAreaPercentOfHeight = 0.6;
         this.combatUIAspectRatio = 9 / 9;
     }
@@ -124,7 +129,7 @@ Zon.combatUI = new Zon.CombatUI();
 
 Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
     constructor() {
-        super('bottomUI', 960, 420);
+        super('bottomUI', 960, 420, Zon.UI.UIElementZID.MAIN_UI);
         this.bottomUIPercentOfHeight = 0.2;
         this.bottomUIAspectRatio = 3;
     }
