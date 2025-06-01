@@ -57,8 +57,8 @@ Zon.Device = class {
     }
 
     resize = () => {
-        const screenWidth = window.innerWidth;
-        const screenHeight = window.innerHeight;
+        const screenWidth = window.visualViewport?.width ?? window.innerWidth;
+        const screenHeight = window.visualViewport?.height ?? window.innerHeight;
         Variable.Base.pause();
         this._height.value = this.isMobile ? screenHeight * (this.heightRatio / this.DEFAULT_HEIGHT_RATIO) : screenHeight;
         this._width.value = Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth);
