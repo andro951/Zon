@@ -187,12 +187,26 @@ Zon.Game = class {
         this.lateUpdate.call();
     }
 
+    _saveFileExists = (saveFileTypeID, saveNum) => {
+        const saveName = Zon.IOManager.getSaveName(saveFileTypeID, saveNum);
+        return localStorage.getItem(saveName) !== null;
+    }
+
     startLoad = (newGame, gameSaveNum, settingsSaveNum) => {
-        if (newGame) {
+        // if (newGame) {//TODO: Changed for forcing it to work for now.  Switch when save/load UI is implemented.
+        //     Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME, gameSaveNum);
+        //     Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME_SETTINGS, settingsSaveNum);
+        //     Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.DISPLAY_SETTINGS, settingsSaveNum);
+        // }
+
+        if (!this._saveFileExists(Zon.SaveFileTypeID.GAME, gameSaveNum))
             Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME, gameSaveNum);
+
+        if (!this._saveFileExists(Zon.SaveFileTypeID.GAME_SETTINGS, settingsSaveNum))
             Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.GAME_SETTINGS, settingsSaveNum);
+
+        if (!this._saveFileExists(Zon.SaveFileTypeID.DISPLAY_SETTINGS, settingsSaveNum))
             Zon.IOManager.tryMakeNewSaveFile(Zon.SaveFileTypeID.DISPLAY_SETTINGS, settingsSaveNum);
-        }
 
         Zon.IOManager.loadGameAsync(gameSaveNum);
         Zon.IOManager.loadGameSettingsAsync(settingsSaveNum);
