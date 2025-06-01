@@ -2,13 +2,10 @@
 
 Zon.Device = class {
     constructor() {
-        this.isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        //this.isMobile = /Mobi|Android/i.test(navigator.userAgent);
         this.DEFAULT_HEIGHT_RATIO = 15;
         this.DEFAULT_WIDTH_RATIO = 9;
-        this.DEFAULT_DEAD_SPACE_RATIO = 0.5;
-        const topDeadSpace = this.isMobile ? this.DEFAULT_DEAD_SPACE_RATIO : 0;
-        const bottomDeadSpace = this.isMobile ? this.DEFAULT_DEAD_SPACE_RATIO : 0;
-        this.heightRatio = this.DEFAULT_HEIGHT_RATIO + topDeadSpace + bottomDeadSpace;
+        this.heightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.widthRatio = this.DEFAULT_WIDTH_RATIO;
         this.usedHeightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.usedWidthRatio = this.DEFAULT_WIDTH_RATIO;
@@ -60,7 +57,7 @@ Zon.Device = class {
         const screenWidth = window.visualViewport?.width ?? window.innerWidth;
         const screenHeight = window.visualViewport?.height ?? window.innerHeight;
         Variable.Base.pause();
-        this._height.value = this.isMobile ? screenHeight * (this.heightRatio / this.DEFAULT_HEIGHT_RATIO) : screenHeight;
+        this._height.value = screenHeight;
         this._width.value = Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth);
         this._top.value = (screenHeight - this.height) / 2;
         this._left.value = (screenWidth - this.width) / 2;
