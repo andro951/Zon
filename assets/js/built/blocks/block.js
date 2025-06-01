@@ -90,7 +90,8 @@ Zon.Block = class extends Struct.Rectangle {
         }
 
         if (Zon.blocksManager.blockHealthTextSetting.value && percentFull < 1) {
-            const healthText = (percentFull * 100).toFixed(0);
+            const displayedPercentNumber = percentFull > 0.99 ? 0.99 : percentFull; // Avoid showing 100% for health text
+            const healthText = (displayedPercentNumber * 100).toFixed(0);
             this.drawTechText(healthText);
         }
     }
