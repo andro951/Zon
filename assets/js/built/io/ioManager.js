@@ -98,7 +98,7 @@ Zon.IOManager.saveProcess = function*(saveFileTypeID, saveLoadInfos, saveNum) {
         let processCommand = yield;
         
         const writer = new Binary.Writer().createStream();
-        const startTime = performance.now();
+        //const startTime = performance.now();
         if (saveLoadInfos.length < 1)
             throw new Error(`No saveLoadHelpers found for saveLoadInfos.`);
 
@@ -142,8 +142,8 @@ Zon.IOManager.saveProcess = function*(saveFileTypeID, saveLoadInfos, saveNum) {
 
         const saveName = Zon.IOManager.getSaveName(saveFileTypeID, saveNum);
         writer.saveToLocalStorage(saveName);
-        const endTime = performance.now();
-        console.log(`Saved ${saveName} in ${endTime - startTime}ms`);
+        //const endTime = performance.now();
+        //console.log(`Saved ${saveName} in ${endTime - startTime}ms`);
     }
     catch (error) {
         const errorMessage = `Error saving ${Zon.SaveFileTypeIDNames[saveFileTypeID]}: ${error}`;
