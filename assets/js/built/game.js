@@ -53,6 +53,8 @@ Zon.Game = class {
         requestAnimationFrame(this.loop);
     }
 
+    //#region Update/Loop
+
     loop = () => {
         Zon.timeController.updateLoopTime();
         this.updateLoop(this.getTickSpeed());
@@ -187,6 +189,10 @@ Zon.Game = class {
         this.lateUpdate.call();
     }
 
+    //#endregion Update/Loop
+
+    //#region Load
+
     _saveFileExists = (saveFileTypeID, saveNum) => {
         const saveName = Zon.IOManager.getSaveName(saveFileTypeID, saveNum);
         return localStorage.getItem(saveName) !== null;
@@ -233,6 +239,10 @@ Zon.Game = class {
         }
     }
 
+    //#endregion Load
+
+    //#region Draw
+
     drawLoop = () => {
         this.draw();
     }
@@ -261,6 +271,8 @@ Zon.Game = class {
         this.levelDatas[levelData.stageIndex] = null;
         this.setupLevel();
     }
+
+    //#endregion Draw
 
     stopStage = () => {
         this.levelIsReady = false;
@@ -296,8 +308,35 @@ Zon.Game = class {
         }
     }
 
-    checkUpdateStageAutomaticallyGoToNextStage = (levelData) => {
+    checkUpdateStageAutomaticallyGoToNextStage = (completedLevelData) => {
+        //Zon.StageSmartReset.onCompleteStageBeforeCheckingResetToStage1(completedLevelData); can switch the stage, so only change it if it hasn't been changed.
+        if (completedLevelData.stageID !== this.stageID.value || completedLevelData.stageNum !== this.stageNum.value)
+            return;
 
+        if (Zon.Settings.getGame(Zon.GameSettingsID.AUTOMATICALLY_GO_TO_NEXT_STAGE)) {
+            let stageSelected = false;
+            if (Zon.Settings.getGame(Zon.GameSettingsID.AUTOMATICALLY_RETURN_TO_STAGE_1)) {
+                if (Zon.Settings.getGame(Zon.GameSettingsID.STAGE_TO_RETURN_TO_STAGE_1) <= Zon.LevelData.startingStage) {
+                    Variable.Base.pause();
+                    this.stageID.value = Zon.LevelData.startingStage;
+                    this.stageNum.value = Zon.LevelData.startingStageNum;
+                    stageSelected = true;
+                    Variable.Base.resume();
+                }
+            }
+
+            if (!stageSelected) {
+                if (this.stageNum.value === Zon.LevelData.maxStageNum) {
+                    if (this.stageID.value < Zon.LevelData.maxStage) {
+                        this.stageID.value++;
+                        this.stageNum.value = Zon.LevelData.startingStageNum;
+                    }
+                }
+                else {
+                    this.stageNum.value++;
+                }
+            }
+        }
     }
 
     setupLevel = () => {
