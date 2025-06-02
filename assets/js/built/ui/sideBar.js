@@ -49,9 +49,10 @@ Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
     }
 }
 
-Zon.UI.SideBar = class SideBar extends Zon.UI.UIStateDiv {
+Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
     constructor() {
-        super('sideBar', (uiState) => new Zon.UI.SlideAnimationHorizontal(uiState, false), Zon.UI.UIElementZID.SIDE_BAR);
+        super('sideBar', Zon.UI.UIElementZID.SIDE_BAR);
+        this.animation = new Zon.UI.SlideAnimationHorizontal(this, false);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
     }
     static create(...args) {

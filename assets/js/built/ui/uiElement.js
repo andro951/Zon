@@ -146,12 +146,34 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.updateUIActions.call();
     }
     updateUIActions = new Actions.Action();
-    show() {
-        this.shown.value = true;
-    }
     onHideActions = new Actions.Action();
     onShowActions = new Actions.Action();
+    show() {
+        if (this.shown.value)
+            return;
+
+        if (this.animation) {
+            this.animation.show();
+            return;
+        }
+
+        this.forceShow();
+    }
     hide() {
+        if (!this.shown.value)
+            return;
+
+        if (this.animation) {
+            this.animation.hide();
+            return;
+        }
+
+        this.forceHide();
+    }
+    forceShow() {
+        this.shown.value = true;
+    }
+    forceHide() {
         this.shown.value = false;
     }
     _updateShown() {

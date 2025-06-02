@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.GameUIState = class extends Zon.UI.UIStateDiv {
+Zon.GameUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }

@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.MainDisplayUIState = class extends Zon.UI.UIStateDiv {
+Zon.MainDisplayUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }

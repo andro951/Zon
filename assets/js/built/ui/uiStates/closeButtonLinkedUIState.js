@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.UI.CloseButtonLinkedUIState = class extends Zon.UI.UIStateDiv {
+Zon.UI.CloseButtonLinkedUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }
