@@ -1,10 +1,18 @@
 "use strict";
 
-Zon.AssemblersUIState = class extends Zon.CloseButtonLinkedUIState {
+Zon.AssemblersUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
         super();
     }
-
+    static create(...args) {
+        const assemblersUIState = new this(...args);
+        assemblersUIState.bindAll();
+        assemblersUIState.postConstructor();
+        return assemblersUIState;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     postLoadSetup() {
         
     }
@@ -14,4 +22,4 @@ Zon.AssemblersUIState = class extends Zon.CloseButtonLinkedUIState {
     }
 }
 
-Zon.assemblersUIState = new Zon.AssemblersUIState();
+Zon.assemblersUIState = Zon.AssemblersUIState.create();

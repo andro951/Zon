@@ -27,11 +27,19 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         super('topUI', Zon.UI.UIElementZID.MAIN_UI);
         this.topUIPercentOfHeight = 0.2;
         this.topUIAspectRatio = 3;
-        this.levelBar = new Zon.UI.PlayerLevelBar(this);
-        this.aetherUI = new Zon.UI.AetherUI(this);
-        this.sideBarButton = new Zon.UI.SideBarButton(this);
+        this.levelBar = Zon.UI.PlayerLevelBar.create(this);
+        this.aetherUI = Zon.UI.AetherUI.create(this);
+        this.sideBarButton = Zon.UI.SideBarButton.create(this);
     }
-
+    static create(...args) {
+        const topUI = new this(...args);
+        topUI.bindAll();
+        topUI.postConstructor();
+        return topUI;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     setup = () => {
         this.backGroundColor.uint = 0x060606FF;
         this.replaceLeft(() => 0);
@@ -98,7 +106,7 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         }
     }
 }
-Zon.topUI = new Zon.TopUI();
+Zon.topUI = Zon.TopUI.create();
 
 Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
     constructor() {
@@ -106,7 +114,15 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
         this.combatAreaPercentOfHeight = 0.6;
         this.combatUIAspectRatio = 9 / 9;
     }
-
+    static create(...args) {
+        const combatUI = new this(...args);
+        combatUI.bindAll();
+        combatUI.postConstructor();
+        return combatUI;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     setup = () => {
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
@@ -126,13 +142,22 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
         }
     }
 }
-Zon.combatUI = new Zon.CombatUI();
+Zon.combatUI = Zon.CombatUI.create();
 
 Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
     constructor() {
         super('bottomUI', 960, 420, Zon.UI.UIElementZID.MAIN_UI);
         this.bottomUIPercentOfHeight = 0.2;
         this.bottomUIAspectRatio = 3;
+    }
+    static create(...args) {
+        const bottomUI = new this(...args);
+        bottomUI.bindAll();
+        bottomUI.postConstructor();
+        return bottomUI;
+    }
+    postConstructor() {
+        super.postConstructor();
     }
 
     setup = () => {
@@ -154,4 +179,4 @@ Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
         }
     }
 }
-Zon.bottomUI = new Zon.BottomUI();
+Zon.bottomUI = Zon.BottomUI.create();

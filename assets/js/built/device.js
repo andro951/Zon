@@ -20,7 +20,15 @@ Zon.Device = class extends Zon.UI.UIElementDiv {
         this.show();
         this._updateShown();
     }
-
+    static create(...args) {
+        const device = new this(...args);
+        device.bindAll();
+        device.postConstructor();
+        return device;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     resize = () => {
         const screenWidth = window.innerWidth;// window.visualViewport?.width ?? window.innerWidth;
         const screenHeight = window.innerHeight;// window.visualViewport?.height ?? window.innerHeight;
@@ -34,4 +42,4 @@ Zon.Device = class extends Zon.UI.UIElementDiv {
     }
 }
 
-Zon.device = new Zon.Device();
+Zon.device = Zon.Device.create();

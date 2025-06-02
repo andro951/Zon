@@ -4,15 +4,18 @@ Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
     constructor(parent) {
         super('sideBarButton', Zon.UI.UIElementZID.MAIN_UI + 1, parent);
         this.element.style.cursor = 'pointer';
-        this.element.addEventListener('click', () => {
-            if (this.onClick) {
-                this.onClick();
-            }
-        });
-
+    }
+    static create(...args) {
+        const sideBarButton = new this(...args);
+        sideBarButton.bindAll();
+        sideBarButton.postConstructor();
+        return sideBarButton;
+    }
+    postConstructor() {
+        super.postConstructor();
+        this.element.addEventListener('click', this.onClick);
         Zon.UI.sideBar.shown.onChangedAction.add(this.updateIcon);
     }
-
     setup = () => {
         this.replaceLeft(() => Zon.topUI.width - this.width - 10);
         this.replaceTop(() => 5);
@@ -51,7 +54,15 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIStateDiv {
         super('sideBar', (uiState) => new Zon.UI.SlideAnimationHorizontal(uiState, false), Zon.UI.UIElementZID.SIDE_BAR);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
     }
-
+    static create(...args) {
+        const sideBar = new this(...args);
+        sideBar.bindAll();
+        sideBar.postConstructor();
+        return sideBar;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     setup() {
         this.replaceLeft(() => Zon.device.width - this.width, this);
         this.replaceTop(() => Zon.topUI.sideBarButton.height + 10);
@@ -62,4 +73,4 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIStateDiv {
     }
 }
 
-Zon.UI.sideBar = new Zon.UI.SideBar();
+Zon.UI.sideBar = Zon.UI.SideBar.create();

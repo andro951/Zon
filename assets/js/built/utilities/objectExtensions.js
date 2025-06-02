@@ -1,8 +1,8 @@
 const ObjectExtensions = {}
 
 Object.defineProperty(Object.prototype, "bindAll", {
-    value: function() {
-        const prototypeFunctions = Object.prototype.getPrototypeFunctions.call(this);
+    value: function(climbPrototypes = true) {
+        const prototypeFunctions = Object.prototype.getPrototypeFunctions.call(this, true, climbPrototypes);
         for (const [functionName, funct] of prototypeFunctions) {
             this[functionName] = funct.bind(this);
         }
@@ -30,7 +30,7 @@ Object.defineProperty(Object.prototype, "forwardMethodsFrom", {
             this[functionName] = funct;
         }
 
-        for (const [functionName, funct] of Object.prototype.getPrototypeFunctions.call(source)) {
+        for (const [functionName, funct] of Object.prototype.getPrototypeFunctions.call(source, true, true)) {
             if (sourceInstanceFunctions.has(functionName))
                 continue;
 
@@ -63,7 +63,7 @@ Object.defineProperty(Object.prototype, "getInstanceFunctionNames", {
     enumerable: false,
 });
 Object.defineProperty(Object.prototype, "getPrototypeFunctionNames", {
-    value: function(filterConstructor = true) {
+    value: function(filterConstructor = true, climbPrototypes = true) {
         const prototype = Object.getPrototypeOf(this);
         if (!prototype || prototype === Object.prototype)
             return new Set();
@@ -85,13 +85,18 @@ Object.defineProperty(Object.prototype, "getPrototypeFunctionNames", {
             names.add(key);
         }
 
-        return new Set([...names, ...Object.prototype.getPrototypeFunctionNames.call(prototype, filterConstructor)]);
+        if (climbPrototypes) {
+            return new Set([...names, ...Object.prototype.getPrototypeFunctionNames.call(prototype, filterConstructor)]);
+        }
+        else {
+            return names;
+        }
     },
     enumerable: false,
 });
 Object.defineProperty(Object.prototype, "getAllFunctionNames", {
-    value: function(filterConstructor = true) {
-        return new Set([...Object.prototype.getInstanceFunctionNames.call(this), ...Object.prototype.getPrototypeFunctionNames.call(this, filterConstructor)]);
+    value: function(filterConstructor = true, climbPrototypes = true) {
+        return new Set([...Object.prototype.getInstanceFunctionNames.call(this), ...Object.prototype.getPrototypeFunctionNames.call(this, filterConstructor, climbPrototypes)]);
     },
     enumerable: false,
 });
@@ -102,14 +107,14 @@ Object.defineProperty(Object.prototype, "getInstanceFunctions", {
     enumerable: false,
 });
 Object.defineProperty(Object.prototype, "getPrototypeFunctions", {
-    value: function(filterConstructor = true) {
-        return Object.prototype.getPropertiesFromNames.call(this, Object.prototype.getPrototypeFunctionNames.call(this, filterConstructor));
+    value: function(filterConstructor = true, climbPrototypes = true) {
+        return Object.prototype.getPropertiesFromNames.call(this, Object.prototype.getPrototypeFunctionNames.call(this, filterConstructor, climbPrototypes));
     },
     enumerable: false,
 });
 Object.defineProperty(Object.prototype, "getAllFunctions", {
-    value: function(filterConstructor = true) {
-        return Object.prototype.getPropertiesFromNames.call(this, Object.prototype.getAllFunctionNames.call(this, filterConstructor));
+    value: function(filterConstructor = true, climbPrototypes = true) {
+        return Object.prototype.getPropertiesFromNames.call(this, Object.prototype.getAllFunctionNames.call(this, filterConstructor, climbPrototypes));
     },
     enumerable: false,
 });

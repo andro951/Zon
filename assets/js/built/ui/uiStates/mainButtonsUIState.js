@@ -4,7 +4,15 @@ Zon.MainButtonsUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }
-
+    static create(...args) {
+        const mainButtonsUIState = new this(...args);
+        mainButtonsUIState.bindAll();
+        mainButtonsUIState.postConstructor();
+        return mainButtonsUIState;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     setup = () => {
         //super.setup();
     }
@@ -14,4 +22,4 @@ Zon.MainButtonsUIState = class extends Zon.UI.UIElementDiv {
     }
 }
 
-Zon.mainButtonsUIState = new Zon.MainButtonsUIState();
+Zon.mainButtonsUIState = Zon.MainButtonsUIState.create();

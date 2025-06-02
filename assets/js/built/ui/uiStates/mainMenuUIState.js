@@ -4,7 +4,15 @@ Zon.MainMenuUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }
-
+    static create(...args) {
+        const mainMenuUIState = new this(...args);
+        mainMenuUIState.bindAll();
+        mainMenuUIState.postConstructor();
+        return mainMenuUIState;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     // construct = () => {//Not supposed to be here?
     //     super.construct();
     // }
@@ -22,4 +30,4 @@ Zon.MainMenuUIState = class extends Zon.UI.UIElementDiv {
     }
 }
 
-Zon.mainMenuUIState = new Zon.MainMenuUIState();
+Zon.mainMenuUIState = Zon.MainMenuUIState.create();

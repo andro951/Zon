@@ -4,8 +4,7 @@ Zon.UI.UIElementBase = class UIElementBase {
     constructor(element, zIndex, parent = Zon.device, inheritShown = true) {
         if (new.target === Zon.UI.UIElementBase)
             throw new TypeError("Cannot construct UIElementBase instances directly");
-
-        this.bindAll();
+        
         this.parent = parent;
         this.element = element;
         this.element.style.zIndex = zIndex.toString();
@@ -37,7 +36,6 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.backGroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backGroundColor.value.cssString);
         this.border = new Variable.Value(this.element.style.border);
         this.border.onChangedAction.add(() => this.element.style.border = this.border.value);
-        Zon.Setup.postConstructors.add(this.postConstructor);
         (parent instanceof Zon.UI.UIElementBase ? parent.element : parent).appendChild(this.element);
         this.dependentVariables = [
             this._leftEquationVar,
@@ -46,7 +44,13 @@ Zon.UI.UIElementBase = class UIElementBase {
             this.rect._height,
         ];
     }
-    postConstructor = () => {
+    static create(...args) {
+        const uiElement = new this(...args);
+        uiElement.bindAll();
+        uiElement.postConstructor();
+        return uiElement;
+    }
+    postConstructor() {
         Zon.Setup.linkAndFinalizeUISetupActions.add(this.setup);
 
         this.rect._left.onChangedAction.add(this._updateLeft);
@@ -189,19 +193,27 @@ Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
         this.element.width = width;
         this.element.height = height;
         this.canvasWidth = new Variable.Value(newCanvas.width);
-        this.canvasWidth.onChangedAction.add(this._updateCanvasWidth);
         this.canvasHeight = new Variable.Value(newCanvas.height);
-        this.canvasHeight.onChangedAction.add(this._updateCanvasHeight);
         this.ctx = this.element.getContext('2d');
     }
-
+    static create(...args) {
+        const uiCanvas = new this(...args);
+        uiCanvas.bindAll();
+        uiCanvas.postConstructor();
+        return uiCanvas;
+    }
+    postConstructor() {
+        super.postConstructor();
+        this.canvasWidth.onChangedAction.add(this._updateCanvasWidth);
+        this.canvasHeight.onChangedAction.add(this._updateCanvasHeight);
+    }
     _updateCanvasWidth() {
         this.element.width = this.canvasWidth.value;
     }
     _updateCanvasHeight() {
         this.element.height = this.canvasHeight.value;
     }
-    clearCanvas = () => {
+    clearCanvas() {
         this.ctx.clearRect(0, 0, this.element.width, this.element.height);
     }
 }
@@ -214,7 +226,15 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         this.fontSize = new Variable.Dependent(() => this.height * 0.8, this);
         this.fontSize.onChangedAction.add(() => this.element.style.fontSize = `${this.fontSize.value}px`);
     }
-
+    static create(...args) {
+        const uiDiv = new this(...args);
+        uiDiv.bindAll();
+        uiDiv.postConstructor();
+        return uiDiv;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     setup() {
         Zon.Setup.postLinkAndFinalizeUiSetupActions.add(this.postSetup);
     }

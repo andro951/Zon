@@ -3,7 +3,6 @@
 Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
     constructor(parent = null) {
         super('aetherUI', Zon.UI.UIElementZID.MAIN_UI, parent);
-        Zon.playerInventory.aether.addOnChangedDrawAction(this._updateText);
 
         //this.element.style.border = "2px solid #888"; // metallic gray
         this.element.style.overflow = "hidden"; // clip the fill inside
@@ -22,7 +21,16 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         this.label.innerText = "0";
         this.element.appendChild(this.label);
     }
-
+    static create(...args) {
+        const aetherUI = new this(...args);
+        aetherUI.bindAll();
+        aetherUI.postConstructor();
+        return aetherUI;
+    }
+    postConstructor() {
+        super.postConstructor();
+        Zon.playerInventory.aether.addOnChangedDrawAction(this._updateText);
+    }
     _updateText = () => {
         this.label.innerText = `${Zon.playerInventory.aether.value.toString()}`;
     }

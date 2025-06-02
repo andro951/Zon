@@ -4,7 +4,15 @@ Zon.GameUIState = class extends Zon.UI.UIStateDiv {
     constructor() {
         super();
     }
-    
+    static create(...args) {
+        const gameUIState = new this(...args);
+        gameUIState.bindAll();
+        gameUIState.postConstructor();
+        return gameUIState;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     show = () => {
         Zon.showCombatUI();//TODO
     }
@@ -26,4 +34,4 @@ Zon.GameUIState = class extends Zon.UI.UIStateDiv {
     }
 }
 
-Zon.gameUIState = new Zon.GameUIState();
+Zon.gameUIState = Zon.GameUIState.create();

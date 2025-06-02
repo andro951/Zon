@@ -4,7 +4,15 @@ Zon.AbilityUIState = class extends Zon.MainDisplayUIState {
     constructor() {
         super();
     }
-
+    static create(...args) {
+        const abilityUIState = new this(...args);
+        abilityUIState.bindAll();
+        abilityUIState.postConstructor();
+        return abilityUIState;
+    }
+    postConstructor() {
+        super.postConstructor();
+    }
     postLoadSetup() {
         
     }
@@ -14,4 +22,4 @@ Zon.AbilityUIState = class extends Zon.MainDisplayUIState {
     }
 }
 
-Zon.abilityUIState = new Zon.AbilityUIState();
+Zon.abilityUIState = Zon.AbilityUIState.create();

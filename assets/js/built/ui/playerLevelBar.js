@@ -33,11 +33,18 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.label.style.zIndex = "1";
         this.label.innerText = "Level 1";
         this.element.appendChild(this.label);
-
+    }
+    static create(...args) {
+        const playerLevelBar = new this(...args);
+        playerLevelBar.bindAll();
+        playerLevelBar.postConstructor();
+        return playerLevelBar;
+    }
+    postConstructor() {
+        super.postConstructor();
         Zon.playerLevel.level.addOnChangedDrawAction(this._updateText);
         Zon.playerLevel.progressToNextLevel.addOnChangedDrawAction(this._updateFill);
     }
-
     _updateText = () => {
         this.label.innerText = `Level ${Zon.playerLevel.level.value}`;
     }

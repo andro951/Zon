@@ -1,10 +1,7 @@
 "use strict";
 
-Zon.Setup.postConstructors = new Actions.Action();
-
 Zon.Setup.setupAndStartGame = () => {
     Variable.Base.pause();
-    Zon.Setup.postConstructors.call();
     Zon.Setup.startAsyncLoading();
     Zon.Setup.preLoadSetup();
     //Zon.Setup.loadOrNewGame(true);//true for new game
