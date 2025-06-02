@@ -8,6 +8,10 @@ Zon.CoreUIState = class extends Zon.MainDisplayUIState {
     postLoadSetup() {
         
     }
+
+    setup = () => {
+        //super.setup();
+    }
 }
 
 Zon.coreUIState = new Zon.CoreUIState();

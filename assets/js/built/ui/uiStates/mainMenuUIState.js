@@ -1,16 +1,24 @@
 "use strict";
 
-Zon.MainMenuUIState = class extends Zon.UIState {
+Zon.MainMenuUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }
 
-    construct = () => {
-        super.construct();
+    // construct = () => {//Not supposed to be here?
+    //     super.construct();
+    // }
+
+    // destruct = () => {
+    //     super.destruct();
+    // }
+
+    _updateShown = () => {
+        //Delete this when implementing MainMenuUIState.
     }
 
-    destruct = () => {
-        super.destruct();
+    setup = () => {
+        //super.setup();
     }
 }
 

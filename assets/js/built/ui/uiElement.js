@@ -1,7 +1,7 @@
 "use strict";
 
 Zon.UI.UIElementBase = class UIElementBase {
-    constructor(element, zIndex, parent) {
+    constructor(element, zIndex, parent = Zon.device, inheritShown = true) {
         if (new.target === Zon.UI.UIElementBase)
             throw new TypeError("Cannot construct UIElementBase instances directly");
 
@@ -14,33 +14,47 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.position.onChangedAction.add(() => this.element.style.position = this.position.value);
         this.element.style.display = "none";
         this.rect = Struct.DynamicRectangle.dependent(this);
-        this.rect._left.onChangedAction.add(this._updateLeft);
-        this.rect._top.onChangedAction.add(this._updateTop);
-        this.rect._width.onChangedAction.add(this._updateWidth);
-        this.rect._height.onChangedAction.add(this._updateHeight);
-        if (this.parent) {
+        this._leftOffset = new Variable.Value(0);
+        this._topOffset = new Variable.Value(0);
+        this._leftEquationVar = Variable.Dependent.empty(this, true);
+        this._topEquationVar = Variable.Dependent.empty(this, true);
+        this.rect._left.replaceEquation(() => {
+            return this._leftEquationVar.value + this._leftOffset.value;
+        });
+        this.rect._left.linkDependentActions();
+        this.rect._top.replaceEquation(() => {
+            return this._topEquationVar.value + this._topOffset.value;
+        });
+        this.rect._top.linkDependentActions();
+        if (this.parent && inheritShown && this.parent !== Zon.device && this.parent !== window.document.body) {
             this.shown = new Variable.Dependent(() => this.parent.shown.value, this);
         }
         else {
             this.shown = new Variable.Value(false);
         }
         
-        this.shown.onChangedAction.add(this._updateShown);
         this.backGroundColor = new Variable.ColorVar();
         this.backGroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backGroundColor.value.cssString);
         this.border = new Variable.Value(this.element.style.border);
         this.border.onChangedAction.add(() => this.element.style.border = this.border.value);
         Zon.Setup.postConstructors.add(this.postConstructor);
-        (parent?.element ?? window.document.body).appendChild(this.element);
+        (parent instanceof Zon.UI.UIElementBase ? parent.element : parent).appendChild(this.element);
         this.dependentVariables = [
-            this.rect._left,
-            this.rect._top,
+            this._leftEquationVar,
+            this._topEquationVar,
             this.rect._width,
             this.rect._height,
         ];
     }
     postConstructor = () => {
         Zon.Setup.linkAndFinalizeUISetupActions.add(this.setup);
+
+        this.rect._left.onChangedAction.add(this._updateLeft);
+        this.rect._top.onChangedAction.add(this._updateTop);
+        this.rect._width.onChangedAction.add(this._updateWidth);
+        this.rect._height.onChangedAction.add(this._updateHeight);
+
+        this.shown.onChangedAction.add(this._updateShown);
     }
     get _top() {
         return this.rect._top;
@@ -63,8 +77,20 @@ Zon.UI.UIElementBase = class UIElementBase {
     get top() {
         return this.rect.top;
     }
+    get topOffset() {
+        return this._topOffset.value;
+    }
+    set topOffset(newValue) {
+        this._topOffset.value = newValue;
+    }
     get left() {
         return this.rect.left;
+    }
+    get leftOffset() {
+        return this._leftOffset.value;
+    }
+    set leftOffset(newValue) {
+        this._leftOffset.value = newValue;
     }
     get width() {
         return this.rect.width;
@@ -97,10 +123,10 @@ Zon.UI.UIElementBase = class UIElementBase {
         this._updateTop();
     }
     replaceTop(func) {
-        this.rect._top.replaceEquation(func);
+        this._topEquationVar.replaceEquation(func);
     }
     replaceLeft(func) {
-        this.rect._left.replaceEquation(func);
+        this._leftEquationVar.replaceEquation(func);
     }
     replaceWidth(func) {
         this.rect._width.replaceEquation(func);
@@ -156,7 +182,7 @@ Zon.UI.UIElementBase = class UIElementBase {
 }
 
 Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
-    constructor(canvasId, width = 300, height = 150, zIndex = 0, parent = null) {
+    constructor(canvasId, width = 300, height = 150, zIndex = 0, parent = Zon.device) {
         const newCanvas = document.createElement("canvas");
         newCanvas.id = canvasId;
         super(newCanvas, zIndex, parent);
@@ -181,7 +207,7 @@ Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
 }
 
 Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
-    constructor(divId, zIndex = 0, parent = null) {
+    constructor(divId, zIndex = 0, parent = Zon.device) {
         const newDiv = document.createElement("div");
         newDiv.id = divId;
         super(newDiv, zIndex, parent);
@@ -190,6 +216,10 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
     }
 
     setup() {
+        Zon.Setup.postLinkAndFinalizeUiSetupActions.add(this.postSetup);
+    }
+
+    postSetup() {
         this.fontSize.onChangedAction.call();
     }
 }
@@ -197,7 +227,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
 Zon.UI.UIElementZID = {
     COMBAT_UI: 0,
     MAIN_UI: 1,
-
+    SIDE_BAR: 2,
 };
 Zon.UI.UIElementZIDNames = [];
 Enum.createEnum(Zon.UI.UIElementZID, Zon.UI.UIElementZIDNames, false);

@@ -94,7 +94,9 @@
 			}
 		},
 		"ui": {
-			"buttonSquare_grey_pressed_NoRips": "assets/textures/ui/buttonSquare_grey_pressed_NoRips.png"
+			"buttonSquare_grey_pressed_NoRips": "assets/textures/ui/buttonSquare_grey_pressed_NoRips.png",
+			"SideBarHideIcon": "assets/textures/ui/SideBarHideIcon.png",
+			"SideBarShowIcon": "assets/textures/ui/SideBarShowIcon.png"
 		}
 	};
 }

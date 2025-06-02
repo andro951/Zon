@@ -103,11 +103,13 @@ Zon.Setup.postLoadSetup = () => {
 }
 
 Zon.Setup.linkAndFinalizeUISetupActions = new Actions.Action();
+Zon.Setup.postLinkAndFinalizeUiSetupActions = new Actions.Action();
 Zon.Setup.startedLinkAndFinalizeUISetupActions = false;
 
 Zon.Setup.finalizeUI = () => {
     Zon.Setup.startedLinkAndFinalizeUISetupActions = true;
     Zon.Setup.linkAndFinalizeUISetupActions.call();
+    Zon.Setup.postLinkAndFinalizeUiSetupActions.call();
 }
 
 Zon.Setup.start = () => {

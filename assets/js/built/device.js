@@ -1,8 +1,11 @@
 "use strict";
 
-Zon.Device = class {
+Zon.Device = class extends Zon.UI.UIElementDiv {
     constructor() {
         //this.isMobile = /Mobi|Android/i.test(navigator.userAgent);
+        super('device', 0, window.document.body);
+        this.dependentVariables = [];
+        this.element.style.overflow = 'hidden';
         this.DEFAULT_HEIGHT_RATIO = 15;
         this.DEFAULT_WIDTH_RATIO = 9;
         this.heightRatio = this.DEFAULT_HEIGHT_RATIO;
@@ -14,48 +17,13 @@ Zon.Device = class {
         window.addEventListener("resize", this.resize);
         this.onResize = new Actions.Action();
         this.resize();
-    }
-
-    get top() {
-        return this.rect.top;
-    }
-    get left() {
-        return this.rect.left;
-    }
-    get width() {
-        return this.rect.width;
-    }
-    get height() {
-        return this.rect.height;
-    }
-    get right() {
-        return this.rect.right;
-    }
-    get bottom() {
-        return this.rect.bottom;
-    }
-    get _top() {
-        return this.rect._top;
-    }
-    get _left() {
-        return this.rect._left;
-    }
-    get _width() {
-        return this.rect._width;
-    }
-    get _height() {
-        return this.rect._height;
-    }
-    get _right() {
-        return this.rect._right;
-    }
-    get _bottom() {
-        return this.rect._bottom;
+        this.show();
+        this._updateShown();
     }
 
     resize = () => {
-        const screenWidth = window.visualViewport?.width ?? window.innerWidth;
-        const screenHeight = window.visualViewport?.height ?? window.innerHeight;
+        const screenWidth = window.innerWidth;// window.visualViewport?.width ?? window.innerWidth;
+        const screenHeight = window.innerHeight;// window.visualViewport?.height ?? window.innerHeight;
         Variable.Base.pause();
         this._height.value = screenHeight;
         this._width.value = Math.min(this.height * this.widthRatio / this.heightRatio, screenWidth);

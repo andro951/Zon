@@ -220,7 +220,7 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             this.unlinkDependentActions();
 
         this.dependentActions.clear();
-        this.extractVariables(newGetValue, thisObj);
+        this.extractVariables(newGetValue, thisObj ?? this._thisObj);
         this._dependentActionsLinked = false;
         if (linked)
             this.linkDependentActions();
@@ -238,6 +238,7 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         if (!this._dependentActionsLinked)
             return;
 
+        this.needsRecalculate = true;
         this._dependentActionsLinked = false;
         for (const action of this.dependentActions) {
             action.remove(this.onChanged);
@@ -296,8 +297,10 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             //(Zon/this).###...###.second.last; Check if second is an object such as Zon.topUI.rect._left.value
             const secondType = typeof second;
             if (secondType === "object") {
-                if (this.tryExtractVariablesFromObject(second))
+                if (this.tryExtractVariablesFromObject(second)) {
+                    //console.log(`Extracted variables from: ${match} (fnStr: ${fnStr})`);
                     continue;
+                }
             }
 
             //Check type of last part
@@ -312,8 +315,10 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
                 const lastType = typeof lastDesc.value;
                 if (lastType === 'object') {
                     const last = this.trygetPart(second, lastStr);
-                    if (this.tryExtractVariablesFromObject(last))
+                    if (this.tryExtractVariablesFromObject(last)) {
+                        //console.log(`Extracted variables from: ${match} (fnStr: ${fnStr})`);
                         continue;
+                    }
 
                     if (Variable.Dependent.debuggExtractVariables) console.warn(`last is an object, but tryExtractVariablesFromObject failed. ${second}[${lastStr}] -> ${last}`);
                     continue;
@@ -330,8 +335,10 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
                     if (lastPrivDesc) {
                         const lastPriv = this.trygetPart(second, lastPrivStr);
                         if (typeof lastPriv === 'object') {
-                            if (this.tryExtractVariablesFromObject(lastPriv))
+                            if (this.tryExtractVariablesFromObject(lastPriv)) {
+                                //console.log(`Extracted variables from: ${match} (fnStr: ${fnStr})`);
                                 continue;
+                            }
                         }
                         else {
                             if (Variable.Dependent.debuggExtractVariables) console.warn(`${lastPrivStr} is not an object.  ${second}[${lastPrivStr}] -> ${lastPriv}`);

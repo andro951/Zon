@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.GameUIState = class extends Zon.UIState {
+Zon.GameUIState = class extends Zon.UI.UIStateDiv {
     constructor() {
         super();
     }
@@ -19,6 +19,10 @@ Zon.GameUIState = class extends Zon.UIState {
 
     onResume = () => {
         
+    }
+
+    setup = () => {
+        //super.setup();
     }
 }
 

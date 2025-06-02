@@ -10,4 +10,12 @@ HTMLDivElement.prototype.setBorder = function(size, color = 'black', blurRadius 
     `
 }
 
+HTMLDivElement.prototype.setBackgroundImage = function(name) {
+    const imageString = `url(${Zon.allTextures.ui[name].img().src})`;
+    this.style.backgroundImage = imageString;
+    // this.style.backgroundSize = "cover";
+    this.style.backgroundSize = "100% 100%";
+    this.style.backgroundRepeat = "no-repeat";
+}
+
 //HTMLCanvasElement

@@ -248,8 +248,10 @@ Zon.Game = class {
     }
 
     onNextDrawActions = new Actions.Action();
+    preDrawActions = new Actions.Action();
     draw = () => {
         Zon.combatUI.clearCanvas();
+        this.preDrawActions.call();
         Zon.blocksManager.draw();
         Zon.BallManager.draw();
         this.lateDraw.call();

@@ -8,6 +8,10 @@ Zon.AbilityUIState = class extends Zon.MainDisplayUIState {
     postLoadSetup() {
         
     }
+
+    setup = () => {
+        //super.setup();
+    }
 }
 
 Zon.abilityUIState = new Zon.AbilityUIState();
