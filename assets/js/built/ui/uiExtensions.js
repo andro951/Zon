@@ -18,4 +18,8 @@ HTMLDivElement.prototype.setBackgroundImage = function(name) {
     this.style.backgroundRepeat = "no-repeat";
 }
 
+HTMLDivElement.prototype.addOnClick = function(onClick) {
+    this.addEventListener('click', onClick);
+}
+
 //HTMLCanvasElement

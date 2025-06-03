@@ -2,7 +2,7 @@
 
 Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
     constructor(parent) {
-        super('sideBarButton', Zon.UI.UIElementZID.MAIN_UI + 1, parent);
+        super('sideBarButton', Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
     }
     static create(...args) {
@@ -13,7 +13,7 @@ Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
     }
     postConstructor() {
         super.postConstructor();
-        this.element.addEventListener('click', this.onClick);
+        this.element.addOnClick(this.onClick);
         Zon.UI.sideBar.shown.onChangedAction.add(this.updateIcon);
     }
     setup = () => {
