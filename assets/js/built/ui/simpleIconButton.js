@@ -1,10 +1,15 @@
 "use strict";
 
 Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
-    constructor(buttonName, iconName, onClick, parent, leftFunct, topFunct, widthFunct = () => Zon.device.width * 0.1, heightFunct = () => Zon.topUI.height * 0.25) {
+    constructor(buttonName, onClick, iconPath, parent, leftFunct, topFunct, { 
+        backgroundPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.UI_PANELS, 'buttonSquare_grey_pressed_NoRips'),
+        widthFunct = () => Zon.device.width * 0.1,
+        heightFunct = () => Zon.topUI.height * 0.25
+    } = {}) {
         super(buttonName, Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
-        this.iconName = iconName;
+        this.iconPath = iconPath;
+        this.backgroundPath = backgroundPath;
         this.onClick = onClick;
         this.rectFunctions = {
             left: leftFunct,
@@ -30,20 +35,10 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
         this.replaceHeight(this.rectFunctions.height);
         this.rectFunctions = undefined;
 
-        const icon = document.createElement('div');
-        this.icon = icon;
-        this.icon.style.position = 'absolute';
-        icon.style.top = '50%';
-        icon.style.left = '50%';
-        icon.style.transform = 'translate(-50%, -50%)';
-        icon.style.width = '50%';
-        icon.style.height = '50%';
-        icon.style.pointerEvents = 'none';
+        this.addEmptyIcon();
 
-        this.element.appendChild(icon);
-
-        this.element.setBackgroundImage('buttonSquare_grey_pressed_NoRips');
-        this.icon.setBackgroundImage(this.iconName);
+        this.element.setBackgroundImage(this.backgroundPath);
+        this.icon.setBackgroundImage(this.iconPath);
 
         super.setup();
     }

@@ -2,7 +2,8 @@
 
 Zon.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
-        super();
+        super('stageSelectUI', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU);
+        this.element.style.backgroundColor = Struct.Color.fromUInt(0x404040FF).cssString;
     }
     static create(...args) {
         const stageUIState = new this(...args);
@@ -18,7 +19,12 @@ Zon.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     }
 
     setup = () => {
-        //super.setup();
+        this.replaceLeft(() => 0);
+        this.replaceTop(() => 0);
+        this.replaceWidth(() => Zon.device.width);
+        this.replaceHeight(() => Zon.device.height * (1 - Zon.UI.CloseButtonUIState.heightScale));
+
+        super.setup();
     }
 }
 

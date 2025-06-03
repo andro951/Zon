@@ -1,10 +1,5 @@
 "use strict";
 
-Zon.TextureFolders = {
-    levels: "levels",
-    ui: "ui",
-}
-
 Zon.TextureLoader = {};
 
 //Contains a map of all the textures in the game, organized by folder.
@@ -57,3 +52,26 @@ Zon.TextureLoader.convertPathsToImages = async (obj) => {
 		}
 	}
 };
+
+Zon.TextureLoader.getUITexturePath = (folder, name) => {
+    return Zon.allTextures[Zon.TextureFolders.ui][folder][name].img().src;
+}
+
+Zon.TextureFolders = {
+    levels: "levels",
+    ui: "ui",
+}
+Enum.freezeObj(Zon.TextureFolders);
+
+Zon.UITextureFolders = {
+    ABILITIES: "Abilities",
+    BARS: "Bars",
+    CORES: "Cores",
+    EFFECTS: "Effects",
+    ENHANCEMENTS: "Enhancements",
+    ICONS: "Icons",
+    ITEMS: "Items",
+    TALENTS: "Talents",
+    UI_PANELS: "UI_Panels",
+}
+Enum.freezeObj(Zon.UITextureFolders);

@@ -1,8 +1,8 @@
 "use strict";
 
 Zon.UI.CloseButtonLinkedUIState = class extends Zon.UI.UIElementDiv {
-    constructor() {
-        super();
+    constructor(divId, zIndex = 0, parent = Zon.device) {
+        super(divId, zIndex, parent);
     }
     static create(...args) {
         const closeButtonLinkedUIState = new this(...args);
@@ -12,5 +12,10 @@ Zon.UI.CloseButtonLinkedUIState = class extends Zon.UI.UIElementDiv {
     }
     postConstructor() {
         super.postConstructor();
+    }
+
+    show() {
+        super.show();
+        Zon.closeButtonUIState.setLinkedUIState(this);
     }
 }

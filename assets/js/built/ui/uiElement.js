@@ -269,7 +269,9 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
 Zon.UI.UIElementZID = {
     COMBAT_UI: 0,
     MAIN_UI: 1,
-    SIDE_BAR: 2,
+    MENU: 2,
+    SIDE_BAR: 3,
+    CLOSE_BUTTON_MENU: 4,
 };
 Zon.UI.UIElementZIDNames = [];
 Enum.createEnum(Zon.UI.UIElementZID, Zon.UI.UIElementZIDNames, false);

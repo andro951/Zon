@@ -20,6 +20,11 @@ Enum.createEnum = (enumObj, namesArr, includeNone = true, includeCount = true) =
 }
 
 Enum.freezeEnum = (enumObj, namesArr) => {
-    Object.freeze(enumObj);
-    Object.freeze(namesArr);
+    Enum.freezeObj(enumObj);
+    Enum.freezeObj(namesArr);
+}
+
+Enum.freezeObj = (obj) => {
+    Object.freeze(obj);
+    return obj;
 }
