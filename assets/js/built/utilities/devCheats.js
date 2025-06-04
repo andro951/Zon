@@ -38,6 +38,8 @@ Zon.DevCheats.makeBalls = () => {
 Zon.DevCheats.runTests = () => {
     //BinaryTests.allTests();
     //Zon.DevCheats.runSaveLoadTests();
+    //BigNumberTests.Test_BigNumberConversions();
+    //NumberTests.Test_CalculateSignificandExponent();
 }
 
 Zon.DevCheats.runSaveLoadTests = () => {

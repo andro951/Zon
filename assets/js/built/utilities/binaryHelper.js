@@ -120,18 +120,12 @@ Binary.BitExtractor = class BitExtractor {
         this.dataView.setFloat64(0, num, true);
         const low = this.dataView.getUint32(0, true);
         const high = this.dataView.getUint32(4, true);
-        const left = high & Binary.BitExtractor.INT_53_EXP_MASK;
-        const left2 = left >>> Binary.BitExtractor.INT_53_UPPER_BITS;
-        const left3 = left2 - Binary.BitExtractor.INT_53_EXP_BIAS;
         const exp = ((high & Binary.BitExtractor.INT_53_EXP_MASK) >>> Binary.BitExtractor.INT_53_UPPER_BITS) - Binary.BitExtractor.INT_53_EXP_BIAS;
         const expShift = Binary.BitExtractor.INT_53_BITS - exp - 1 - Binary.BitExtractor.UINT_32_BITS;
         let intHigh;
         let intLow;
         if (exp <= Binary.BitExtractor.INT_53_UPPER_BITS) {
             intHigh = 0;
-            const left4 = high & Binary.BitExtractor.INT_53_UPPER_32_MASK;
-            const left5 = left4 | Binary.BitExtractor.INT_53_UPPER_32_HIDDEN_1_MASK;
-            const left6 = left5 >>> expShift;
             intLow = ((high & Binary.BitExtractor.INT_53_UPPER_32_MASK) | Binary.BitExtractor.INT_53_UPPER_32_HIDDEN_1_MASK) >>> expShift;
         }
         else {
@@ -142,8 +136,8 @@ Binary.BitExtractor = class BitExtractor {
             //console.log(`intHigh: ${intHigh.toUInt32BinaryString()}, intLow: ${intLow.toUInt32BinaryString()}`);
         }
 
-        const numString = `${num.toBinaryString()}`;
-        const splitString = `${intHigh.toUInt32BinaryString()} ${intLow.toUInt32BinaryString()}`;
+        //const numString = `${num.toBinaryString()}`;
+        //const splitString = `${intHigh.toUInt32BinaryString()} ${intLow.toUInt32BinaryString()}`;
         // console.log(`Num String: ${numString}`);
         // console.log(`Split String: ${splitString}`);
         // console.log(`exp: ${exp} + 1023 = ${exp + Binary.BitExtractor.INT_53_EXP_BIAS} (${(exp + Binary.BitExtractor.INT_53_EXP_BIAS).toUInt32BinaryString(11)})`);
@@ -162,10 +156,6 @@ Binary.BitExtractor = class BitExtractor {
         }
         else {
             const leftShift = Binary.BitExtractor.UINT_32_BITS + expShift;
-            const left = intHigh << leftShift;
-            const right = intLow >>> -expShift;
-            const left2 = left | right;
-            const left3 = left2 & Binary.BitExtractor.INT_53_UPPER_32_MASK;
             high = ((intHigh << leftShift) | (intLow >>> -expShift)) & Binary.BitExtractor.INT_53_UPPER_32_MASK;
             low = intLow << leftShift;
         }
@@ -175,10 +165,10 @@ Binary.BitExtractor = class BitExtractor {
         this.dataView.setUint32(0, low, true);
         this.dataView.setUint32(4, high, true);
 
-        const result = this.dataView.getFloat64(0, true);
+        //const result = this.dataView.getFloat64(0, true);
 
-        const inString = `${intHigh.toUInt32BinaryString()} ${intLow.toUInt32BinaryString()}`;
-        const outString = `${result.toBinaryString()}`;
+        //const inString = `${intHigh.toUInt32BinaryString()} ${intLow.toUInt32BinaryString()}`;
+        //const outString = `${result.toBinaryString()}`;
         // console.log(`In String: ${inString}`);
         // console.log(`Out String: ${outString}`);
         // console.log(`exp: ${exp} + 1023 = ${exp + Binary.BitExtractor.INT_53_EXP_BIAS} (${(exp + Binary.BitExtractor.INT_53_EXP_BIAS).toUInt32BinaryString(11)})`);

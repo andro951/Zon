@@ -126,8 +126,11 @@ StringHelper.ToTime = function(daysGreaterThanZero, days, time, secondsDecimal =
 
     return s;
 }
-StringHelper.ToTime2 = function(triple, remainingTime, decimals = 2, scientific = false, removeTrailingZeros = true) {
-    return StringHelper.ToTime(triple > Numbers.Triple.Zero, triple.S(decimals, scientific, removeTrailingZeros), remainingTime);
+// StringHelper.ToTime2 = function(triple, remainingTime, decimals = 2, scientific = false, removeTrailingZeros = true) {
+//     return StringHelper.ToTime(triple > Numbers.Triple.Zero, triple.S(decimals, scientific, removeTrailingZeros), remainingTime);
+// }
+StringHelper.ToTime2 = function(bigNumber, remainingTime, decimals = 2, scientific = false, removeTrailingZeros = true) {
+    return StringHelper.ToTime(bigNumber.isPositive, bigNumber.S(decimals, scientific, removeTrailingZeros), remainingTime);
 }
 
 String.prototype.isUpper = function(c) {

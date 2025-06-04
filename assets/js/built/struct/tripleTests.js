@@ -121,6 +121,13 @@ NumberTests.testData_CalculateSignificandExponents = [
 	new NumberTests.TestData_CalculateSignificandExponent(-1, -4, 4, "-1.0000e-4", "-1e-4", "-0.0001", "-0.0001"),
 	new NumberTests.TestData_CalculateSignificandExponent(-1, -4, 5, "-1.00000e-4", "-1e-4", "-0.00010", "-0.0001"),
 
+	new NumberTests.TestData_CalculateSignificandExponent(1, -4, 0, "1e-4", "1e-4", "1e-4", "1e-4"),
+	new NumberTests.TestData_CalculateSignificandExponent(1, -4, 1, "1.0e-4", "1e-4", "1.0e-4", "1e-4"),
+	new NumberTests.TestData_CalculateSignificandExponent(1, -4, 2, "1.00e-4", "1e-4", "1.00e-4", "1e-4"),
+	new NumberTests.TestData_CalculateSignificandExponent(1, -4, 3, "1.000e-4", "1e-4", "1.000e-4", "1e-4"),
+	new NumberTests.TestData_CalculateSignificandExponent(1, -4, 4, "1.0000e-4", "1e-4", "0.0001", "0.0001"),
+	new NumberTests.TestData_CalculateSignificandExponent(1, -4, 5, "1.00000e-4", "1e-4", "0.00010", "0.0001"),
+
 	// new(-1, -3, 0, "-1e-3", "-1e-3", "-1e-3", "-1e-3"),
 	// new(-1, -3, 1, "-1.0e-3", "-1e-3", "-1.0e-3", "-1e-3"),
 	// new(-1, -3, 2, "-1.00e-3", "-1e-3", "-1.00e-3", "-1e-3"),
@@ -716,5 +723,3 @@ NumberTests.Test_CalculateSignificandExponent = function() {
 			console.log("");//Space
 	}
 }
-
-//NumberTests.Test_CalculateSignificandExponent();
