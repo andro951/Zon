@@ -22,8 +22,8 @@ Zon.LevelData = class LevelData {
     static startingStageNum = 1;
     static startingStageDisplayedNum = 1;
     static stageCompletionAetherBonusStageMultiplier = 2;
-    static baseStageCompletionAetherBonus = Numbers.Triple.ONE;
-    static baseBlockHealth = Numbers.Triple.ONE;
+    static baseStageCompletionAetherBonus = Struct.BigNumber.ONE;
+    static baseBlockHealth = Struct.BigNumber.ONE;
     static {
         this.getStageIndex = function(stageID, stageNum) {
             return (stageID - this.startingStage) * this.maxStageNum + stageNum - this.startingStageNum;
@@ -74,7 +74,7 @@ Zon.LevelData = class LevelData {
     }
 
     static getBlockMaxHealth(displayedStageNum, prestigeCount) {
-        return Zon.LevelData.baseBlockHealth.multiplyByPow10(displayedStageNum + Zon.LevelData.blockHealthMultiplePerPrestige * prestigeCount).tryBumpDown();
+        return Zon.LevelData.baseBlockHealth.multiplyByPow10(displayedStageNum + Zon.LevelData.blockHealthMultiplePerPrestige * prestigeCount);//.tryBumpDown();
     }
 
     static getStageCompletionBaseAetherReward(displayedStageNum, prestigeCount) {

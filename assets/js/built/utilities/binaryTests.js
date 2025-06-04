@@ -393,21 +393,21 @@ BinaryTests.makeTest1Data = () => {
         new BinaryTests.TestData_BinaryReadAndWrite(0x4FFFFF, 51, 'uint53'),
         new BinaryTests.TestData_BinaryReadAndWrite(0x8FFFFF, 52, 'uint53'),
         new BinaryTests.TestData_BinaryReadAndWrite(0x1FFFFF, 53, 'uint53'),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.HALF),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.NEGATIVE_ONE),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.ONE),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.HALF),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 0n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 1n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 2n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 3n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 400n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 5000n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 60000n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(100n, 700000n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.create(6849851654n, 79841635489n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.fromNumber(10, 79841635489n)),
-        new BinaryTests.TestData_BinaryReadAndWrite(Numbers.Triple.fromNumber(648973.324568, 65189n)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.HALF),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.NEGATIVE_ONE),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.ONE),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.HALF),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 0)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 1)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 2)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 3)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 400)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 5000)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 60000)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(100, 700000)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(6849851654, 79841635489)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(10, 79841635489)),
+        new BinaryTests.TestData_BinaryReadAndWrite(Struct.BigNumber.create(648973.324568, 65189)),
     ];
 }
 
@@ -488,7 +488,7 @@ BinaryTests.test1 = function() {
             case 'bool':
                 writer.writeBool(value);
                 break;
-            case 'Triple':
+            case 'BigNumber':
                 value.write(writer);
                 break;
             default:
@@ -575,8 +575,8 @@ BinaryTests.test1 = function() {
             case 'bool':
                 readValue = reader.readBool();
                 break;
-            case 'Triple':
-                readValue = Numbers.Triple.read(reader);
+            case 'BigNumber':
+                readValue = Struct.BigNumber.read(reader);
                 break;
             default:
                 throw new Error(`Unsupported type: ${typeof value}`);
@@ -586,7 +586,7 @@ BinaryTests.test1 = function() {
         
         let notEqual = true;
         switch (type) {
-            case 'Triple':
+            case 'BigNumber':
                 notEqual = readValue.notEquals(value);
                 break;
             default:

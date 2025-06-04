@@ -13,7 +13,7 @@ Zon.Ball = class extends Struct.Circle {
     }
 
     get damage() {
-        return Numbers.Triple.create(10n, 0n);
+        return Struct.BigNumber.create(10);
     }
 
     correctVelocity = () => {

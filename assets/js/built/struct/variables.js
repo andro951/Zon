@@ -80,7 +80,7 @@ Variable.Value = class VariableValue extends Variable.Base {
     }
 }
 
-Variable.TripleVar = class TripleVar extends Variable.Base {
+Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
     constructor(defaultValue) {
         super();
         this._defaultValue = defaultValue;
@@ -88,16 +88,13 @@ Variable.TripleVar = class TripleVar extends Variable.Base {
     }
 
     static get ZERO() {
-        return new Variable.TripleVar(Numbers.Triple.ZERO);
+        return new Variable.BigNumberVar(Struct.BigNumber.ZERO);
     }
     static get ONE() {
-        return new Variable.TripleVar(Numbers.Triple.ONE);
+        return new Variable.BigNumberVar(Struct.BigNumber.ONE);
     }
-    static create(significand, exponent = 0n) {
-        return new Variable.TripleVar(Numbers.Triple.create(significand, exponent));
-    }
-    static fromNumber(num, exponent = 0n) {
-        return new Variable.TripleVar(Numbers.Triple.fromNumber(num, exponent));
+    static create(significand, exponent = 0) {
+        return new Variable.BigNumberVar(Struct.BigNumber.create(significand, exponent));
     }
 
     set value(newValue) {
@@ -209,15 +206,14 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         if (typeof newGetValue !== 'function')
             throw new Error(`newGetValue must be a function, got ${typeof newGetValue}: ${newGetValue}`);
 
+        console.log(`Replacing equation of DependentVariable with: ${newGetValue}, thisObj: ${thisObj}, thisObj name: ${thisObj ? thisObj.constructor.name : 'undefined'}`);
         this.getValue = newGetValue;
         this._value = undefined;
         this.needsRecalculate = true;
+        const linked = this._dependentActionsLinked;
+        this.unlinkDependentActions();
         if (newGetValue === Variable.Dependent.defaultEquation)
             return;
-
-        const linked = this._dependentActionsLinked;
-        if (linked)
-            this.unlinkDependentActions();
 
         this.dependentActions.clear();
         this.extractVariables(newGetValue, thisObj ?? this._thisObj);
@@ -238,7 +234,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         if (!this._dependentActionsLinked)
             return;
 
+        //return;
         this.needsRecalculate = true;
+        this._value = undefined;
         this._dependentActionsLinked = false;
         for (const action of this.dependentActions) {
             action.remove(this.onChanged);

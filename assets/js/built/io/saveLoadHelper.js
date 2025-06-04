@@ -80,7 +80,7 @@ Zon.SaveLoadHelper_T = class SaveLoadHelper_T extends Zon.SaveLoadHelper {
         value.write(writer);
     }
     _read = (reader) => {
-        return Numbers.Triple.read(reader);
+        return Struct.BigNumber.read(reader);
     }
 }
 

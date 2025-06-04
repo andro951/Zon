@@ -4,7 +4,6 @@ const Zon = {};
 Zon.Setup = {};
 const Struct = {};
 const Extensions = {};
-const Numbers = {};
 const Trig = {};
 const Algebra = {};
 Zon.UI = {};

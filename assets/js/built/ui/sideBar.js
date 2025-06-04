@@ -17,7 +17,7 @@ Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
         Zon.UI.sideBar.shown.onChangedAction.add(this.updateIcon);
     }
     setup = () => {
-        this.replaceLeft(() => Zon.topUI.width - this.width - 4);
+        this.replaceLeft(() => Zon.topUI.width - this.width - 4, this);
         this.replaceTop(() => 5);
         this.replaceWidth(() => Zon.device.width * 0.1);
         this.replaceHeight(() => Zon.topUI.height * 0.25);
@@ -73,7 +73,7 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         this.replaceWidth(() => Zon.device.width * 0.12);
         this.replaceHeight(() => Zon.bottomUI.top - this.top - 10);
 
-        this._addIconButton('stageSelectButton', Zon.stageUIState.show, 'StageIcon');
+        //this._addIconButton('stageSelectButton', Zon.stageUIState.show, 'StageIcon');
         //this._addIconButton('stageSelectButton2', () => console.log("Clicked Stage Select2"), 'StageIcon');
 
         super.setup();

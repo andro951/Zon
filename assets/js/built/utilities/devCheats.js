@@ -11,7 +11,7 @@ Zon.DevCheats.postLoadSetup = () => {
 }
 
 Zon.DevCheats.onStartGame = () => {
-    Zon.DevCheats.makeBalls();
+    //Zon.DevCheats.makeBalls();
     Zon.DevCheats.runTests();
 }
 

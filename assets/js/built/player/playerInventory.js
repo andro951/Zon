@@ -2,9 +2,9 @@
 
 Zon.PlayerInventory = class {
     constructor() {
-        this.aether = Variable.TripleVar.ZERO;
-        this.totalAetherEarned = Variable.TripleVar.ZERO;
-        this.aetherNodes = new Zon.Item(Zon.ItemType.AetherNode, Numbers.Triple.ZERO);
+        this.aether = Variable.BigNumberVar.ZERO;
+        this.totalAetherEarned = Variable.BigNumberVar.ZERO;
+        this.aetherNodes = new Zon.Item(Zon.ItemType.AetherNode, Struct.BigNumber.ZERO);
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
     }
 
@@ -12,7 +12,7 @@ Zon.PlayerInventory = class {
         Zon.Setup.preSetLoadedValuesSetupActions.add(this.preSetLoadedValuesSetup);
         for (let itemType = Zon.ItemID.AssemblersStart; itemType <= Zon.ItemID.AssemblersEnd; itemType++) {
             if (!this.assemblersInventory.has(itemType)) {
-                this.assemblersInventory.set(itemType, new Zon.Item(itemType, Numbers.Triple.ZERO));
+                this.assemblersInventory.set(itemType, new Zon.Item(itemType, Struct.BigNumber.ZERO));
             }
         }
 
@@ -105,15 +105,15 @@ Zon.PlayerInventory = class {
     }
     onGainAether = new Actions.Action();
     spendAsMuchAetherAsPossible = (aetherToConsume) => {
-        if (this.aether.value.lessThanOrEqual(Numbers.Triple.ZERO))
-            return Numbers.Triple.ZERO;
+        if (this.aether.value.lessThanOrEqual(Struct.BigNumber.ZERO))
+            return Struct.BigNumber.ZERO;
         
-        if (aetherToConsume.lessThanOrEqual(Numbers.Triple.ZERO))
-            return Numbers.Triple.ZERO;
+        if (aetherToConsume.lessThanOrEqual(Struct.BigNumber.ZERO))
+            return Struct.BigNumber.ZERO;
 
         if (aetherToConsume.greaterThanOrEqual(this.aether.value)) {
             const spent = this.aether.value;
-            this.aether.value = Numbers.Triple.ZERO;
+            this.aether.value = Struct.BigNumber.ZERO;
             return spent;
         }
 

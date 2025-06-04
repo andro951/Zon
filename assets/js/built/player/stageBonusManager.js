@@ -9,7 +9,7 @@ Zon.StageBonusManager.preLoadSetup = () => {
 }
 
 Zon.StageBonusManager.preSetLoadedValuesSetup = () => {
-    Zon.StageBonusManager.totalStageBonus.replaceEquation(() => Numbers.Triple.ONE);
+    Zon.StageBonusManager.totalStageBonus.replaceEquation(() => Struct.BigNumber.ONE);
 }
 
 Zon.StageBonusManager.onCompleteStage = (levelData) => {

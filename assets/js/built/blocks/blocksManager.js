@@ -177,7 +177,7 @@ Zon.BlocksManager = class {
                 const block = this._blocks[blockIndex];
                 if (block === null) {
                     this._levelData.pixels([blockIndex]).a = 0;
-                    this._levelData.blockHP[blockIndex] = Numbers.Triple.ZERO;
+                    this._levelData.blockHP[blockIndex] = Struct.BigNumber.ZERO;
                 } else {
                     this._levelData.blockHP[blockIndex] = block.health.HP;
                 }
@@ -199,7 +199,7 @@ Zon.BlocksManager = class {
         const allBlocks = this.blocks;
 
         //Try to pick a block >= 25% of max hp
-        const threshold = this._levelData.blockMaxHealth.multiply(Numbers.Triple.create(1n, -2));
+        const threshold = this._levelData.blockMaxHealth.multiply(Struct.BigNumber.create(1, -2));
         let block = allBlocks.filter(b => b.health.HP.greaterThanOrEqual(threshold)).getRandom();
         if (!block) {
             //If no block found >= 25% max hp, pick a random block.

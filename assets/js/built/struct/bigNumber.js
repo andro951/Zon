@@ -372,6 +372,9 @@ Struct.BigNumber = class BigNumber {
         uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((this._exponent + 1023) << 20);
         return float64Arr[0];
     }
+    multiplyByPow10(pow10Exponent) {
+        return this.multiply(Struct.BigNumber.fromBase10Exp(1, pow10Exponent));
+    }
     toBase10() {
         if (this._significand === 0) {
             return {
@@ -708,7 +711,7 @@ Struct.BigNumber = class BigNumber {
         return this.multiply(Struct.BigNumber.HUNDRED).s(decimals, false, true) + "%";
     }
     s(decimals = 2, scientific = false, removeTrailingZeros = true) {
-        if (this.significand === 0n) {
+        if (this.significand === 0) {
             return `0${(!removeTrailingZeros && decimals > 0 ? `.${"0".repeat(decimals)}` : "")}`;
         }
 
