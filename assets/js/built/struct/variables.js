@@ -211,7 +211,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this._value = undefined;
         this.needsRecalculate = true;
         const linked = this._dependentActionsLinked;
-        this.unlinkDependentActions();
+        if (linked)
+            this.unlinkDependentActions();
+
         if (newGetValue === Variable.Dependent.defaultEquation)
             return;
 
@@ -222,8 +224,12 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             this.linkDependentActions();
     }
     linkDependentActions() {
-        if (this._dependentActionsLinked)
+        if (this._dependentActionsLinked) {
+            if (zonDebug)
+                throw new Error("DependentVariable: linkDependentActions called, but already linked.  Skipping.");
+
             return;
+        }
 
         this._dependentActionsLinked = true;
         for (const action of this.dependentActions) {
@@ -231,8 +237,12 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         }
     }
     unlinkDependentActions() {
-        if (!this._dependentActionsLinked)
+        if (!this._dependentActionsLinked) {
+            if (zonDebug)
+                throw new Error("DependentVariable: unlinkDependentActions called, but not linked.  Skipping.");
+
             return;
+        }
 
         //return;
         this.needsRecalculate = true;

@@ -177,18 +177,22 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.shown.value = false;
     }
     _updateShown() {
-        console.log(`UIElementBase: _updateShown called for ${this.element.id}, shown: ${this.shown.value}`);
+        console.log(`UIElementBase; shown: ${this.shown.value}, left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height}, id: ${this.element.id}`);
+        if (Zon.device !== undefined)
+            console.log(`device; left: ${Zon.device.left}, top: ${Zon.device.top}, width: ${Zon.device.width}, height: ${Zon.device.height}`);
+        
         if (this.shown.value) {
             for (const dependentVariable of this.dependentVariables) {
                 dependentVariable.linkDependentActions();
             }
             
             this.element.style.display = this._display ?? "block";
-            console.log(`UIElementBase: _updateShown (true), left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height} (${this.element.id})`);
+            console.log(`UIElementBase: _updateShown (true), left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height}, id: ${this.element.id}`);
             this._updateAllValues();
             this.onShowActions.call();
             this.updateUIContent();
         } else {
+            console.log(`UIElementBase: _updateShown (false), left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height}, id: ${this.element.id}`);
             for (const dependentVariable of this.dependentVariables) {
                 dependentVariable.unlinkDependentActions();
             }
