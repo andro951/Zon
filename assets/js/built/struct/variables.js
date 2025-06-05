@@ -206,9 +206,11 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         if (typeof newGetValue !== 'function')
             throw new Error(`newGetValue must be a function, got ${typeof newGetValue}: ${newGetValue}`);
 
-        console.log(`Replacing equation of DependentVariable with: ${newGetValue}, thisObj: ${thisObj}, thisObj name: ${thisObj ? thisObj.constructor.name : 'undefined'}`);
+        if (zonDebug) {
+            //console.log(`Replacing equation of DependentVariable with: ${newGetValue}, thisObj: ${thisObj}, thisObj name: ${thisObj ? thisObj.constructor.name : 'undefined'}`);
+        }
+        
         this.getValue = newGetValue;
-        this._value = undefined;
         this.needsRecalculate = true;
         const linked = this._dependentActionsLinked;
         if (linked)
@@ -235,6 +237,8 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         for (const action of this.dependentActions) {
             action.add(this.onChanged);
         }
+
+        this.onChanged();
     }
     unlinkDependentActions() {
         if (!this._dependentActionsLinked) {
@@ -244,7 +248,6 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             return;
         }
 
-        //return;
         this.needsRecalculate = true;
         this._value = undefined;
         this._dependentActionsLinked = false;
@@ -413,7 +416,12 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
     get value() {
         if (this.needsRecalculate) {
             this._value = this.getValue();
-            this.needsRecalculate = false;
+            if (this._dependentActionsLinked) {
+                this.needsRecalculate = false;
+            }
+            else if (zonDebug) {
+                console.warn(`DependentVariable get value() when _dependentActionsLinked is false.  This shouldn't happen frequently.  name: ${this._thisObj ? this._thisObj.constructor.name : 'undefined'}, this.getValue: ${this.getValue}, this._value: ${this._value}`);
+            }
         }
 
         return this._value;
