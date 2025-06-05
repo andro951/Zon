@@ -19,8 +19,28 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
         this.progressToNextLevel = new Variable.Dependent(() => {
             return this.xp.value.logarithmicProgress(this.xpAtLevel.value, this.xpAtNextLevel.value);
         }, this);
+
+        this.createEquations();
     }
     
+    createEquations() {
+        //Provide constants to the equation.  
+        const constants = new Map();
+        const r = `r`;
+        constants.set(r, `2^(1 / 7)`);
+        const level = `level`;
+        const args = [level];
+        const levelToXPStr = `trunc(0.25 * (${level} * (${level} + 1) * 0.5 +  300 / (${r} - 1) * (${r}^${level} - ${r})) - round((${level} - 1) * (42.2425 / 120)))`;
+
+        //Inputs and constants should always be lowercase/camelCase.
+        //This should show as:
+        //constants:
+        //r: 2^(1 / 7) = 1.10409
+        //LevelToXP(level) = `trunc(0.25 * (level * (level + 1) * 0.5 +  300 / (r - 1) * (r^level - r)) - round((level - 1) * (42.2425 / 120)))`
+        //It should scan the function for constants and create static variables for them.  Also find operations that can be simplified to a constant like 42.2425 / 120.
+        this.levelToXPEquation = Zon.Equation_BN.create(`LevelToXP`, levelToXPStr, args, constants);
+    }
+
     static _r = Struct.BigNumber.create(Math.pow(2, 1 / 7));
     static _a = Struct.BigNumber.create(300);
     static _correctionFactor = Struct.BigNumber.create(42.2425 / 120);
@@ -33,14 +53,14 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
         const a = Zon.PlayerLevel._a;
         const r = Zon.PlayerLevel._r;
         const sum = a.divide(r.subtract(Struct.BigNumber.ONE)).multiply(r.pow(level).subtract(r));
-        return Zon.PlayerLevel._quarter.multiply(levelSum.add(sum)).subtract(level.subtract(Struct.BigNumber.ONE).multiply(Zon.PlayerLevel._correctionFactor).round()).truncate();
+        return Zon.PlayerLevel._quarter.multiply(levelSum.add(sum)).subtract(level.subtract(Struct.BigNumber.ONE).multiply(Zon.PlayerLevel._correctionFactor).round()).trunc();
     }
     xpToLevel = (xp) => {
         if (!xp.isPositive)
             return Struct.BigNumber.ONE;
 
         const r = Zon.PlayerLevel._r;
-        const estimatedLevel = Zon.PlayerLevel._seven.multiply(xp.add(Struct.BigNumber.ONE).multiply(r.subtract(Struct.BigNumber.ONE)).divide(Zon.PlayerLevel._seventyFive).add(r).log2()).truncate();
+        const estimatedLevel = Zon.PlayerLevel._seven.multiply(xp.add(Struct.BigNumber.ONE).multiply(r.subtract(Struct.BigNumber.ONE)).divide(Zon.PlayerLevel._seventyFive).add(r).log2()).trunc();
         const xpAtLevel = this.levelToXP(estimatedLevel);
         if (xpAtLevel.greaterThan(xp))
             return estimatedLevel.subtract(Struct.BigNumber.ONE);
@@ -126,14 +146,14 @@ class ExperienceCalculator {
         const a = Zon.PlayerLevel._a;
         const r = Zon.PlayerLevel._r;
         const sum = a.divide(r.subtract(Struct.BigNumber.ONE)).multiply(r.pow(level).subtract(r));
-        return Zon.PlayerLevel._quarter.multiply(levelSum.add(sum)).subtract(level.subtract(Struct.BigNumber.ONE).multiply(Zon.PlayerLevel._correctionFactor).round()).truncate();
+        return Zon.PlayerLevel._quarter.multiply(levelSum.add(sum)).subtract(level.subtract(Struct.BigNumber.ONE).multiply(Zon.PlayerLevel._correctionFactor).round()).trunc();
     }
     xpToLevelNew(xp) {
         if (!xp.isPositive)
             return Struct.BigNumber.ONE;
 
         const r = Zon.PlayerLevel._r;
-        const estimatedLevel = Zon.PlayerLevel._seven.multiply(xp.add(Struct.BigNumber.ONE).multiply(r.subtract(Struct.BigNumber.ONE)).divide(Zon.PlayerLevel._seventyFive).add(r).log2()).truncate();
+        const estimatedLevel = Zon.PlayerLevel._seven.multiply(xp.add(Struct.BigNumber.ONE).multiply(r.subtract(Struct.BigNumber.ONE)).divide(Zon.PlayerLevel._seventyFive).add(r).log2()).trunc();
         const xpAtLevel = this.levelToXPNew(estimatedLevel);
         if (xpAtLevel.greaterThan(xp))
             return estimatedLevel.subtract(Struct.BigNumber.ONE);

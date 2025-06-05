@@ -395,7 +395,7 @@ Struct.BigNumber = class BigNumber {
     toBase2() {
         throw new Error(`BigNumber is already in base 2.  This method should not be used.`);
     }
-    truncateI() {
+    truncI() {
         if (this._significand === 0) {
             this._significand = 0;
             this._exponent = 0;
@@ -426,8 +426,8 @@ Struct.BigNumber = class BigNumber {
 
         return this;
     }
-    truncate() {
-        return this.clone.truncateI();
+    trunc() {
+        return this.clone.truncI();
     }
     roundI() {
         if (this._significand === 0) {
