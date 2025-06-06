@@ -869,7 +869,67 @@ Struct.BigNumber = class BigNumber {
         "n": 10,
         "d": 11
     };
-    static tryParse(valueString) {
+    // static tryParse(valueString) {
+    //     let backValue = 0;
+    //     for (const [key, val] of Object.entries(Struct.BigNumber.abbreviationGroups)) {
+    //         const index = valueString.indexOf(key);
+    //         if (index > -1) {
+    //             const abrLength = key.length;
+    //             let newString = valueString.substring(0, index);
+    //             if (valueString.length >= index + abrLength) {
+    //                 const backString = valueString.substring(index + abrLength);
+    //                 newString += backString;
+    //             }
+
+    //             valueString = newString;
+    //             backValue = val * 3;
+    //             break;
+    //         }
+    //     }
+
+    //     let e = valueString.indexOf('e');
+    //     if (e < 0)
+    //         e = valueString.indexOf('E');
+
+    //     if (e >= 0) {
+    //         if (e === 0)
+    //             return [false, Struct.BigNumber.ZERO];
+
+    //         const front = valueString.substring(0, e);
+    //         const frontValue = parseFloat(front);
+    //         if (isNaN(frontValue))
+    //             return [false, Struct.BigNumber.ZERO];
+
+    //         if (e < valueString.length - 1) {
+    //             const back = valueString.substring(e + 1);
+    //             const backValue2 = parseFloat(back);
+    //             if (isNaN(backValue2))
+    //                 return [false, Struct.BigNumber.ZERO];
+
+    //             backValue += backValue2;
+    //         }
+
+    //         return [true, Struct.BigNumber.fromBase10Exp(frontValue, backValue)];
+    //     } else {
+    //         const doubleValue = parseFloat(valueString);
+    //         if (!isNaN(doubleValue)) {
+    //             if (backValue > 0)
+    //                 return [true, Struct.BigNumber.fromBase10Exp(doubleValue, backValue)];
+
+    //             return [true, Struct.BigNumber.create(doubleValue)];
+    //         }
+    //     }
+
+    //     return [false, Struct.BigNumber.ZERO];
+    // };
+    // static parse(valueString) {
+    //     const [ result, string ] = Struct.BigNumber.tryParse(valueString);
+    //     if (result)
+    //         return string;
+
+    //     throw new Error(`Failed to parse ${valueString} into a BigNumber.`);
+    // }
+    static parse(valueString) {
         let backValue = 0;
         for (const [key, val] of Object.entries(Struct.BigNumber.abbreviationGroups)) {
             const index = valueString.indexOf(key);
@@ -893,40 +953,33 @@ Struct.BigNumber = class BigNumber {
 
         if (e >= 0) {
             if (e === 0)
-                return [false, Struct.BigNumber.ZERO];
+                return null;
 
             const front = valueString.substring(0, e);
             const frontValue = parseFloat(front);
             if (isNaN(frontValue))
-                return [false, Struct.BigNumber.ZERO];
+                return null;
 
             if (e < valueString.length - 1) {
                 const back = valueString.substring(e + 1);
                 const backValue2 = parseFloat(back);
                 if (isNaN(backValue2))
-                    return [false, Struct.BigNumber.ZERO];
+                    return null;
 
                 backValue += backValue2;
             }
 
-            return [true, Struct.BigNumber.fromBase10Exp(frontValue, backValue)];
+            return Struct.BigNumber.fromBase10Exp(frontValue, backValue);
         } else {
             const doubleValue = parseFloat(valueString);
             if (!isNaN(doubleValue)) {
                 if (backValue > 0)
-                    return [true, Struct.BigNumber.fromBase10Exp(doubleValue, backValue)];
+                    return Struct.BigNumber.fromBase10Exp(doubleValue, backValue);
 
-                return [true, Struct.BigNumber.create(doubleValue)];
+                return Struct.BigNumber.create(doubleValue);
             }
         }
 
-        return [false, Struct.BigNumber.ZERO];
-    };
-    static parse(valueString) {
-        const [ result, string ] = Struct.BigNumber.tryParse(valueString);
-        if (result)
-            return string;
-
-        throw new Error(`Failed to parse ${valueString} into a BigNumber.`);
+        return null;
     }
 }
