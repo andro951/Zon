@@ -2,20 +2,99 @@
 
 //TODO: arguments will be actual values provided to an equation function which aren't variables.  The old 'arguments' will be called variables.
 
-Zon.Equation = class Equation_BN {
-    constructor() {}
-    static create(name, equationString, operationsSet, variablesArr, argsArr, constantsMap) {
-        const equation = new this();
+Zon.Equation = class Equation {
+    constructor() {
+        if (new.target === Zon.Equation)
+            throw new TypeError("Cannot construct Equation instances directly.");
+
+        this.name = '';
+        this.equationString = '';
+        this.defaultVariablesArr = [];
+        this.variablesArr = [];
+        this.defaultArgsArr = [];
+        this.argsArr = [];
+        this.constantsMap = new Map();
+        this.constantsArr = [];
+        this.constantsArrLookupMap = new Map();
+        this._equationTreeHead = null;
+        this._equationFunction = null;
+    }
+    static create(equation, name, equationString, operationsSet, variablesArr = [], argsArr = [], constantsMap = new Map()) {
         equation.name = name;
         equation.equationString = equationString;
-        equation.variablesArr = variablesArr;
-        equation.argsArr = argsArr;
+        equation.defaultVariablesArr = Array.from(variablesArr);
+        equation.variablesArr = equation.defaultVariablesArr;
+        equation.defaultArgsArr = Array.from(argsArr);
+        equation.argsArr = equation.defaultArgsArr;
         equation.constantsMap = constantsMap;
         equation.constantsArr = Array.from(constantsMap.values());
         equation.constantsArrLookupMap = new Map(Array.from(constantsMap.keys()).map((key, index) => [key, index]));
-        equation._equationTree = Zon.Equation.createTree(equationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
+        equation._equationTreeHead = Zon.Equation.createTree(equationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
         equation._equationFunction = null;//TODO
+        if (zonDebug) {
+            const equationString = equation._equationTreeHead.toString();
+            console.log(`  equationString: ${equationString}`);
+            console.log(`equationTreeHead: ${equation._equationTreeHead.toString()}`);
+            if (equationString !== equation.equationString) {
+                console.error(`Equation string mismatch: expected "${equation.equationString}", got "${equationString}"`);
+            }
+        }
+        
         return equation;
+    }
+
+    *traverseNodes() {
+        for (const node of this._equationTreeHead.traverse()) {
+            if (node === null)
+                continue;
+
+            yield node;
+        }
+    }
+
+    get value() {
+        return this._equationTreeHead.value;
+    }
+    getValue(variablesArr = this.defaultVariablesArr, argsArr = this.defaultArgsArr) {
+        this.variablesArr = variablesArr;
+        this.argsArr = argsArr;
+        const result = this._equationTreeHead.value;
+        this.variablesArr = this.defaultVariablesArr;
+        this.argsArr = this.defaultArgsArr;
+        return result;
+    }
+    toString() {
+        return `${this.name}${(this.defaultArgsArr.length > 0 ? `(${this.defaultArgsArr.join(', ')})` : '')} = ${this.equationString}`;
+    }
+}
+
+Zon.Equation_BN = class Equation_BN extends Zon.Equation {
+    constructor() {
+        super();
+    }
+    static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        const equation = new this();
+        return Zon.Equation.create(equation, name, equationString, Zon.Equation.BigNumberOperationSet.instance, variablesArr, argsArr, constantsMap);
+    }
+}
+
+Zon.Equation_N = class Equation_N extends Zon.Equation {
+    constructor() {
+        super();
+    }
+    static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        const equation = new this();
+        return Zon.Equation.create(equation, name, equationString, Zon.Equation.NumberOperationSet.instance, variablesArr, argsArr, constantsMap);
+    }
+}
+
+Zon.Equation_B = class Equation_B extends Zon.Equation {
+    constructor() {
+        super();
+    }
+    static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        const equation = new this();
+        return Zon.Equation.create(equation, name, equationString, Zon.Equation.BoolOperationSet.instance, variablesArr, argsArr, constantsMap);
     }
 }
 
@@ -1210,7 +1289,7 @@ Zon.GlobalVariables = new Map();
             super();
         }
 
-        static _instance = null;
+        static instance = null;
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -1287,7 +1366,7 @@ Zon.GlobalVariables = new Map();
             ['π', Math.PI],
         ]);
     }
-    NumberOperationSet._instance = new NumberOperationSet();
+    NumberOperationSet.instance = new NumberOperationSet();
     Zon.Equation.NumberOperationSet = NumberOperationSet;
     
     class BigNumberOperationSet extends OperationsSet {
@@ -1295,7 +1374,7 @@ Zon.GlobalVariables = new Map();
             super();
         }
 
-        static _instance = null;
+        static instance = null;
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -1363,7 +1442,7 @@ Zon.GlobalVariables = new Map();
         }
         static _symbolConstants = [...NumberOperationSet._symbolConstants].map(([key, value]) => [key, Struct.BigNumber.create(value)]);
     }
-    BigNumberOperationSet._instance = new BigNumberOperationSet();
+    BigNumberOperationSet.instance = new BigNumberOperationSet();
     Zon.Equation.BigNumberOperationSet = BigNumberOperationSet;
 
     class BoolOperationSet extends OperationsSet {
@@ -1371,7 +1450,7 @@ Zon.GlobalVariables = new Map();
             super();
         }
 
-        static _instance = null;
+        static instance = null;
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -1448,7 +1527,7 @@ Zon.GlobalVariables = new Map();
             
         ]);
     }
-    BoolOperationSet._instance = new BoolOperationSet();
+    BoolOperationSet.instance = new BoolOperationSet();
     Zon.Equation.BoolOperationSet = BoolOperationSet;
 
     //#endregion OperationSets
