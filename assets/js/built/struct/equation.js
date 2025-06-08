@@ -1916,11 +1916,11 @@
         get constants() {
             return BigNumberOperationSet._constants;
         }
-        static _constants = [...NumberOperationSet._constants].map(([key, value]) => [key, Struct.BigNumber.create(value)])
+        static _constants = new Map([...NumberOperationSet._constants].map(([key, value]) => [key, Struct.BigNumber.create(value)]));
         get symbolConstants() {
             return BigNumberOperationSet._symbolConstants;
         }
-        static _symbolConstants = [...NumberOperationSet._symbolConstants].map(([key, value]) => [key, Struct.BigNumber.create(value)]);
+        static _symbolConstants = new Map([...NumberOperationSet._symbolConstants].map(([key, value]) => [key, Struct.BigNumber.create(value)]));
     }
     BigNumberOperationSet.instance = new BigNumberOperationSet();
     Zon.Equation.BigNumberOperationSet = BigNumberOperationSet;

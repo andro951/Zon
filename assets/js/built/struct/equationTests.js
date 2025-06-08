@@ -4,14 +4,15 @@ Struct.EquationTests = {};
 
 Struct.EquationTests.runTests = () => {
     if (Zon.Equation.debug) {
-        Struct.EquationTests.equationTests(Zon.Equation_N);
+        //Struct.EquationTests.equationTests_N(Zon.Equation_N);
+        Struct.EquationTests.equationTests_BN(Zon.Equation_BN);
     }
     
     //Struct.EquationTests.exampleWithLevelToXP();
 }
 
-Struct.EquationTests.equationTests = (testClass) => {
-    class EquationTest {
+Struct.EquationTests.equationTests_N = (testClass) => {
+    class EquationTest_N {
         constructor(equationStr, expectedFunc, variables = [], args = [], constants = new Map(), testArgs = [], variableOverrides = []) {
             this.equationStr = equationStr;
             this.expectedFunc = expectedFunc;
@@ -23,11 +24,11 @@ Struct.EquationTests.equationTests = (testClass) => {
         }
     }
     const testCases = [
-        new EquationTest(`0.25`, (args, variables) => 0.25, [], [], new Map(), [], []),
-        new EquationTest(`2.5e-1`, (args, variables) => 2.5e-1, [], [], new Map(), [], []),
-        new EquationTest(`2.5e5`, (args, variables) => 2.5e5, [], [], new Map(), [], []),
-        new EquationTest(`trunc(0.25)`, (args, variables) => Math.trunc(0.25), [], [], new Map(), [], []),
-        new EquationTest(`0.25 * 100`, (args, variables) => 0.25 * 100, [], [], new Map(), [], []),
+        new EquationTest_N(`0.25`, (args, variables) => 0.25, [], [], new Map(), [], []),
+        new EquationTest_N(`2.5e-1`, (args, variables) => 2.5e-1, [], [], new Map(), [], []),
+        new EquationTest_N(`2.5e5`, (args, variables) => 2.5e5, [], [], new Map(), [], []),
+        new EquationTest_N(`trunc(0.25)`, (args, variables) => Math.trunc(0.25), [], [], new Map(), [], []),
+        new EquationTest_N(`0.25 * 100`, (args, variables) => 0.25 * 100, [], [], new Map(), [], []),
         (() => {
             const level = `level`;
             const args = [level];
@@ -35,7 +36,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`0.25 * ${level}`, (args, variables) => 0.25 * args[0], [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`0.25 * ${level}`, (args, variables) => 0.25 * args[0], [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -44,7 +45,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`0.25 * ${level} * (${level} + 1) * 0.5`, (args, variables) => 0.25 * args[0] * (args[0] + 1) * 0.5, [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`0.25 * ${level} * (${level} + 1) * 0.5`, (args, variables) => 0.25 * args[0] * (args[0] + 1) * 0.5, [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -53,7 +54,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`0.25 * (${level} * (${level} + 1) * 0.5)`, (args, variables) => 0.25 * (args[0] * (args[0] + 1) * 0.5), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`0.25 * (${level} * (${level} + 1) * 0.5)`, (args, variables) => 0.25 * (args[0] * (args[0] + 1) * 0.5), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -62,7 +63,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`trunc(${level})`, (args, variables) => Math.trunc(args[0]), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`trunc(${level})`, (args, variables) => Math.trunc(args[0]), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -71,7 +72,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`0.25 * trunc(${level})`, (args, variables) => 0.25 * Math.trunc(args[0]), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`0.25 * trunc(${level})`, (args, variables) => 0.25 * Math.trunc(args[0]), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -80,7 +81,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`0.25 * trunc(${level} * (${level} + 1) * 0.5)`, (args, variables) => 0.25 * Math.trunc(args[0] * (args[0] + 1) * 0.5), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`0.25 * trunc(${level} * (${level} + 1) * 0.5)`, (args, variables) => 0.25 * Math.trunc(args[0] * (args[0] + 1) * 0.5), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -89,7 +90,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`trunc(trunc(${level}))`, (args, variables) => Math.trunc(Math.trunc(args[0])), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`trunc(trunc(${level}))`, (args, variables) => Math.trunc(Math.trunc(args[0])), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -98,7 +99,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`0.25 * trunc(trunc(${level}) * (${level} + 1) * 0.5)`, (args, variables) => 0.25 * Math.trunc(args[0] * (args[0] + 1) * 0.5), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`0.25 * trunc(trunc(${level}) * (${level} + 1) * 0.5)`, (args, variables) => 0.25 * Math.trunc(args[0] * (args[0] + 1) * 0.5), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -107,7 +108,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [8],
                 [10]
             ];
-            return new EquationTest(`log(${level}, 2)`, (args, variables) => Math.log(args[0]) / Math.log(2), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`log(${level}, 2)`, (args, variables) => Math.log(args[0]) / Math.log(2), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -116,7 +117,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [8],
                 [10]
             ];
-            return new EquationTest(`log(log(${level}, 2), 3)`, (args, variables) => Math.log(Math.log(args[0]) / Math.log(2)) / Math.log(3), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`log(log(${level}, 2), 3)`, (args, variables) => Math.log(Math.log(args[0]) / Math.log(2)) / Math.log(3), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -125,7 +126,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [8],
                 [10]
             ];
-            return new EquationTest(`5 * log(${level}, 2)`, (args, variables) => 5 * (Math.log(args[0]) / Math.log(2)), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`5 * log(${level}, 2)`, (args, variables) => 5 * (Math.log(args[0]) / Math.log(2)), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -134,7 +135,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [8],
                 [10]
             ];
-            return new EquationTest(`trunc(log(${level}, 2))`, (args, variables) => Math.trunc(Math.log(args[0]) / Math.log(2)), [], args, new Map(), testArgs, []);
+            return new EquationTest_N(`trunc(log(${level}, 2))`, (args, variables) => Math.trunc(Math.log(args[0]) / Math.log(2)), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -147,7 +148,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`level - r^2`, (args, variables) => args[0] - (2 ** (1 / 7)) ** 2, [], args, constants, testArgs, []);
+            return new EquationTest_N(`level - r^2`, (args, variables) => args[0] - (2 ** (1 / 7)) ** 2, [], args, constants, testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -156,20 +157,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`-level`, (args, variables) => -args[0], [], args, new Map(), testArgs, []);
-        })(),
-        (() => {
-            const level = `level`;
-            const args = [level];
-            const r = `r`;
-            const constants = new Map([
-                [r, `2^(1 / 7)`]
-            ]);
-            const testArgs = [
-                [10],
-                [20]
-            ];
-            return new EquationTest(`(-level - --r)^2`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** 2, [], args, constants, testArgs, []);
+            return new EquationTest_N(`-level`, (args, variables) => -args[0], [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -182,7 +170,20 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            return new EquationTest(`(-level - r)^2`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** 2, [], args, constants, testArgs, []);
+            return new EquationTest_N(`(-level - --r)^2`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** 2, [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_N(`(-level - r)^2`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** 2, [], args, constants, testArgs, []);
         })(),
         (() => {
             const level = `level`;
@@ -197,7 +198,7 @@ Struct.EquationTests.equationTests = (testClass) => {
             ];
             const testVar = new Variable.Value(3, `TestVar`);
             const variables = [testVar];
-            return new EquationTest(`(-level - r)^${testVar.name}`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** variables[0].value, variables, args, constants, testArgs, []);
+            return new EquationTest_N(`(-level - r)^${testVar.name}`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** variables[0].value, variables, args, constants, testArgs, []);
         })(),
         (() => {
             const a = 'a';
@@ -206,7 +207,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [a, `-2^2`],
                 [b, `(-2)^2`]
             ]);
-            return new EquationTest(`${a} + ${b}`, (args, variables) => 0, [], [], constants);
+            return new EquationTest_N(`${a} + ${b}`, (args, variables) => 0, [], [], constants);
         })(),
         (() => {
             const a = 'a';
@@ -215,7 +216,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [a, `1 + 2 * 3`],
                 [b, `2 * 3 + 1`]
             ]);
-            return new EquationTest(`${a} - ${b}`, (args, variables) => 0, [], [], constants);
+            return new EquationTest_N(`${a} - ${b}`, (args, variables) => 0, [], [], constants);
         })(),
         (() => {
             const a = 'a';
@@ -224,7 +225,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [a, `1 + 2 + 3 * 4`],
                 [b, `1 + 3 * 4 + 2`]
             ]);
-            return new EquationTest(`${a} - ${b}`, (args, variables) => 0, [], [], constants);
+            return new EquationTest_N(`${a} - ${b}`, (args, variables) => 0, [], [], constants);
         })(),
     ];
 
@@ -259,10 +260,269 @@ Struct.EquationTests.equationTests = (testClass) => {
             const expectedValue = test.expectedFunc([], []);
             console.log(`  equation.value: ${value} (v2: ${value2})`);
             if (value !== expectedValue)
-                console.error(`  equation getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value}`);
+                console.error(`  equation getValue() mismatch: expected ${expectedValue}, got ${value}`);
 
             if (value2 !== expectedValue)
-                console.error(`  equation2 getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value2}`);
+                console.error(`  equation2 getValue() mismatch: expected ${expectedValue}, got ${value2}`);
+        }
+
+        console.log(`\n`);
+    }
+}
+Struct.EquationTests.equationTests_BN = (testClass) => {
+    class EquationTest_BN {
+        constructor(equationStr, expectedFunc, variables = [], args = [], constants = new Map(), testArgs = [], variableOverrides = []) {
+            this.equationStr = equationStr;
+            this.expectedFunc = expectedFunc;
+            this.variables = variables;
+            this.args = args;
+            this.constants = constants;
+            this.testArgs = testArgs;
+            this.variableOverrides = variableOverrides;
+        }
+    }
+    const testCases = [
+        new EquationTest_BN(`0.25`, (args, variables) => Struct.BigNumber.create(0.25), [], [], new Map(), [], []),
+        new EquationTest_BN(`2.5e-1`, (args, variables) => Struct.BigNumber.create(2.5e-1), [], [], new Map(), [], []),
+        new EquationTest_BN(`2.5e5`, (args, variables) => Struct.BigNumber.create(2.5e5), [], [], new Map(), [], []),
+        new EquationTest_BN(`trunc(0.25)`, (args, variables) => Struct.BigNumber.create(0.25).trunc(), [], [], new Map(), [], []),
+        new EquationTest_BN(`0.25 * 100`, (args, variables) => Struct.BigNumber.create(0.25).multiply(Struct.BigNumber.create(100)), [], [], new Map(), [], []),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * ${level}`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * ${level} * (${level} + 1) * 0.5`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]).multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * (${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]).multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`trunc(${level})`, (args, variables) => args[0].trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(${level})`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].trunc()), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`trunc(trunc(${level}))`, (args, variables) => args[0].trunc().trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(trunc(${level}) * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`log(${level}, 2)`, (args, variables) => args[0].log(2), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`log(log(${level}, 2), 3)`, (args, variables) => args[0].log(2).log(3), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`5 * log(${level}, 2)`, (args, variables) => Struct.BigNumber.create(5).multiply(args[0].log(2)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`trunc(log(${level}, 2))`, (args, variables) => args[0].log(2).trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            const rV = Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)));
+            return new EquationTest_BN(`level - r^2`, (args, variables) => args[0].subtract(rV.pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`-level`, (args, variables) => args[0].negative(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`(-level - --r)^2`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`(-level - r)^2`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            const testVar = new Variable.BigNumberVar(Struct.BigNumber.create(3), `TestVar`);
+            const variables = [testVar];
+            return new EquationTest_BN(`(-level - r)^${testVar.name}`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(variables[0].value)), variables, args, constants, testArgs, []);
+        })(),
+        (() => {
+            const a = 'a';
+            const b = 'b';
+            const constants = new Map([
+                [a, `-2^2`],
+                [b, `(-2)^2`]
+            ]);
+            return new EquationTest_BN(`${a} + ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
+        })(),
+        (() => {
+            const a = 'a';
+            const b = 'b';
+            const constants = new Map([
+                [a, `1 + 2 * 3`],
+                [b, `2 * 3 + 1`]
+            ]);
+            return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
+        })(),
+        (() => {
+            const a = 'a';
+            const b = 'b';
+            const constants = new Map([
+                [a, `1 + 2 + 3 * 4`],
+                [b, `1 + 3 * 4 + 2`]
+            ]);
+            return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
+        })(),
+    ];
+
+    for (let i = 0; i < testCases.length; i++) {
+        const test = testCases[i];
+        const name = `e${i + 1}`;
+        const equation = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
+        const equation2 = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
+        equation2._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation2._equationTreeHeadNotCondensed);
+        const end = Math.max(test.variableOverrides.length, test.testArgs.length);
+        if (end === undefined || end === null)
+            throw new Error(`Test ${i + 1} has no testArgs or variableOverrides defined.`);
+
+        if (end > 0) {
+            for (let j = 0; j < end; j++) {
+                const testArgs = test.testArgs[j];
+                const variableOverrides = test.variableOverrides[j];
+                const value = variableOverrides ? equation.getValueNewVariables(variableOverrides, ...testArgs) : equation.getValue(...testArgs);
+                const value2 = variableOverrides ? equation2.getValueNewVariables(variableOverrides, ...testArgs) : equation2.getValue(...testArgs);
+                const expectedValue = test.expectedFunc(testArgs, variableOverrides ?? test.variables);
+                console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2})`);
+                if (value.notEquals(expectedValue))
+                    console.error(`  equation getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value.toBinaryFullString()}`);
+
+                if (value2.notEquals(expectedValue))
+                    console.error(`  equation2 getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value2.toBinaryFullString()}`);
+            }
+        }
+        else {
+            const value = equation.value;
+            const value2 = equation2.value;
+            const expectedValue = test.expectedFunc([], []);
+            console.log(`  equation.value: ${value} (v2: ${value2})`);
+            if (value.notEquals(expectedValue))
+                console.error(`  equation getValue() mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value.toBinaryFullString()}`);
+
+            if (value2.notEquals(expectedValue))
+                console.error(`  equation2 getValue() mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value2.toBinaryFullString()}`);
         }
 
         console.log(`\n`);
@@ -294,6 +554,6 @@ Struct.EquationTests.exampleWithLevelToXP = () => {
     }
 }
 
-//Test BigNumber
+//Create an actual function from the tree.
 
 //Try to use in place math operations?
