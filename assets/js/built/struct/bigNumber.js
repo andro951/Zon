@@ -27,12 +27,27 @@ Struct.BigNumber = class BigNumber {
     }
     static LOG2_OF_10 = Math.log2(10);//3.321928094887362
     static LOG10_OF_2 = Math.log10(2);//0.301029995664
+    static {
+        this.MAX_NUMBER_EXPONENT_B10 = Math.trunc(Math.log10(Number.MAX_VALUE));
+        this.MAX_NUMBER_SIGNIFICAND_B10 = Number.MAX_VALUE / (10 ** this.MAX_NUMBER_EXPONENT_B10);
+    }
     static fromBase10Exp(significand, exponentBase10) {
         if (significand === 0)
             return Struct.BigNumber.ZERO;
 
         if (exponentBase10 === 0)
             return Struct.BigNumber.create(significand, 0);
+
+        const absExponentBase10 = Math.abs(exponentBase10);
+        const absSignificand = Math.abs(significand);
+        if (absExponentBase10 < Struct.BigNumber.MAX_NUMBER_EXPONENT_B10 ||
+            absExponentBase10 === Struct.BigNumber.MAX_NUMBER_EXPONENT_B10 &&
+            absSignificand <= Struct.BigNumber.MAX_NUMBER_SIGNIFICAND_B10
+        ) {
+            const smallSignificand = significand * (10 ** exponentBase10);
+            if (Number.isFinite(smallSignificand))
+                return Struct.BigNumber.create(smallSignificand, 0);
+        }
 
         return Struct.BigNumber.create(significand, exponentBase10 * Struct.BigNumber.LOG2_OF_10);
     }
@@ -937,6 +952,11 @@ Struct.BigNumber = class BigNumber {
     //     throw new Error(`Failed to parse ${valueString} into a BigNumber.`);
     // }
     static parse(valueString) {
+        const smallFloat = parseFloat(valueString);
+        if (!isNaN(smallFloat)) {
+            return Struct.BigNumber.create(smallFloat);
+        }
+
         let backValue = 0;
         for (const [key, val] of Object.entries(Struct.BigNumber.abbreviationGroups)) {
             const index = valueString.indexOf(key);
