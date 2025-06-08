@@ -288,4 +288,4 @@ Struct.EquationTests.exampleWithLevelToXP = () => {
 //Multiple decimal points
 //Starting or ending with decimal point
 
-//this.levelToXPEquation = Zon.Equation_N.create(`LevelToXP`, levelToXPStr, [], args, constants);
+//Populate variable names for ALL variables.  Give them some name to identify them for troubleshooting.

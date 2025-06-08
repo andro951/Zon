@@ -855,6 +855,9 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
 
             return null;
         }
+        isConstant() {
+            return true;
+        }
     }
     class VariableReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
@@ -900,7 +903,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
 
             return null;
         }
-    }//TODO: make all the references inherit from eachother?  They are almost identical.
+    }
     class ArgReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
             super(parent);
