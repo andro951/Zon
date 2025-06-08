@@ -1,7 +1,7 @@
 "use strict";
 
 {
-    const debugEquation = zonDebug && false;
+    const debugEquation = zonDebug && true;
     Zon.Equation = class Equation {
         constructor() {
             if (new.target === Zon.Equation)
@@ -51,10 +51,11 @@
 
             equation._equationTreeHeadNotCondensed = Zon.Equation.EquationTreeBuilder.createTree(equationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
             if (debugEquation) {
-                console.log(`  equationString: ${equationString}`);
-                console.log(`equationTreeHead: ${equation._equationTreeHeadNotCondensed.toString()}`);
-                if (equationString !== equation.equationString) {
-                    console.error(`Equation string mismatch: expected "${equation.equationString}", got "${equationString}"`);
+                const treeHeadString = equation._equationTreeHeadNotCondensed.toString();
+                console.log(`  equationString: ${equation.equationString}`);
+                console.log(`equationTreeHead: ${treeHeadString}`);
+                if (equation.equationString !== treeHeadString) {
+                    console.error(`Equation string mismatch: expected "${equation.equationString}", got "${treeHeadString}"`);
                 }
             }
 
@@ -104,40 +105,39 @@
             return `${this.name}${(this.defaultArgsArr.length > 0 ? `(${this.defaultArgsArr.join(', ')})` : '')} = ${this.equationString}`;
         }
     }
-}
 
-Zon.Equation_BN = class Equation_BN extends Zon.Equation {
-    constructor() {
-        super();
+    Zon.Equation.debug = debugEquation;
+    
+    Zon.Equation_BN = class Equation_BN extends Zon.Equation {
+        constructor() {
+            super();
+        }
+        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+            const equation = new this();
+            return Zon.Equation.create(equation, name, equationString, Zon.Equation.BigNumberOperationSet.instance, variablesArr, argsArr, constantsMap);
+        }
     }
-    static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
-        const equation = new this();
-        return Zon.Equation.create(equation, name, equationString, Zon.Equation.BigNumberOperationSet.instance, variablesArr, argsArr, constantsMap);
-    }
-}
 
-Zon.Equation_N = class Equation_N extends Zon.Equation {
-    constructor() {
-        super();
+    Zon.Equation_N = class Equation_N extends Zon.Equation {
+        constructor() {
+            super();
+        }
+        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+            const equation = new this();
+            return Zon.Equation.create(equation, name, equationString, Zon.Equation.NumberOperationSet.instance, variablesArr, argsArr, constantsMap);
+        }
     }
-    static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
-        const equation = new this();
-        return Zon.Equation.create(equation, name, equationString, Zon.Equation.NumberOperationSet.instance, variablesArr, argsArr, constantsMap);
-    }
-}
 
-Zon.Equation_B = class Equation_B extends Zon.Equation {
-    constructor() {
-        super();
+    Zon.Equation_B = class Equation_B extends Zon.Equation {
+        constructor() {
+            super();
+        }
+        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+            const equation = new this();
+            return Zon.Equation.create(equation, name, equationString, Zon.Equation.BoolOperationSet.instance, variablesArr, argsArr, constantsMap);
+        }
     }
-    static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
-        const equation = new this();
-        return Zon.Equation.create(equation, name, equationString, Zon.Equation.BoolOperationSet.instance, variablesArr, argsArr, constantsMap);
-    }
-}
 
-{
-    const debuggingEquationTree = zonDebug && false;
     const OperationID = {
         NONE: 0,
 
@@ -289,7 +289,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
             //false,//NOT
         ];
         static createTree(s, equation, operationsSet, variablesArr, argsArr, constantsArrLookupMap) {
-            if (debuggingEquationTree) console.log(`Creating equation tree for:\n${s}`);
+            if (debugEquation) console.log(`Creating equation tree for:\n${s}`);
             const argsSet = new Set(argsArr);
             const variablesMap = new Map(variablesArr.map((v, i) => [v.name, i]));
 
@@ -325,8 +325,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                     }
                 }
 
-                if (debuggingEquationTree) console.log(`Extracted word: ${word}`);
-                //const lowerWord = word.toLowerCase();//Intentionally removed
+                //if (debugEquation) console.log(`Extracted word: ${word}`);
                 const constant = operationsSet.constants.get(word);
                 if (constant !== undefined) {
                     placeConstantOrVariable(new NamedConstant(word, constant));
@@ -380,7 +379,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                     return false;
                 }
 
-                if (debuggingEquationTree) console.log(`Extracted word2: ${word}`);
+                //if (debugEquation) console.log(`Extracted word2: ${word}`);
                 const variableIndex = variablesMap.get(word);
                 if (variableIndex !== undefined) {
                     placeConstantOrVariable(new VariableReference(equation, word, variableIndex));
@@ -440,7 +439,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                 if (valueString.length === 0)
                     return false;
 
-                if (debuggingEquationTree) console.log(`Trying to get constant; toString: ${valueString}`);
+                //if (debugEquation) console.log(`Trying to get constant; toString: ${valueString}`);
                 const value = operationsSet.parse(valueString);
                 if (value !== undefined && value !== null) {
                     const constant = new Constant(value);
@@ -465,7 +464,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                 }
 
                 if (operation !== null) {
-                    if (debuggingEquationTree) console.log(`Trying to get operator; key: ${operation.key}`); 
+                    //if (debugEquation) console.log(`Trying to get operator; key: ${operation.key}`); 
                     if (operation.operationID === OperationID.SUBTRACT) {
                         if (tree == null || !tree.readyForOperation())
                             return false;
@@ -486,7 +485,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                     throw new Error("Failed to apply operation.  The last Value is null.");
 
                 const operation = new Operation(operationsSet, operationID);
-                if (debuggingEquationTree) console.log(`Applying operation: ${operationID}`);
+                //if (debugEquation) console.log(`Applying operation: ${operationID}`);
                 if (!tree.readyForOperation())
                     throw new Error(`Failed to apply operation: ${operationID}.  The tree is not ready for an operation.  ${tree.toString()}`);
 
@@ -497,7 +496,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                     throw new Error("Failed to apply precursor operation.  The precursorOperationID is NONE.");
                 
                 const operation = new PrecursorOperation(operationsSet, precursorOperationID);
-                if (debuggingEquationTree) console.log(`Applying precursor operation: ${precursorOperationID}`);
+                //if (debugEquation) console.log(`Applying precursor operation: ${precursorOperationID}`);
                 if (tree == null) {
                     tree = operation.setup();
                 }
@@ -510,7 +509,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                     throw new Error("Failed to apply single variable operation.  The singleVariableOperationID is NONE.");
 
                 const operation = new SingleVariableOperation(operationsSet, singleVariableOperationID);
-                if (debuggingEquationTree) console.log(`Applying single variable operation: ${singleVariableOperationID}`);
+                //if (debugEquation) console.log(`Applying single variable operation: ${singleVariableOperationID}`);
                 if (tree == null) {
                     tree = operation.setup();
                 }
@@ -519,7 +518,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                 }
             }
             function placeConstantOrVariable(constantOrVariable) {
-                if (debuggingEquationTree) console.log(`Placing constant or variable: ${constantOrVariable.toString()}`);
+                //if (debugEquation) console.log(`Placing constant or variable: ${constantOrVariable.toString()}`);
                 if (tree === null) {
                     tree = constantOrVariable;
                 }
@@ -560,7 +559,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                                 tree = parenthesis;
                             }
                             else {
-                                if (debuggingEquationTree) console.log(`Joining parenthesis to tree: ${tree.toString()}`);
+                                //if (debugEquation) console.log(`Joining parenthesis to tree: ${tree.toString()}`);
                                 tree = tree.joinNode(parenthesis);
                             }
                         }
@@ -872,7 +871,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
         }
         get value() {
             const variable = this.equation.variablesArr[this.index];
-            if (!variable)
+            if (variable === undefined || variable === null)
                 throw new Error(`Variable not found in equation: ${this.name} at index ${this.index}.`);
 
             return variable.value;
@@ -917,7 +916,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
         }
         get value() {
             const arg = this.equation.argsArr[this.index];
-            if (arg === undefined)
+            if (arg === undefined || arg === null)
                 throw new Error(`Argument not found in equation: ${this.name} at index ${this.index}.`);
 
             return arg;
@@ -954,7 +953,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
         }
         get value() {
             const constant = this.equation.constantsArr[this.index];
-            if (!constant)
+            if (constant === undefined || constant === null)
                 throw new Error(`Constant not found in equation: ${this.name} at index ${this.index}.`);
 
             return constant;
@@ -992,7 +991,7 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
                     throw new Error(`Invalid constant type: ${constantOrNull.constructor.name}. Expected Constant.`);
 
                 const value = constantOrNull.value;
-                if (debuggingEquationTree) {
+                if (debugEquation) {
                     //console.log(`Creating CachedConstantReference for constant: ${constantOrNull.toString()} with value: ${value}`);
                 }
                 
@@ -1018,8 +1017,8 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
         }
         get value() {
             const constant = this.equation._cachedConstants[this.index];
-            if (!constant)
-                throw new Error(`Constant not found in equation: ${this.toString()} at index ${this.index}.`);
+            if (constant === undefined || constant === null)
+                throw new Error(`Cached constant not found at index ${this.index}.`, this);
 
             return constant;
         }
@@ -1144,14 +1143,14 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
             return null;
         }
         simplify() {
-            if (debuggingEquationTree) {
+            if (debugEquation) {
                 //console.log(`Simplifying operation: ${this.toString()}`);
             }
 
             this.left.simplify();
             this.right.simplify();
 
-            if (debuggingEquationTree) {
+            if (debugEquation) {
                 // if (this.left.isConstant() || this.right.isConstant()) {
                 //     console.log(`Found constant in operation: ${this.toString()}`);
                 // }

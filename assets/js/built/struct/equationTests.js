@@ -3,8 +3,11 @@
 Struct.EquationTests = {};
 
 Struct.EquationTests.runTests = () => {
-    //Struct.EquationTests.equationTests(Zon.Equation_N);
-    Struct.EquationTests.exampleWithLevelToXP();
+    if (Zon.Equation.debug) {
+        Struct.EquationTests.equationTests(Zon.Equation_N);
+    }
+    
+    //Struct.EquationTests.exampleWithLevelToXP();
 }
 
 Struct.EquationTests.equationTests = (testClass) => {
@@ -21,6 +24,8 @@ Struct.EquationTests.equationTests = (testClass) => {
     }
     const testCases = [
         new EquationTest(`0.25`, (args, variables) => 0.25, [], [], new Map(), [], []),
+        new EquationTest(`2.5e-1`, (args, variables) => 2.5e-1, [], [], new Map(), [], []),
+        new EquationTest(`2.5e5`, (args, variables) => 2.5e5, [], [], new Map(), [], []),
         new EquationTest(`trunc(0.25)`, (args, variables) => Math.trunc(0.25), [], [], new Map(), [], []),
         new EquationTest(`0.25 * 100`, (args, variables) => 0.25 * 100, [], [], new Map(), [], []),
         (() => {
@@ -230,13 +235,29 @@ Struct.EquationTests.equationTests = (testClass) => {
         const equation2 = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
         equation2._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation2._equationTreeHeadNotCondensed);
         const end = Math.max(test.variableOverrides.length, test.testArgs.length);
-        for (let j = 0; j < end; j++) {
-            const testArgs = test.testArgs[j];
-            const variableOverrides = test.variableOverrides[j];
-            const value = variableOverrides ? equation.getValueNewVariables(variableOverrides, ...testArgs) : equation.getValue(...testArgs);
-            const value2 = variableOverrides ? equation2.getValueNewVariables(variableOverrides, ...testArgs) : equation2.getValue(...testArgs);
-            const expectedValue = test.expectedFunc(testArgs, variableOverrides ?? test.variables);
-            console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2})`);
+        if (end === undefined || end === null)
+            throw new Error(`Test ${i + 1} has no testArgs or variableOverrides defined.`);
+
+        if (end > 0) {
+            for (let j = 0; j < end; j++) {
+                const testArgs = test.testArgs[j];
+                const variableOverrides = test.variableOverrides[j];
+                const value = variableOverrides ? equation.getValueNewVariables(variableOverrides, ...testArgs) : equation.getValue(...testArgs);
+                const value2 = variableOverrides ? equation2.getValueNewVariables(variableOverrides, ...testArgs) : equation2.getValue(...testArgs);
+                const expectedValue = test.expectedFunc(testArgs, variableOverrides ?? test.variables);
+                console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2})`);
+                if (value !== expectedValue)
+                    console.error(`  equation getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value}`);
+
+                if (value2 !== expectedValue)
+                    console.error(`  equation2 getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value2}`);
+            }
+        }
+        else {
+            const value = equation.value;
+            const value2 = equation2.value;
+            const expectedValue = test.expectedFunc([], []);
+            console.log(`  equation.value: ${value} (v2: ${value2})`);
             if (value !== expectedValue)
                 console.error(`  equation getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value}`);
 
@@ -273,19 +294,8 @@ Struct.EquationTests.exampleWithLevelToXP = () => {
     }
 }
 
-//Simplify could use a lot of work such as combining multiplications that aren't directly connected.
-//Look at my dynamic number class in Matrix Operations if I even want to bother with this.
-
-//Try to use in place math operations?
-
 //Test BigNumber
 
-//Check numbers with e/E
-
-//Check invalid numbers like:
-//Multiple e/E
-//Starting or ending with e/E
-//Multiple decimal points
-//Starting or ending with decimal point
+//Try to use in place math operations?
 
 //Populate variable names for ALL variables.  Give them some name to identify them for troubleshooting.
