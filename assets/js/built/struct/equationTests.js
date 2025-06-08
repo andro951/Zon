@@ -195,7 +195,7 @@ Struct.EquationTests.equationTests = (testClass) => {
                 [10],
                 [20]
             ];
-            const testVar = new Variable.Value(3, `testVar`);
+            const testVar = new Variable.Value(3, `TestVar`);
             const variables = [testVar];
             return new EquationTest(`(-level - r)^${testVar.name}`, (args, variables) => (-args[0] - 2 ** (1 / 7)) ** variables[0].value, variables, args, constants, testArgs, []);
         })(),
@@ -297,5 +297,3 @@ Struct.EquationTests.exampleWithLevelToXP = () => {
 //Test BigNumber
 
 //Try to use in place math operations?
-
-//Populate variable names for ALL variables.  Give them some name to identify them for troubleshooting.

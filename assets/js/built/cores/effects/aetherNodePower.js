@@ -5,7 +5,7 @@ Zon.AetherNodePower = class AetherNodePower {
 
     }
 
-    static totalMultiplier = Variable.Dependent.empty();
+    static totalMultiplier = Variable.Dependent.empty(`TotalAetherNodePowerMultiplier`);
     static preLoadSetup = () => {
         this.totalMultiplier.replaceEquation(() => Struct.BigNumber.ONE);
     }

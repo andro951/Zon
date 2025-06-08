@@ -2,8 +2,8 @@
 
 Zon.PlayerInventory = class {
     constructor() {
-        this.aether = Variable.BigNumberVar.ZERO;
-        this.totalAetherEarned = Variable.BigNumberVar.ZERO;
+        this.aether = Variable.BigNumberVar.ZERO(`Aether`);
+        this.totalAetherEarned = Variable.BigNumberVar.ZERO(`TotalAetherEarned`);
         this.aetherNodes = new Zon.Item(Zon.ItemType.AetherNode, Struct.BigNumber.ZERO);
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
     }
@@ -157,9 +157,9 @@ Zon.PlayerInventory = class {
     }
 
     constructAetherNodeVariables = () => {
-        this.aetherNodeTimer = new Variable.Value(0);
-        this.aetherNodeInterval = new Variable.Value(6000);
-        this.aetherNodeProductionPercent = new Variable.Dependent(() => this.aetherNodeTimer.value / this.aetherNodeInterval.value, this);
+        this.aetherNodeTimer = new Variable.Value(0, `AetherNodeTimer`);
+        this.aetherNodeInterval = new Variable.Value(6000, `AetherNodeInterval`);
+        this.aetherNodeProductionPercent = new Variable.Dependent(() => this.aetherNodeTimer.value / this.aetherNodeInterval.value, `AetherNodeProductionPercent`, this);
     }
 
     constructAetherNodeProductionRate = () => {
@@ -168,7 +168,7 @@ Zon.PlayerInventory = class {
             Zon.AetherBonusManager.aetherBonus.value * 
             Zon.AetherNodePower.totalMultiplier.value *
             Zon.CreationPower.totalMultiplier.value
-        , this);
+        , `AetherNodeProductionRate`, this);
     }
 
     //#endregion Aether Nodes

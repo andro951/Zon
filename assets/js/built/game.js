@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.Game = class {
+Zon.Game = class Game {
     constructor() {
         this.loopStarted = false;
         this.lateUpdate = new Actions.Action();
@@ -9,11 +9,11 @@ Zon.Game = class {
         this.onLevelReadyActions = new Actions.Action();
         this.levelIsReady = false;
         this.levelDatas = new Array(Zon.LevelData.stageCount).fill(null);
-        this.stageID = new Variable.Value(Zon.LevelData.startingStage);
-        this.stageNum = new Variable.Value(Zon.LevelData.startingStageNum);
-        this.highestStageAvailable = new Variable.Value(Zon.LevelData.startingStage);
-        this.highestStageNumAvailable = new Variable.Value(Zon.LevelData.startingStageNum);
-        this.prestigeCount = new Variable.Value(0);
+        this.stageID = new Variable.Value(Zon.LevelData.startingStage, `CurrentStage`);
+        this.stageNum = new Variable.Value(Zon.LevelData.startingStageNum, `CurrentStageNumber`);
+        this.highestStageAvailable = new Variable.Value(Zon.LevelData.startingStage, `HighestStageAvailable`);
+        this.highestStageNumAvailable = new Variable.Value(Zon.LevelData.startingStageNum, `HighestStageNumberAvailable`);
+        this.prestigeCount = new Variable.Value(0, `PrestigeCount`);
         this.tickRemainder = 0;
         this.lastTickStart = performance.now();
         this.timePerTick = 0.00000000001;

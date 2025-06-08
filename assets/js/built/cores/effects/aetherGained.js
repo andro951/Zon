@@ -5,7 +5,7 @@ Zon.AetherGained = class AetherGained {
         
     }
     
-    static totalMultiplier = Variable.Dependent.empty();
+    static totalMultiplier = Variable.Dependent.empty(`TotalAetherGainedMultiplier`);
     static preLoadSetup = () => {
         this.totalMultiplier.replaceEquation(() => Struct.BigNumber.ONE);
     }

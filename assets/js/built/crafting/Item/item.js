@@ -3,8 +3,8 @@
 Zon.Item = class Item {
     constructor(itemType, quantity) {
         this.itemType = itemType;
-        this.quantity = new Variable.BigNumberVar(quantity);
         this.name = Zon.ItemID.getName(itemType);
+        this.quantity = new Variable.BigNumberVar(quantity, `${this.name}Quantity`);
     }
 
     static nullOrNone(item) {

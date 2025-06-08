@@ -2,7 +2,7 @@
 
 Zon.StageBonusManager = {};
 
-Zon.StageBonusManager.totalStageBonus = Variable.Dependent.empty();
+Zon.StageBonusManager.totalStageBonus = Variable.Dependent.empty(`TotalStageAetherBonus`);
 
 Zon.StageBonusManager.preLoadSetup = () => {
 

@@ -9,14 +9,14 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.element = element;
         this.element.style.zIndex = zIndex.toString();
         this.element.style.position = "absolute";
-        this.position = new Variable.Value(this.element.style.position);
+        this.position = new Variable.Value(this.element.style.position, `${this.element.id}Position`);
         this.position.onChangedAction.add(() => this.element.style.position = this.position.value);
         this.element.style.display = "none";
-        this.rect = Struct.DynamicRectangle.dependent(this);
-        this._leftOffset = new Variable.Value(0);
-        this._topOffset = new Variable.Value(0);
-        this._leftEquationVar = Variable.Dependent.empty(this, true);
-        this._topEquationVar = Variable.Dependent.empty(this, true);
+        this.rect = Struct.DynamicRectangle.dependent(this.element.id, this);
+        this._leftOffset = new Variable.Value(0, `${this.element.id}LeftOffset`);
+        this._topOffset = new Variable.Value(0, `${this.element.id}TopOffset`);
+        this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, this, true);
+        this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, this, true);
         this.rect._left.replaceEquation(() => {
             return this._leftEquationVar.value + this._leftOffset.value;
         });
@@ -25,16 +25,17 @@ Zon.UI.UIElementBase = class UIElementBase {
             return this._topEquationVar.value + this._topOffset.value;
         });
         this.rect._top.linkDependentActions();
+        const shownName = `${this.element.id}Shown`;
         if (this.parent && inheritShown && this.parent !== Zon.device && this.parent !== window.document.body) {
-            this.shown = new Variable.Dependent(() => this.parent.shown.value, this);
+            this.shown = new Variable.Dependent(() => this.parent.shown.value, shownName, this);
         }
         else {
-            this.shown = new Variable.Value(false);
+            this.shown = new Variable.Value(false, shownName);
         }
-        
-        this.backGroundColor = new Variable.ColorVar();
+
+        this.backGroundColor = new Variable.ColorVar(`${this.element.id}BackGroundColor`);
         this.backGroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backGroundColor.value.cssString);
-        this.border = new Variable.Value(this.element.style.border);
+        this.border = new Variable.Value(this.element.style.border, `${this.element.id}Border`);
         this.border.onChangedAction.add(() => this.element.style.border = this.border.value);
         (parent instanceof Zon.UI.UIElementBase ? parent.element : parent).appendChild(this.element);
         this.dependentVariables = [
@@ -217,8 +218,8 @@ Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
         super(newCanvas, zIndex, parent);
         this.element.width = width;
         this.element.height = height;
-        this.canvasWidth = new Variable.Value(newCanvas.width);
-        this.canvasHeight = new Variable.Value(newCanvas.height);
+        this.canvasWidth = new Variable.Value(newCanvas.width, `${canvasId}CanvasWidth`);
+        this.canvasHeight = new Variable.Value(newCanvas.height, `${canvasId}CanvasHeight`);
         this.ctx = this.element.getContext('2d');
     }
     static create(...args) {
@@ -248,7 +249,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         const newDiv = document.createElement("div");
         newDiv.id = divId;
         super(newDiv, zIndex, parent);
-        this.fontSize = new Variable.Dependent(() => this.height * 0.8, this);
+        this.fontSize = new Variable.Dependent(() => this.height * 0.8, `${this.element.id}FontSize`, this);
         this.fontSize.onChangedAction.add(() => this.element.style.fontSize = `${this.fontSize.value}px`);
     }
     static create(...args) {

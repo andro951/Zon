@@ -3,7 +3,13 @@
 const Variable = {}
 
 Variable.Base = class VariableBase {
-    constructor(name = null) {
+    constructor(name) {
+        if (new.target === Variable.Base)
+            throw new Error("Variable.Base is an abstract class and cannot be instantiated directly.");
+
+        if (!name)
+            throw new Error("Variable name is required.");
+
         this.onChanged = this.onChanged.bind(this);
         this.onChangedAction = new Actions.Action();
         this.name = name;
@@ -59,7 +65,7 @@ Variable.Base = class VariableBase {
 }
 
 Variable.Value = class VariableValue extends Variable.Base {
-    constructor(defaultValue, name = null) {
+    constructor(defaultValue, name) {
         super(name);
         this._defaultValue = defaultValue;
         this._value = defaultValue;
@@ -82,20 +88,19 @@ Variable.Value = class VariableValue extends Variable.Base {
 }
 
 Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
-    constructor(defaultValue, name = null) {
+    constructor(defaultValue, name) {
         super(name);
         this._defaultValue = defaultValue;
         this._value = defaultValue.clone;
     }
-
-    static get ZERO() {
-        return new Variable.BigNumberVar(Struct.BigNumber.ZERO);
+    static ZERO(name) {
+        return new Variable.BigNumberVar(Struct.BigNumber.ZERO, name);
     }
-    static get ONE() {
-        return new Variable.BigNumberVar(Struct.BigNumber.ONE);
+    static ONE(name) {
+        return new Variable.BigNumberVar(Struct.BigNumber.ONE, name);
     }
-    static create(significand, exponent = 0) {
-        return new Variable.BigNumberVar(Struct.BigNumber.create(significand, exponent));
+    static create(name, significand, exponent = 0) {
+        return new Variable.BigNumberVar(Struct.BigNumber.create(significand, exponent), name);
     }
 
     set value(newValue) {
@@ -116,7 +121,7 @@ Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
 }
 
 Variable.ColorVar = class ColorVar extends Variable.Base {
-    constructor(defaultColor = 0, name = null) {
+    constructor(name, defaultColor = 0) {
         super(name);
         this._defaultValue = defaultColor;
         this._value = Struct.Color.fromUInt(defaultColor);
@@ -189,7 +194,7 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
 }
 
 Variable.Dependent = class DependentVariable extends Variable.Base {
-    constructor(getValue, thisObj = undefined, name = null, linkDependentActions = true) {
+    constructor(getValue, name, thisObj = undefined, linkDependentActions = true) {
         super(name);
         if (typeof getValue !== 'function')
             throw new Error(`getValue must be a function, got ${typeof getValue}: ${getValue}`);
@@ -199,8 +204,8 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this._thisObj = thisObj;
         this.replaceEquation(getValue, thisObj);
     }
-    static empty = (thisObj = undefined, name = null, linkDependentActions = false) => {
-        return new Variable.Dependent(Variable.Dependent.defaultEquation, thisObj, name, linkDependentActions);
+    static empty = (name, thisObj = undefined, linkDependentActions = false) => {
+        return new Variable.Dependent(Variable.Dependent.defaultEquation, name, thisObj, linkDependentActions);
     }
     static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
     replaceEquation(newGetValue, thisObj = undefined) {

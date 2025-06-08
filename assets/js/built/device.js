@@ -12,7 +12,7 @@ Zon.Device = class extends Zon.UI.UIElementDiv {
         this.widthRatio = this.DEFAULT_WIDTH_RATIO;
         this.usedHeightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.usedWidthRatio = this.DEFAULT_WIDTH_RATIO;
-        this.rect = Struct.DynamicRectangle.empty();
+        this.rect = Struct.DynamicRectangle.empty(`Device`);
         window.addEventListener("load", this.resize);
         window.addEventListener("resize", this.resize);
         this.onResize = new Actions.Action();

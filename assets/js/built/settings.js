@@ -113,7 +113,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
 }
 
 {
-    Zon.Setting = class extends Zon.IHasSaveLoadHelper {
+    Zon.Setting = class Setting extends Zon.IHasSaveLoadHelper {
         constructor(id, defaultValue, name = null) {
             if (new.target === Zon.Setting) {
                 throw new TypeError("Cannot construct Setting instances directly");
@@ -123,7 +123,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             this.id = id;
             this.defaultValue = defaultValue;
             this.name = name ?? Zon.GameSettingsIDNames[id];
-            this._value = new Variable.Value(defaultValue);
+            this._value = new Variable.Value(defaultValue, `Setting${this.name}Value`);
             this.onChangedAction = this._value.onChangedAction;
             this.onChangedByPlayerAction = new Actions.Action();
         }

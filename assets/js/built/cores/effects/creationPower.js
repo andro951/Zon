@@ -5,7 +5,7 @@ Zon.CreationPower = class CreationPower {
         
     }
 
-    static totalMultiplier = Variable.Dependent.empty();
+    static totalMultiplier = Variable.Dependent.empty(`TotalCreationPowerMultiplier`);
     static preLoadSetup = () => {
         this.totalMultiplier.replaceEquation(() => Struct.BigNumber.ONE);
     }

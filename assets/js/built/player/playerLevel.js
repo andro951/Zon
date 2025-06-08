@@ -3,7 +3,7 @@
 Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level system from BlocksAII.
     constructor() {
         this.xp = Zon.playerInventory.aether;
-        this.level = new Variable.BigNumberVar(this.xpToLevel(this.xp.value));
+        this.level = new Variable.BigNumberVar(this.xpToLevel(this.xp.value), `PlayerLevel`);
         this.xp.onChangedAction.add(() => {
             while (this.xp.value.greaterThanOrEqual(this.xpAtNextLevel.value)) {
                 this.level.value = this.level.value.add(Struct.BigNumber.ONE);
@@ -12,13 +12,13 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
         
         this.xpAtLevel = new Variable.Dependent(() => {
             return this.levelToXP(this.level.value); 
-        }, this);
+        }, `XPAtPlayerLevel`, this);
         this.xpAtNextLevel = new Variable.Dependent(() => {
             return this.levelToXP(this.level.value.add(Struct.BigNumber.ONE));
-        }, this);
+        }, `XPAtNextPlayerLevel`, this);
         this.progressToNextLevel = new Variable.Dependent(() => {
             return this.xp.value.logarithmicProgress(this.xpAtLevel.value, this.xpAtNextLevel.value);
-        }, this);
+        }, `ProgressToNextPlayerLevel`, this);
 
         this.createEquations();
     }

@@ -34,14 +34,14 @@ Zon.BlocksManager = class {
         this.blockDamagedColorStrengthSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_DAMAGED_COLOR_STRENGTH);
         this.blockDamagedColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_DAMAGED_COLOR);
         this.blockDamagedFadeTimeSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_DAMAGED_FADE_TIME);
-        this.blockDamagedFadeTimeSettingInv = new Variable.Dependent(() => 1 / this.blockDamagedFadeTimeSetting, this);
+        this.blockDamagedFadeTimeSettingInv = new Variable.Dependent(() => 1 / this.blockDamagedFadeTimeSetting, `BlockDamagedFadeTimeSettingInv`, this);
         this.blockHealthTextFontSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_FONT);
-        this.blockHealthTextFont = new Variable.Dependent(() => `24px ` + Zon.Settings.BlockHealthTextFonts[this.blockHealthTextFontSetting.value], this);
+        this.blockHealthTextFont = new Variable.Dependent(() => `24px ` + Zon.Settings.BlockHealthTextFonts[this.blockHealthTextFontSetting.value], `BlockHealthTextFont`, this);
         this.blockHealthTextFont.onChangedAction.add(this.updateAllBlockHealthTextFonts);
         this.blockHealthTextColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_COLOR);
-        this.blockHealthTextColorString = new Variable.Dependent(() => this.blockHealthTextColorSetting.value.cssString, this);
+        this.blockHealthTextColorString = new Variable.Dependent(() => this.blockHealthTextColorSetting.value.cssString, `BlockHealthTextColorString`, this);
         this.blockHealthTextOutlineColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_COLOR);
-        this.blockHealthTextOutlineColorString = new Variable.Dependent(() => this.blockHealthTextOutlineColorSetting.value.cssString, this);
+        this.blockHealthTextOutlineColorString = new Variable.Dependent(() => this.blockHealthTextOutlineColorSetting.value.cssString, `BlockHealthTextOutlineColorString`, this);
         this.blockHealthTextOutlineStyleSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_STYLE);
         this.blockHealthTextOutlineWidthSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_WIDTH);
         this.blockHealthTextSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT);
