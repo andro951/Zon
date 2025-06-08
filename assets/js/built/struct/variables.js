@@ -3,9 +3,10 @@
 const Variable = {}
 
 Variable.Base = class VariableBase {
-    constructor() {
+    constructor(name = null) {
         this.onChanged = this.onChanged.bind(this);
         this.onChangedAction = new Actions.Action();
+        this.name = name;
     }
 
     valueOf() {
@@ -58,8 +59,8 @@ Variable.Base = class VariableBase {
 }
 
 Variable.Value = class VariableValue extends Variable.Base {
-    constructor(defaultValue) {
-        super();
+    constructor(defaultValue, name = null) {
+        super(name);
         this._defaultValue = defaultValue;
         this._value = defaultValue;
     }
@@ -81,8 +82,8 @@ Variable.Value = class VariableValue extends Variable.Base {
 }
 
 Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
-    constructor(defaultValue) {
-        super();
+    constructor(defaultValue, name = null) {
+        super(name);
         this._defaultValue = defaultValue;
         this._value = defaultValue.clone;
     }
@@ -115,8 +116,8 @@ Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
 }
 
 Variable.ColorVar = class ColorVar extends Variable.Base {
-    constructor(defaultColor = 0) {
-        super();
+    constructor(defaultColor = 0, name = null) {
+        super(name);
         this._defaultValue = defaultColor;
         this._value = Struct.Color.fromUInt(defaultColor);
     }
@@ -188,8 +189,8 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
 }
 
 Variable.Dependent = class DependentVariable extends Variable.Base {
-    constructor(getValue, thisObj = undefined, linkDependentActions = true) {
-        super();
+    constructor(getValue, thisObj = undefined, name = null, linkDependentActions = true) {
+        super(name);
         if (typeof getValue !== 'function')
             throw new Error(`getValue must be a function, got ${typeof getValue}: ${getValue}`);
 
@@ -198,8 +199,8 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this._thisObj = thisObj;
         this.replaceEquation(getValue, thisObj);
     }
-    static empty = (thisObj = undefined, linkDependentActions = false) => {
-        return new Variable.Dependent(Variable.Dependent.defaultEquation, thisObj, linkDependentActions);
+    static empty = (thisObj = undefined, name = null, linkDependentActions = false) => {
+        return new Variable.Dependent(Variable.Dependent.defaultEquation, thisObj, name, linkDependentActions);
     }
     static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
     replaceEquation(newGetValue, thisObj = undefined) {
@@ -259,6 +260,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
     extractVariables(fn, thisContext = undefined) {
         if (Variable.Dependent.debuggExtractVariables) console.log(`Extracting variables from function: ${fn}`);
         const fnStr = fn.toString();
+        this._extractVariablesFromString(fnStr, thisContext);
+    }
+    _extractVariablesFromString(fnStr, thisContext = undefined) {
         const matches = [...new Set(fnStr.match(/\b(?:\w+\.)+\w+\b/g))];
         if (!matches) {
             if (Variable.Dependent.debuggExtractVariables) console.warn(`No matches found in function: ${fnStr}`);

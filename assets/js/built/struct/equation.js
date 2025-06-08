@@ -1,70 +1,108 @@
 "use strict";
 
-//TODO: arguments will be actual values provided to an equation function which aren't variables.  The old 'arguments' will be called variables.
+{
+    const debugEquation = zonDebug && false;
+    Zon.Equation = class Equation {
+        constructor() {
+            if (new.target === Zon.Equation)
+                throw new TypeError("Cannot construct Equation instances directly.");
 
-Zon.Equation = class Equation {
-    constructor() {
-        if (new.target === Zon.Equation)
-            throw new TypeError("Cannot construct Equation instances directly.");
+            this.name = '';
+            this.equationString = '';
+            this.defaultVariablesArr = [];
+            this.variablesArr = [];
+            this.defaultArgsArr = [];
+            this.argsArr = [];
+            this._constantsMap = new Map();
+            this._constantsTrees = [];
+            this.constantsArr = [];
+            this.constantsArrLookupMap = new Map();
+            this._cachedConstants = [];
+            this._equationTreeHeadNotCondensed = null;
+            this._equationTreeHead = null;
+            this._equationFunction = null;
+        }
+        static create(equation, name, equationString, operationsSet, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+            equation.name = name;
+            equation.equationString = equationString;
+            equation.operationsSet = operationsSet;
+            equation.defaultVariablesArr = Array.from(variablesArr);
+            equation.variablesArr = equation.defaultVariablesArr;
+            equation.argsNames = Array.from(argsArr);
+            equation.constantsMap = constantsMap;
+            equation.constantsArr = [];
+            equation.constantsArrLookupMap = new Map();
+            for (const [key, constantEquationString] of constantsMap) {
+                if (constantEquationString === undefined || constantEquationString === null) {
+                    console.error(`Skipping constant "${key}" with undefined or null value.`);
+                    continue;
+                }
 
-        this.name = '';
-        this.equationString = '';
-        this.defaultVariablesArr = [];
-        this.variablesArr = [];
-        this.defaultArgsArr = [];
-        this.argsArr = [];
-        this.constantsMap = new Map();
-        this.constantsArr = [];
-        this.constantsArrLookupMap = new Map();
-        this._equationTreeHead = null;
-        this._equationFunction = null;
-    }
-    static create(equation, name, equationString, operationsSet, variablesArr = [], argsArr = [], constantsMap = new Map()) {
-        equation.name = name;
-        equation.equationString = equationString;
-        equation.defaultVariablesArr = Array.from(variablesArr);
-        equation.variablesArr = equation.defaultVariablesArr;
-        equation.defaultArgsArr = Array.from(argsArr);
-        equation.argsArr = equation.defaultArgsArr;
-        equation.constantsMap = constantsMap;
-        equation.constantsArr = Array.from(constantsMap.values());
-        equation.constantsArrLookupMap = new Map(Array.from(constantsMap.keys()).map((key, index) => [key, index]));
-        equation._equationTreeHead = Zon.Equation.createTree(equationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
-        equation._equationFunction = null;//TODO
-        if (zonDebug) {
-            const equationString = equation._equationTreeHead.toString();
-            console.log(`  equationString: ${equationString}`);
-            console.log(`equationTreeHead: ${equation._equationTreeHead.toString()}`);
-            if (equationString !== equation.equationString) {
-                console.error(`Equation string mismatch: expected "${equation.equationString}", got "${equationString}"`);
+                const constantTree = Zon.Equation.EquationTreeBuilder.createTree(constantEquationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
+                this.EquationTreeBuilder.checkOnlyContainsConstants(constantTree);
+                equation._constantsTrees.push(constantTree);
+                const constantValue = constantTree.value;
+                equation.constantsArr.push(constantValue);
+                equation.constantsArrLookupMap.set(key, equation.constantsArr.length - 1);
+                if (debugEquation) {
+                    console.log(`const: ${constantTree.toString()} = ${constantValue}`);
+                }
+            }
+
+            equation._equationTreeHeadNotCondensed = Zon.Equation.EquationTreeBuilder.createTree(equationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
+            if (debugEquation) {
+                console.log(`  equationString: ${equationString}`);
+                console.log(`equationTreeHead: ${equation._equationTreeHeadNotCondensed.toString()}`);
+                if (equationString !== equation.equationString) {
+                    console.error(`Equation string mismatch: expected "${equation.equationString}", got "${equationString}"`);
+                }
+            }
+
+            equation._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation._equationTreeHeadNotCondensed.clone());
+            if (debugEquation) {
+                console.log(`equationString_s: ${equation._equationTreeHead.toString()}`);
+            }
+
+            equation._equationTreeHead = Zon.Equation.EquationTreeBuilder.replaceConstantsWithReferences(equation);
+            Zon.Equation.EquationTreeBuilder._checkNoConstants(equation._equationTreeHead);
+            if (debugEquation) {
+
+            }
+
+            equation._equationFunction = null;//TODO
+            
+            return equation;
+        }
+        *traverseNodes() {
+            for (const node of this._equationTreeHead.traverse()) {
+                if (node === null)
+                    continue;
+
+                yield node;
             }
         }
-        
-        return equation;
-    }
+        get value() {
+            const result = this._equationTreeHead.value;
+            if (!this.operationsSet.isFinite(result))
+                throw new Error(`Equation value is not finite: ${result}.  Equation: ${this.toString()}`);
 
-    *traverseNodes() {
-        for (const node of this._equationTreeHead.traverse()) {
-            if (node === null)
-                continue;
-
-            yield node;
+            return result;
         }
-    }
-
-    get value() {
-        return this._equationTreeHead.value;
-    }
-    getValue(variablesArr = this.defaultVariablesArr, argsArr = this.defaultArgsArr) {
-        this.variablesArr = variablesArr;
-        this.argsArr = argsArr;
-        const result = this._equationTreeHead.value;
-        this.variablesArr = this.defaultVariablesArr;
-        this.argsArr = this.defaultArgsArr;
-        return result;
-    }
-    toString() {
-        return `${this.name}${(this.defaultArgsArr.length > 0 ? `(${this.defaultArgsArr.join(', ')})` : '')} = ${this.equationString}`;
+        getValue(...args) {
+            this.argsArr = args;
+            const result = this.value;
+            this.argsArr = [];
+            return result;
+        }
+        getValueNewVariables(variablesArr, ...args) {
+            this.variablesArr = variablesArr;
+            const result = this.getValue(...args);
+            this.variablesArr = this.defaultVariablesArr;
+            return result;
+        }
+        toString() {
+            return `${this.name}${(this.defaultArgsArr.length > 0 ? `(${this.defaultArgsArr.join(', ')})` : '')} = ${this.equationString}`;
+        }
     }
 }
 
@@ -98,9 +136,8 @@ Zon.Equation_B = class Equation_B extends Zon.Equation {
     }
 }
 
-Zon.GlobalVariables = new Map();
-
 {
+    const debuggingEquationTree = zonDebug && false;
     const OperationID = {
         NONE: 0,
 
@@ -151,7 +188,6 @@ Zon.GlobalVariables = new Map();
         ]);
         static singleVariableOperations = new Map([
             ['abs', SingleVariableOperationID.ABS],
-            ['-', SingleVariableOperationID.NEGATE],
             ['round', SingleVariableOperationID.ROUND],
             ['trunc', SingleVariableOperationID.TRUNC],
             //['!', SingleOperationID.NOT],
@@ -253,6 +289,7 @@ Zon.GlobalVariables = new Map();
             //false,//NOT
         ];
         static createTree(s, equation, operationsSet, variablesArr, argsArr, constantsArrLookupMap) {
+            if (debuggingEquationTree) console.log(`Creating equation tree for:\n${s}`);
             const argsSet = new Set(argsArr);
             const variablesMap = new Map(variablesArr.map((v, i) => [v.name, i]));
 
@@ -260,7 +297,7 @@ Zon.GlobalVariables = new Map();
             let precursorOperation = PrecursorOperationID.NONE;
             let singleVariableOperation = SingleVariableOperationID.NONE;
             let needToCloseNonParentheseSingleVariableOperation = false;
-            const notAllowedInVariableName = new Set([...this.operations.keys()].flatMap(s => [...s]).concat([...operationsSet.symbolConstants.keys()]).concat(['(', ')', ' ', ',']));
+            const notAllowedInVariableName = new Set([...EquationTreeBuilder.operations.keys()].flatMap(s => [...s]).concat([...operationsSet.symbolConstants.keys()]).concat(['(', ')', ' ', ',']));
             let i = 0;
             function checkStringForWords() {
                 const firstChar = s[i];
@@ -288,6 +325,7 @@ Zon.GlobalVariables = new Map();
                     }
                 }
 
+                if (debuggingEquationTree) console.log(`Extracted word: ${word}`);
                 //const lowerWord = word.toLowerCase();//Intentionally removed
                 const constant = operationsSet.constants.get(word);
                 if (constant !== undefined) {
@@ -295,7 +333,7 @@ Zon.GlobalVariables = new Map();
                     return true;
                 }
 
-                const precursorOperationID = this.precursorOperations.get(word);
+                const precursorOperationID = EquationTreeBuilder.precursorOperations.get(word);
                 if (precursorOperationID !== undefined) {
                     if (precursorOperation !== PrecursorOperationID.NONE)
                         throw new Error("Failed to parse string.  There was already a precursor operation.");
@@ -304,7 +342,7 @@ Zon.GlobalVariables = new Map();
                     return true;
                 }
 
-                const singleVariableOperationID = this.singleVariableOperations.get(word);
+                const singleVariableOperationID = EquationTreeBuilder.singleVariableOperations.get(word);
                 if (singleVariableOperationID !== undefined) {
                     if (singleVariableOperation !== SingleVariableOperationID.NONE)
                         throw new Error("Failed to parse string.  There was already a single variable operation.");
@@ -330,48 +368,81 @@ Zon.GlobalVariables = new Map();
                 }
 
                 if (word.length === 0) {
-                    throw new Error(`Failed to Extract a value from the string: ${s}`);
+                    if (firstChar === '-' && (tree === null || !tree.readyForOperation())) {
+                        i++;
+                        if (singleVariableOperation !== SingleVariableOperationID.NONE)
+                            throw new Error("Failed to parse string.  There was already a single variable operation.");
+
+                        singleVariableOperation = SingleVariableOperationID.NEGATE;
+                        return true;
+                    }
+
+                    return false;
                 }
 
+                if (debuggingEquationTree) console.log(`Extracted word2: ${word}`);
                 const variableIndex = variablesMap.get(word);
                 if (variableIndex !== undefined) {
-                    placeConstantOrVariable(new Zon.Equation.VariableReference(equation, word, variableIndex));//TODO
+                    placeConstantOrVariable(new VariableReference(equation, word, variableIndex));
                     return true;
                 }
 
                 const argIndex = argsSet.has(word) ? argsArr.indexOf(word) : -1;
                 if (argIndex !== -1) {
-                    placeConstantOrVariable(new Zon.Equation.ArgReference(equation, word, argIndex));//TODO
+                    placeConstantOrVariable(new ArgReference(equation, word, argIndex));
                     return true;
                 }
 
                 const constantIndex = constantsArrLookupMap.get(word);
                 if (constantIndex !== undefined) {
-                    placeConstantOrVariable(new Zon.Equation.EquationConstantReference(equation, word, constantIndex));//TODO
+                    placeConstantOrVariable(new ConstantReference(equation, word, constantIndex));
                     return true;
                 }
 
-                throw new Error(`Failed to parse string.  The word "${word}" was not found in the variables, arguments, constants, or operations.`);
+                return false;
             }
             function tryGetConstant() {
                 const start = i;
                 let end = i;
+                let foundDecimal = -1;
+                let eFound = -1;
                 while (end < s.length) {
                     const c = s[end];
-                    if ((c >= '0' && c <= '9') || c === '.' || c === '-') {
+                    if (c >= '0' && c <= '9'){
                         end++;
+                    }
+                    else if (c === '.') {
+                        if (foundDecimal !== -1)
+                            break;
+
+                        foundDecimal = end;
+                        end++;
+                    }
+                    else if (c === 'e' || c === 'E') {
+                        if (eFound !== -1)
+                            break;
+
+                        eFound = end;
+                        end++;
+                        if (end < s.length && (s[end] === '-' || s[end] === '+')) {
+                            end++;
+                        }
                     }
                     else {
                         break;
                     }
                 }
 
-                const valueString = s.substring(start, end - start);
+                if (eFound === end - 1)
+                    end--;
+
+                const valueString = s.substring(start, end);
                 if (valueString.length === 0)
                     return false;
 
+                if (debuggingEquationTree) console.log(`Trying to get constant; toString: ${valueString}`);
                 const value = operationsSet.parse(valueString);
-                if (value !== undefined) {
+                if (value !== undefined && value !== null) {
                     const constant = new Constant(value);
                     placeConstantOrVariable(constant);
                     i = end;
@@ -388,12 +459,13 @@ Zon.GlobalVariables = new Map();
                 function match(key) {
                     return key[0] === first && sLengthRemaining >= key.length && s.substring(index, index + key.length) === key;
                 }
-                for (const [key, operationID] of this.operations) {
+                for (const [key, operationID] of EquationTreeBuilder.operations) {
                     if ((operation === null || key.length > operation.key.length) && match(key))
                         operation = { key, operationID };
                 }
 
                 if (operation !== null) {
+                    if (debuggingEquationTree) console.log(`Trying to get operator; key: ${operation.key}`); 
                     if (operation.operationID === OperationID.SUBTRACT) {
                         if (tree == null || !tree.readyForOperation())
                             return false;
@@ -414,18 +486,23 @@ Zon.GlobalVariables = new Map();
                     throw new Error("Failed to apply operation.  The last Value is null.");
 
                 const operation = new Operation(operationsSet, operationID);
-                tree = tree.joinOperation(operation);
+                if (debuggingEquationTree) console.log(`Applying operation: ${operationID}`);
+                if (!tree.readyForOperation())
+                    throw new Error(`Failed to apply operation: ${operationID}.  The tree is not ready for an operation.  ${tree.toString()}`);
+
+                tree = operation.mergeOntoTree(tree);
             }
             function applyPrecursorOperation(precursorOperationID) {
                 if (precursorOperationID === PrecursorOperationID.NONE)
                     throw new Error("Failed to apply precursor operation.  The precursorOperationID is NONE.");
                 
                 const operation = new PrecursorOperation(operationsSet, precursorOperationID);
+                if (debuggingEquationTree) console.log(`Applying precursor operation: ${precursorOperationID}`);
                 if (tree == null) {
                     tree = operation.setup();
                 }
                 else {
-                    tree = tree.joinPrecursorOperation(operation);
+                    tree = tree.joinNode(operation).setup();
                 }
             }
             function applySingleVariableOperation(singleVariableOperationID) {
@@ -433,14 +510,16 @@ Zon.GlobalVariables = new Map();
                     throw new Error("Failed to apply single variable operation.  The singleVariableOperationID is NONE.");
 
                 const operation = new SingleVariableOperation(operationsSet, singleVariableOperationID);
+                if (debuggingEquationTree) console.log(`Applying single variable operation: ${singleVariableOperationID}`);
                 if (tree == null) {
                     tree = operation.setup();
                 }
                 else {
-                    tree = tree.joinSingleVariableOperation(operation);
+                    tree = tree.joinNode(operation).setup();
                 }
             }
             function placeConstantOrVariable(constantOrVariable) {
+                if (debuggingEquationTree) console.log(`Placing constant or variable: ${constantOrVariable.toString()}`);
                 if (tree === null) {
                     tree = constantOrVariable;
                 }
@@ -481,7 +560,8 @@ Zon.GlobalVariables = new Map();
                                 tree = parenthesis;
                             }
                             else {
-                                tree = tree.joinParenthesis(parenthesis);
+                                if (debuggingEquationTree) console.log(`Joining parenthesis to tree: ${tree.toString()}`);
+                                tree = tree.joinNode(parenthesis);
                             }
                         }
 
@@ -497,11 +577,12 @@ Zon.GlobalVariables = new Map();
                 }
 
                 if (singleVariableOperation !== SingleVariableOperationID.NONE) {
-                    if (!this.singleVariableOperationUsesParentheses[singleVariableOperation]) {
+                    if (EquationTreeBuilder.singleVariableOperationUsesParentheses[singleVariableOperation]) {
                         needToCloseNonParentheseSingleVariableOperation = true;
-                        applyPrecursorOperation(precursorOperation);
-                        precursorOperation = PrecursorOperationID.NONE;
                     }
+
+                    applySingleVariableOperation(singleVariableOperation);
+                    singleVariableOperation = SingleVariableOperationID.NONE;
                 }
 
                 if (tryGetOperator()) {
@@ -510,7 +591,7 @@ Zon.GlobalVariables = new Map();
 
                 if (tryGetConstant()) {
                     if (needToCloseNonParentheseSingleVariableOperation) {
-                        needToCloseNonParentheseSingleVariableOperation = false;
+                        needToCloseNonParentheseSingleVariableOperation = false;//Probably doesn't work.  Just close it immediatly and do precedence.
                         if (tree == null)
                             throw new Error("Failed to close non parentheses single variable operation.  The tree was null.");
 
@@ -522,7 +603,7 @@ Zon.GlobalVariables = new Map();
 
                 if (checkStringForWords()) {
                     if (needToCloseNonParentheseSingleVariableOperation) {
-                        needToCloseNonParentheseSingleVariableOperation = false;
+                        needToCloseNonParentheseSingleVariableOperation = false;//probably doesn't work
                         if (tree == null)
                             throw new Error("Failed to close non parentheses single variable operation.  The tree was null.");
 
@@ -538,7 +619,65 @@ Zon.GlobalVariables = new Map();
             if (tree == null)
                 throw new Error("Failed to parse string.  The tree was null.");
 
-            return tree.getTreeHead();
+            const head = tree.getTreeHead();
+
+            const validationError = head.validate();
+            if (validationError)
+                throw new Error(`Equation tree validation failed: ${validationError}`);
+
+            return head;
+        }
+        static checkOnlyContainsConstants(treeHead) {
+            for (const node of treeHead.traverse()) {
+                if (!node)
+                    throw new Error(`Node in constant tree is null.  This should not happen.  Constant: ${key}, Equation: ${constantEquationString}`);
+
+                if (node instanceof VariableReference)
+                    throw new Error(`Variables are not allowed in constant definitions.`);
+
+                if (node instanceof ArgReference)
+                    throw new Error(`Arguments are not allowed in constant definitions.  Constant: ${key}, Equation: ${constantEquationString}`);
+            }
+        }
+        static _checkNoConstants(treeHead) {
+            for (const node of treeHead.traverse()) {
+                if (!node)
+                    throw new Error(`Node in equation tree is null.  This should not happen.  Equation: ${treeHead.toString()}`);
+
+                if (node instanceof Constant)
+                    throw new Error(`Constants should be replaced with ConstantReference by this point.  Equation: ${treeHead.toString()}`);
+            }
+        }
+        static simplifyEquation(treeHead) {
+            const simplified = treeHead.simplify();
+            const validationError = simplified.validate();
+            if (validationError)
+                throw new Error(`Equation tree validation failed: ${validationError}`);
+
+            return simplified;
+        }
+        static replaceConstantsWithReferences(equation) {
+            const constantsMap = new Map();
+            if (equation._equationTreeHead instanceof Constant) {
+                return new CachedConstantReference(equation._equationTreeHead, constantsMap, equation);
+            }
+
+            const constants = [];
+            for (const node of equation._equationTreeHead.traverse()) {
+                if (node instanceof Constant) {
+                    constants.push(node);
+                }
+            }
+
+            for (const constant of constants) {
+                new CachedConstantReference(constant, constantsMap, equation);
+            }
+
+            const validationError = equation._equationTreeHead.validate();
+            if (validationError)
+                throw new Error(`Equation tree validation failed: ${validationError}`);
+
+            return equation._equationTreeHead;
         }
     }
     Zon.Equation.EquationTreeBuilder = EquationTreeBuilder;
@@ -579,17 +718,8 @@ Zon.GlobalVariables = new Map();
 
             throw new Error(`Failed to close parenthesis for ${this.toString()}.  No parent parenthesis found.`);
         }
-        joinParenthesis(parenthesis) {
-            throw new Error(`Cannot join Parenthesis onto ${this.toString()}.`);
-        }
-        joinOperation(operation) {
-            throw new Error(`Cannot join Operation onto ${this.toString()}.`);
-        }
         joinNode(node) {
             throw new Error(`Cannot join Variable onto ${this.toString()}.`);
-        }
-        joinPrecursorOperation(precursorOperation) {
-            throw new Error(`Cannot join PrecursorOperation onto ${this.toString()}.`);
         }
         myselfAsLeftInputForOperation(operation) {
             if (operation.left !== null)
@@ -619,22 +749,46 @@ Zon.GlobalVariables = new Map();
         readyForOperation() {
             throw new Error(`readyForOperation must be implemented by subclasses.  ${this.toString()}`);
         }
+        validate(parent = null) {
+            throw new Error(`Validate must be implemented by subclasses.  ${this.toString()}`);
+        }
+        precedence() {
+            throw new Error(`Precedence must be implemented by subclasses.  ${this.toString()}`);
+        }
+        isConstant() {
+            return false;
+        }
+        collectAndReplaceConstants(thisNode) {
+            throw new Error(`collectAndReplaceConstants must be implemented by subclasses.  ${this.toString()}`);
+        }
+        clone() {
+            throw new Error(`Clone must be implemented by subclasses.  ${this.toString()}`);
+        }
+        toString() {
+            throw new Error(`toString must be implemented by subclasses.  ${this.constructor.name}`);
+        }
         *traverse() {
-            return null;
+            throw new Error(`Traverse must be implemented by subclasses.  ${this.toString()}`);
         }
     }
     class VariableGetter extends TreeNode {
         constructor(parent = null) {
             super(parent);
         }
-        joinOperation(operation) {
-            return this.myselfAsLeftInputForOperation(operation);
-        }
         readyForOperation() {
             return true;
         }
         toString() {
             return `${this.value}`;
+        }
+        precedence() {
+            return 0;
+        }
+        simplify() {
+            return this;
+        }
+        *traverse() {
+            yield this;
         }
     }
     class ParentNode extends TreeNode {
@@ -650,24 +804,38 @@ Zon.GlobalVariables = new Map();
     }
     class Constant extends VariableGetter {
         constructor(value, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
             super(parent);
             this._value = value;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new Constant(this._value);
         }
         get value() {
             return this._value;
         }
-    }//TODO: make sure this is only used when extracting constants from the equation string to cache them in equation.constantsMap/arr.
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for constant: ${this._value}`;
+
+            if (this._value === undefined || this._value === null)
+                return `Invalid constant value: ${this._value}`;
+
+            return null;
+        }
+        isConstant() {
+            return true;
+        }
+    }
     class NamedConstant extends VariableGetter {
         constructor(name, value, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
             super(parent);
             this.name = name;
             this._value = value;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new NamedConstant(this.name, this._value);
         }
         get value() {
             return this._value;
@@ -675,16 +843,29 @@ Zon.GlobalVariables = new Map();
         toString() {
             return this.name;
         }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for constant: ${this.name}`;
+
+            if (this._value === undefined || this._value === null)
+                return `Invalid constant value: ${this._value}`;
+
+            if (this.name === undefined || this.name === null)
+                return `Invalid constant name: ${this.name}`;
+
+            return null;
+        }
     }
     class VariableReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
             super(parent);
             this.equation = equation;
             this.name = name;
             this.index = index;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new VariableReference(this.equation, this.name, this.index);
         }
         get value() {
             const variable = this.equation.variablesArr[this.index];
@@ -704,19 +885,32 @@ Zon.GlobalVariables = new Map();
         toString() {
             return this.name;
         }
-        *traverse() {
-            yield this;
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for variable reference: ${this.name}`;
+
+            if (this.equation === undefined || this.equation === null)
+                return `Invalid variable reference equation.  Equation is undefined or null on variable reference: ${this.name}`;
+
+            if (this.index < 0 || this.index >= this.equation.defaultVariablesArr.length)
+                return `Invalid variable reference index.  Index is out of bounds on variable reference: ${this.name}.  Index: ${this.index}, Length: ${this.equation.defaultVariablesArr.length}`;
+
+            if (this.name === undefined || this.name === null)
+                return `Invalid variable reference name: ${this.name}`;
+
+            return null;
         }
-    }
+    }//TODO: make all the references inherit from eachother?  They are almost identical.
     class ArgReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
             super(parent);
             this.equation = equation;
             this.name = name;
             this.index = index;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new ArgReference(this.equation, this.name, this.index);
         }
         get value() {
             const arg = this.equation.argsArr[this.index];
@@ -728,49 +922,139 @@ Zon.GlobalVariables = new Map();
         toString() {
             return this.name;
         }
-        *traverse() {
-            yield this;
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for argument reference: ${this.name}`;
+
+            if (this.equation === undefined || this.equation === null)
+                return `Invalid argument reference equation.  Equation is undefined or null on argument reference: ${this.name}`;
+
+            if (this.index < 0 || this.index >= this.equation.argsNames.length)
+                return `Invalid argument reference index.  Index is out of bounds on argument reference: ${this.name}.  Index: ${this.index}, Length: ${this.equation.argsNames.length}`;
+
+            if (this.name === undefined || this.name === null)
+                return `Invalid argument reference name: ${this.name}`;
+
+            return null;
         }
     }
     class ConstantReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
             super(parent);
             this.equation = equation;
             this.name = name;
             this.index = index;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new ConstantReference(this.equation, this.name, this.index);
         }
         get value() {
             const constant = this.equation.constantsArr[this.index];
             if (!constant)
                 throw new Error(`Constant not found in equation: ${this.name} at index ${this.index}.`);
 
-            return constant.value;
+            return constant;
         }
         toString() {
             return this.name;
         }
-        *traverse() {
-            yield this;
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for constant reference: ${this.name}`;
+
+            if (this.equation === undefined || this.equation === null)
+                return `Invalid constant reference equation.  Equation is undefined or null on constant reference: ${this.name}`;
+
+            if (this.index < 0 || this.index >= this.equation.constantsArr.length)
+                return `Invalid constant reference index.  Index is out of bounds on constant reference: ${this.name}.  Index: ${this.index}, Length: ${this.equation.constantsArr.length}`;
+
+            if (this.name === undefined || this.name === null)
+                return `Invalid constant reference name: ${this.name}`;
+
+            return null;
+        }
+        isConstant() {
+            return true;
+        }
+    }
+    class CachedConstantReference extends VariableGetter {
+        constructor(constantOrNull, currentCachedVariablesMapOrIndex, equation) {
+            super(constantOrNull ? constantOrNull.parent : null);
+            if (constantOrNull === null && typeof currentCachedVariablesMapOrIndex === 'number') {
+                this.index = currentCachedVariablesMapOrIndex;
+            }
+            else {
+                if (!(constantOrNull instanceof Constant))
+                    throw new Error(`Invalid constant type: ${constantOrNull.constructor.name}. Expected Constant.`);
+
+                const value = constantOrNull.value;
+                if (debuggingEquationTree) {
+                    //console.log(`Creating CachedConstantReference for constant: ${constantOrNull.toString()} with value: ${value}`);
+                }
+                
+                const index = currentCachedVariablesMapOrIndex.get(value);
+                if (index !== undefined && index !== null) {
+                    this.index = index;
+                }
+                else {
+                    this.index = equation._cachedConstants.length;
+                    equation._cachedConstants.push(value);
+                    currentCachedVariablesMapOrIndex.set(value, this.index);
+                }
+            }
+
+            this.equation = equation;
+
+            if (this.parent)
+                this.parent.swap(constantOrNull, this);
+        }
+        clone() {
+            this.validate(this.parent);
+            return new ConstantReference(null, this.index, this.equation);
+        }
+        get value() {
+            const constant = this.equation._cachedConstants[this.index];
+            if (!constant)
+                throw new Error(`Constant not found in equation: ${this.toString()} at index ${this.index}.`);
+
+            return constant;
+        }
+        toString() {
+            return `${this.value}`;
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for constant reference: ${this.toString()}`;
+
+            if (this.equation === undefined || this.equation === null)
+                return `Invalid constant reference equation.  Equation is undefined or null on constant reference: ${this.toString()}`;
+
+            if (this.index < 0 || this.index >= this.equation._cachedConstants.length)
+                return `Invalid constant reference index.  Index is out of bounds on constant reference: ${this.toString()}.  Index: ${this.index}, Length: ${this.equation._cachedConstants.length}`;
+
+            return null;
+        }
+        isConstant() {
+            return true;
         }
     }
     class Operation extends ParentNode {
-        constructor(operationsSet, operationID, left = null, right = null, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
+        constructor(operationsSetOrFunc, operationID, left = null, right = null, parent = null) {
             super(parent);
             this.left = left;
             this.right = right;
             this.operationID = operationID;
-            this.func = operationsSet.getOperation(operationID);
+            this.func = operationsSetOrFunc instanceof OperationsSet ? operationsSetOrFunc.getOperation(operationID) : operationsSetOrFunc;
             if (this.left)
                 this.left.parent = this;
                 
             if (this.right)
                 this.right.parent = this;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new Operation(this.func, this.operationID, this.left.clone(), this.right.clone());
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -781,35 +1065,19 @@ Zon.GlobalVariables = new Map();
         toString() {
             return EquationTreeBuilder.operationString(this.operationID, this.left ? this.left.toString() : 'none', this.right ? this.right.toString() : 'none');
         }
-        joinParenthesis(parenthesis) {
-            if (!(parenthesis instanceof Parenthesis))
-                throw new Error(`Invalid parenthesis type: ${parenthesis.constructor.name}. Expected Parenthesis.`);
-
-            this.right = parenthesis;
-            parenthesis.parent = this;
-            return parenthesis;
-        }
-        joinOperation(operation) {
-            if (!(operation instanceof Operation))
-                throw new Error(`Invalid operation type: ${operation.constructor.name}. Expected Operation.`);
-
-            if (this.right !== null && EquationTreeBuilder.oppPrecedence[this.operationID] < EquationTreeBuilder.oppPrecedence[operation.operationID]) {
-                //Set new operation as child (right)
-                operation.left = this.right;
-                this.right = operation;
-                operation.parent = this;
-                return operation;
+        mergeOntoTree(currentNode) {
+            let node = currentNode;
+            while (node.parent && this.precedence() <= node.parent.precedence()) {
+                node = node.parent;
             }
-            else {
-                //Swap this operation with the new operation.  This becomes the left of the new operation.
-                operation.left = this;
-                operation.parent = this.parent;
-                this.parent = operation;
-                if (this.parent)
-                    this.parent.swap(this, operation);
 
-                return operation;
-            }
+            this.parent = node.parent;
+            this.left = node;
+            node.parent = this;
+            if (this.parent)
+                this.parent.swap(node, this);
+            
+            return this;
         }
         joinNode(node) {
             if (!(node instanceof TreeNode))
@@ -822,23 +1090,12 @@ Zon.GlobalVariables = new Map();
             node.parent = this;
             return node;
         }
-        joinPrecursorOperation(precursorOperation) {
-            if (!(precursorOperation instanceof PrecursorOperation))
-                throw new Error(`Invalid precursor operation type: ${precursorOperation.constructor.name}. Expected PrecursorOperation.`);
-
-            if (this.right !== null)
-                throw new Error(`Failed to join precursor operation onto Operation because Operation.Right wasn't null`);
-
-            this.right = precursorOperation;
-            precursorOperation.parent = this;
-            return precursorOperation;
-        }
         swap(existing, newOp) {
-            if (this.left === existing) {
-                this.left = newOp;
-            }
-            else if (this.right === existing) {
+            if (this.right === existing) {
                 this.right = newOp;
+            }
+            else if (this.left === existing) {
+                this.left = newOp;
             }
             else {
                 throw new Error(`Failed to swap operation.  Existing operation not found in this operation: ${this.toString()}`);
@@ -846,6 +1103,73 @@ Zon.GlobalVariables = new Map();
         }
         readyForOperation() {
             return this.right !== null;
+        }
+        precedence() {
+            return EquationTreeBuilder.oppPrecedence[this.operationID];
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for operation: ${this.operationID} in operation: ${this.toString()}`;
+
+            if (this.operationID === OperationID.NONE)
+                return `Invalid operation ID: ${this.operationID} in operation: ${this.toString()}`;
+
+            if (this.left === null || this.left === undefined)
+                return `Invalid left operand in operation: ${this.toString()}`;
+            
+            if (this.right === null || this.right === undefined)
+                return `Invalid right operand in operation: ${this.toString()}`;
+
+            if (this === this.left)
+                return `Invalid operation: ${this.toString()}.  Left operand cannot be the same as the operation itself.`;
+
+            if (this === this.right)
+                return `Invalid operation: ${this.toString()}.  Right operand cannot be the same as the operation itself.`;
+
+            const leftValidation = this.left.validate(this);
+            if (leftValidation !== null) {
+                if (zonDebug) console.error(`Left validation failed.  left:`, this.left, `, this:`, this, `, error: ${leftValidation}`);
+                return leftValidation;
+            }
+
+            const rightValidation = this.right.validate(this);
+            if (rightValidation !== null) {
+                if (zonDebug) console.error(`Right validation failed.  right:`, this.right, `, this:`, this, `, error: ${rightValidation}`);
+                return rightValidation;
+            }
+
+            return null;
+        }
+        simplify() {
+            if (debuggingEquationTree) {
+                //console.log(`Simplifying operation: ${this.toString()}`);
+            }
+
+            this.left.simplify();
+            this.right.simplify();
+
+            if (debuggingEquationTree) {
+                // if (this.left.isConstant() || this.right.isConstant()) {
+                //     console.log(`Found constant in operation: ${this.toString()}`);
+                // }
+                // else {
+                //     console.log(`No constants found in operation: ${this.toString()}`);
+                // }
+            }
+
+            if (this.left.isConstant() && this.right.isConstant()) {
+                const newValue = this.value;
+                const newConstant = new Constant(newValue, this.parent);
+                if (this.parent) {
+                    this.parent.swap(this, newConstant);
+                    return this.parent;
+                }
+                else {
+                    return newConstant;
+                }
+            }
+
+            return this;
         }
         *traverse() {
             if (this.left) {
@@ -869,15 +1193,18 @@ Zon.GlobalVariables = new Map();
     }
     //class OperationT2 extends ParentNode {}//Used for type operations that work with different input types.
     class SingleVariableOperation extends ParentNode {
-        constructor(operationsSet, singleOperationID, variable = null, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
+        constructor(operationsSetOrFunc, singleOperationID, variable = null, parent = null) {
             super(parent);
             this.singleOperationID = singleOperationID;
             this.variable = variable;
-            this.variable.parent = this;
-            this.func = operationsSet.getSingleVariableOperation(singleOperationID);
+            if (this.variable)
+                this.variable.parent = this;
+
+            this.func = operationsSetOrFunc instanceof OperationsSet ? operationsSetOrFunc.getSingleVariableOperation(singleOperationID) : operationsSetOrFunc;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new SingleVariableOperation(this.func, this.singleOperationID, this.variable.clone());
         }
         get value() {
             if (this.variable === null)
@@ -886,18 +1213,30 @@ Zon.GlobalVariables = new Map();
             return this.func(this.variable.value);
         }
         toString() {
-            return EquationTreeBuilder.singleVariableOperationstring(this.singleOperationID, this.variable.toString());
+            return EquationTreeBuilder.singleVariableOperationstring(this.singleOperationID, this.variable ? this.variable.toString() : 'none');
         }
-        joinOperation(operation) {
-            if (this.variable === null)
-                throw new Error(`Failed to join operation onto SingleVariableOperation because variable is null.  ${this.toString()}`);
+        joinNode(node) {
+            if (EquationTreeBuilder.singleVariableOperationUsesParentheses[this.singleOperationID])
+                throw new Error(`This operation uses fake parentheses.  It should never be joined on directly.  ${this.toString()}`);
 
-            return this.myselfAsLeftInputForOperation(operation);
+            if (!(node instanceof TreeNode))
+                throw new Error(`Invalid variable type: ${node.constructor.name}. Expected TreeNode.`);
+
+            if (this.variable !== null)
+                throw new Error(`Failed to join variable onto SingleVariableOperation because variable wasn't null.  ${this.toString()}`);
+
+            this.variable = node;
+            node.parent = this;
+            return node;
         }
         setup() {
-            this.variable = new FakeParenthesis();
-            this.variable.parent = this;
-            return this.variable;
+            if (EquationTreeBuilder.singleVariableOperationUsesParentheses[this.singleOperationID]) {
+                this.variable = new FakeParenthesis();
+                this.variable.parent = this;
+                return this.variable;
+            }
+            
+            return this;
         }
         swap(existing, newOp) {
             if (this.variable === existing) {
@@ -909,6 +1248,64 @@ Zon.GlobalVariables = new Map();
         }
         readyForOperation() {
             return this.variable !== null;
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for single variable operation: ${this.singleOperationID} in operation: ${this.toString()}`;
+
+            if (this.singleOperationID === SingleVariableOperationID.NONE)
+                return `Invalid single variable operation ID: ${this.singleOperationID} in operation: ${this.toString()}`;
+
+            if (this.variable === null || this.variable === undefined)
+                return `Invalid variable in single variable operation: ${this.toString()}`;
+
+            if (this === this.variable)
+                return `Invalid single variable operation: ${this.toString()}.  Variable cannot be the same as the operation itself.`;
+
+            const variableValidation = this.variable.validate(this);
+            if (variableValidation !== null) {
+                if (zonDebug) console.error(`Variable validation failed.  variable:`, this.variable, `, this:`, this, `, error: ${variableValidation}`);
+                return variableValidation;
+            }
+
+            return null;
+        }
+        precedence() {
+            return EquationTreeBuilder.singleOperationPrecedence[this.singleOperationID];
+        }
+        simplify() {
+            if (this.variable instanceof SingleVariableOperation) {
+                switch (this.singleOperationID) {
+                    case SingleVariableOperationID.NEGATE:
+                        if (this.variable.singleOperationID === SingleVariableOperationID.NEGATE) {
+                            this.variable.variable.parent = this.parent;
+                            if (this.parent) {
+                                this.parent.swap(this, this.variable.variable);
+                                return this.parent.simplify();
+                            }
+                            else {
+                                return this.variable.variable.simplify();
+                            }
+                        }
+                        break;
+                }
+            }
+
+            this.variable.simplify();
+
+            if (this.variable.isConstant()) {
+                const newValue = this.value;
+                const newConstant = new Constant(newValue, this.parent);
+                if (this.parent) {
+                    this.parent.swap(this, newConstant);
+                    return this.parent;
+                }
+                else {
+                    return newConstant;
+                }
+            }
+
+            return this;
         }
         *traverse() {
             if (this.variable) {
@@ -923,20 +1320,21 @@ Zon.GlobalVariables = new Map();
     }
     //class ConvertOperation extends ParentNode {}//Used for converting between different types.
     class PrecursorOperation extends ParentNode {
-        constructor(operationsSet, precursorOperationID, left = null, right = null, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
+        constructor(operationsSetOrFunc, precursorOperationID, left = null, right = null, parent = null) {
             super(parent);
             this.left = left;
             this.right = right;
             this.precursorOperationID = precursorOperationID;
-            this.func = operationsSet.getPrecursorOperation(precursorOperationID);
+            this.func = operationsSetOrFunc instanceof OperationsSet ? operationsSetOrFunc.getPrecursorOperation(precursorOperationID) : operationsSetOrFunc;
             if (this.left)
                 this.left.parent = this;
                 
             if (this.right)
                 this.right.parent = this;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new PrecursorOperation(this.func, this.precursorOperationID, this.left.clone(), this.right.clone());
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -946,15 +1344,6 @@ Zon.GlobalVariables = new Map();
         }
         toString() {
             return EquationTreeBuilder.precursorOperationString(this.precursorOperationID, this.left ? this.left.toString() : 'none', this.right ? this.right.toString() : 'none');
-        }
-        joinOperation(operation) {
-            if (!(operation instanceof Operation))
-                throw new Error(`Invalid operation type: ${operation.constructor.name}. Expected Operation.`);
-
-            if (this.left === null || this.right === null)
-                throw new Error(`Failed to join operation onto ${this.toString()} because Left or Right was null.`);
-
-            return this.myselfAsLeftInputForOperation(operation);
         }
         setup() {
             if (this.left !== null || this.right !== null)
@@ -976,11 +1365,11 @@ Zon.GlobalVariables = new Map();
             return this.right;
         }
         swap(existing, newOp) {
-            if (this.left === existing) {
-                this.left = newOp;
-            }
-            else if (this.right === existing) {
+            if (this.right === existing) {
                 this.right = newOp;
+            }
+            else if (this.left === existing) {
+                this.left = newOp;
             }
             else {
                 throw new Error(`Failed to swap operation.  Existing operation not found in this operation: ${this.toString()}`);
@@ -988,6 +1377,60 @@ Zon.GlobalVariables = new Map();
         }
         readyForOperation() {
             return this.left !== null && this.right !== null;
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for precursor operation: ${this.precursorOperationID} in operation: ${this.toString()}`;
+
+            if (this.precursorOperationID === PrecursorOperationID.NONE)
+                return `Invalid precursor operation ID: ${this.precursorOperationID} in operation: ${this.toString()}`;
+
+            if (this.left === null || this.left === undefined)
+                return `Invalid left operand in precursor operation: ${this.toString()}`;
+
+            if (this.right === null || this.right === undefined)
+                return `Invalid right operand in precursor operation: ${this.toString()}`;
+
+            if (this === this.left)
+                return `Invalid precursor operation: ${this.toString()}.  Left operand cannot be the same as the operation itself.`;
+
+            if (this === this.right)
+                return `Invalid precursor operation: ${this.toString()}.  Right operand cannot be the same as the operation itself.`;
+
+            const leftValidation = this.left.validate(this);
+            if (leftValidation !== null) {
+                if (zonDebug) console.error(`Left validation failed.  left:`, this.left, `, this:`, this, `, error: ${leftValidation}`);
+                return leftValidation;
+            }
+
+            const rightValidation = this.right.validate(this);
+            if (rightValidation !== null) {
+                if (zonDebug) console.error(`Right validation failed.  right:`, this.right, `, this:`, this, `, error: ${rightValidation}`);
+                return rightValidation;
+            }
+
+            return null;
+        }
+        precedence() {
+            return 0;
+        }
+        simplify() {
+            this.left.simplify();
+            this.right.simplify();
+
+            if (this.left.isConstant() && this.right.isConstant()) {
+                const newValue = this.value;
+                const newConstant = new Constant(newValue, this.parent);
+                if (this.parent) {
+                    this.parent.swap(this, newConstant);
+                    return this.parent;
+                }
+                else {
+                    return newConstant;
+                }
+            }
+
+            return this;
         }
         *traverse() {
             if (this.left) {
@@ -1011,11 +1454,14 @@ Zon.GlobalVariables = new Map();
     }
     class Parenthesis extends ParentNode {
         constructor(innerValue = null, parent = null) {
-            if (parent && !(parent instanceof Operation))
-                throw new Error(`Invalid parent type: ${parent.constructor.name}. Expected Operation.`);
-
             super(parent);
             this.innerValue = innerValue;
+            if (this.innerValue)
+                this.innerValue.parent = this;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new Parenthesis(this.innerValue.clone());
         }
         get value() {
             if (this.innerValue === null)
@@ -1026,35 +1472,10 @@ Zon.GlobalVariables = new Map();
         toString() {
             return `(${this.innerValue ? this.innerValue.toString() : 'none'})`;
         }
-        joinOperation(operation) {
-            if (!(operation instanceof Operation))
-                throw new Error(`Invalid operation type: ${operation.constructor.name}. Expected Operation.`);
-
-            if (this.innerValue === null)
-                throw new Error(`Can't treat Parenthesis as a constant value input to the operation ${operation.toString()} because InnerValue is null.`);
-
-            return this.myselfAsLeftInputForOperation(operation);
-        }
-        joinPrecursorOperation(precursorOperation) {
-            if (!(precursorOperation instanceof PrecursorOperation))
-                throw new Error(`Invalid precursor operation type: ${precursorOperation.constructor.name}. Expected PrecursorOperation.`);
-
-            precursorOperation.parent = this;
-            return precursorOperation.setup();
-        }
-        joinParenthesis(node) {
-            if (!(node instanceof Parenthesis))
-                throw new Error(`Invalid parenthesis type: ${node.constructor.name}. Expected Parenthesis.`);
-
-            return this._joinCommon(node);
-        }
         joinNode(node) {
             if (!(node instanceof TreeNode))
                 throw new Error(`Invalid variable type: ${node.constructor.name}. Expected TreeNode.`);
 
-            return this._joinCommon(node);
-        }
-        _joinCommon(node) {
             node.parent = this;
             return node;
         }
@@ -1075,6 +1496,43 @@ Zon.GlobalVariables = new Map();
         }
         readyForOperation() {
             return this.innerValue !== null;
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for parenthesis: ${this.toString()}`;
+
+            if (this.innerValue === null)
+                return `Invalid inner value in parenthesis: ${this.toString()}`;
+
+            if (this.innerValue === this)
+                return `Invalid parenthesis: ${this.toString()}.  Inner value cannot be the same as the parenthesis itself.`;
+
+            const innerValidation = this.innerValue.validate(this);
+            if (innerValidation !== null) {
+                if (zonDebug) console.error(`Inner value validation failed.  innerValue:`, this.innerValue, `, this:`, this, `, error: ${innerValidation}`);
+                return innerValidation;
+            }
+
+            return null;
+        }
+        precedence() {
+            return 0;
+        }
+        simplify() {
+            this.innerValue.simplify();
+
+            if (this.innerValue instanceof VariableGetter || this.innerValue instanceof Parenthesis || this.innerValue instanceof SingleVariableOperation && EquationTreeBuilder.singleVariableOperationUsesParentheses[this.innerValue.singleOperationID]) {
+                this.innerValue.parent = this.parent;
+                if (this.parent) {
+                    this.parent.swap(this, this.innerValue);
+                    return this.parent;
+                }
+                else {
+                    return this.innerValue;
+                }
+            }
+
+            return this;
         }
         *traverse() {
             if (this.innerValue) {
@@ -1130,6 +1588,9 @@ Zon.GlobalVariables = new Map();
 
             return this.parent;
         }
+        validate(parent = null) {
+            throw new Error(`FakeParenthesis should never exist at the time of validation.  It is a placeholder for operations that use parentheses.  ${this.toString()}`);
+        }
     }
 
     //#endregion Equation Nodes
@@ -1176,11 +1637,17 @@ Zon.GlobalVariables = new Map();
         abs(t) {
             throw new Error("Abs operation must be implemented by subclasses.");
         }
+        negate(t) {
+            throw new Error("Negate operation must be implemented by subclasses.");
+        }
         round(t) {
             throw new Error("Round operation must be implemented by subclasses.");
         }
         trunc(t) {
             throw new Error("Truncate operation must be implemented by subclasses.");
+        }
+        isFinite(t) {
+            throw new Error("IsFinite operation must be implemented by subclasses.");
         }
         valueAsBool(t) {
             return this.toBool(t) ? this.one : this.zero;
@@ -1311,7 +1778,7 @@ Zon.GlobalVariables = new Map();
         subtract = (a, b) => a - b;
         multiply = (a, b) => a * b;
         divide = (a, b) => a / b;
-        pow = (a, b) => Math.pow(a, b);
+        pow = (a, b) => a ** b;
         log = (a, b) => Math.log(a) / Math.log(b);
         toBool = (t) => t === 0 ? false : true;
         get one() {
@@ -1323,8 +1790,10 @@ Zon.GlobalVariables = new Map();
         lessThanBool = (a, b) => a < b;
         equalToBool = (a, b) => a === b;
         abs = (t) => Math.abs(t);
+        negate = (t) => -t;
         round = (t) => Math.round(t);
         trunc = (t) => Math.trunc(t);
+        isFinite = (t) => Number.isFinite(t);
         getPrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 case PrecursorOperationID.LOG:
@@ -1337,6 +1806,8 @@ Zon.GlobalVariables = new Map();
             switch (operationID) {
                 case SingleVariableOperationID.ABS:
                     return this.abs;
+                case SingleVariableOperationID.NEGATE:
+                    return this.negate;
                 case SingleVariableOperationID.ROUND:
                     return this.round;
                 case SingleVariableOperationID.TRUNC:
@@ -1347,6 +1818,9 @@ Zon.GlobalVariables = new Map();
         }
         parse(valueString) {
             const parsedValue = parseFloat(valueString);
+            if (isNaN(parsedValue))
+                return null;
+
             if (!isFinite(parsedValue))
                 throw new Error(`Failed to parse value: ${valueString}`);
 
@@ -1408,8 +1882,10 @@ Zon.GlobalVariables = new Map();
         lessThanBool = (a, b) => a.lessThan(b);
         equalToBool = (a, b) => a.equals(b);
         abs = (t) => t.abs();
+        negate = (t) => t.negative();
         round = (t) => t.round();
         trunc = (t) => t.trunc();
+        isFinite = (t) => t instanceof Struct.BigNumber && t.isFinite();
         getPrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 case PrecursorOperationID.LOG:
@@ -1422,6 +1898,8 @@ Zon.GlobalVariables = new Map();
             switch (operationID) {
                 case SingleVariableOperationID.ABS:
                     return this.abs;
+                case SingleVariableOperationID.NEGATE:
+                    return this.negate;
                 case SingleVariableOperationID.ROUND:
                     return this.round;
                 case SingleVariableOperationID.TRUNC:
@@ -1486,8 +1964,10 @@ Zon.GlobalVariables = new Map();
         lessThanBool = (a, b) => !a && b;
         equalToBool = (a, b) => a === b;
         abs = (t) => t;
+        negate = (t) => !t;
         round = (t) => t;
         trunc = (t) => t;
+        isFinite = (t) => typeof t === 'boolean';
         getPrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 case PrecursorOperationID.LOG:
@@ -1500,6 +1980,8 @@ Zon.GlobalVariables = new Map();
             switch (operationID) {
                 case SingleVariableOperationID.ABS:
                     return this.abs;
+                case SingleVariableOperationID.NEGATE:
+                    return this.negate;
                 case SingleVariableOperationID.ROUND:
                     return this.round;
                 case SingleVariableOperationID.TRUNC:

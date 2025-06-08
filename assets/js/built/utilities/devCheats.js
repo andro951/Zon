@@ -40,6 +40,7 @@ Zon.DevCheats.runTests = () => {
     //Zon.DevCheats.runSaveLoadTests();
     //BigNumberTests.Test_BigNumberConversions();
     //NumberTests.Test_CalculateSignificandExponent();
+    Struct.EquationTests.runTests();
 }
 
 Zon.DevCheats.runSaveLoadTests = () => {

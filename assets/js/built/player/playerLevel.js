@@ -30,7 +30,7 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
         constants.set(r, `2^(1 / 7)`);
         const level = `level`;
         const args = [level];
-        const levelToXPStr = `trunc(0.25 * (${level} * (${level} + 1) * 0.5 +  300 / (${r} - 1) * (${r}^${level} - ${r})) - round((${level} - 1) * (42.2425 / 120)))`;
+        const levelToXPStr = `trunc(0.25 * (${level} * (${level} + 1) * 0.5 + 300 / (${r} - 1) * (${r}^${level} - ${r})) - round((${level} - 1) * (42.2425 / 120)))`;
 
         //Inputs and constants should always be lowercase/camelCase.
         //This should show as:
@@ -40,7 +40,7 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
         //It should scan the function for constants and create static variables for them.  Also find operations that can be simplified to a constant like 42.2425 / 120.
         
         //this.levelToXPEquation = Zon.Equation_BN.create(`LevelToXP`, levelToXPStr, args, constants);
-        this.levelToXPEquation = Zon.Equation_N.create(`LevelToXP`, levelToXPStr, [], args, constants);
+        //this.levelToXPEquation = Zon.Equation_N.create(`LevelToXP`, levelToXPStr, [], args, constants);
         //name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()
     }
 

@@ -689,6 +689,13 @@ Struct.BigNumber = class BigNumber {
         const remaining = daysRemainder.toNumber() * 86400;
         return StringHelper.ToTime2(daysWholeNumber, remaining, decimals, scientific, removeTrailingZeros);
     }
+    isFinite() {
+        const finite = Number.isFinite(this._significand) && Number.isFinite(this._exponent);
+        if (!finite)
+            throw new Error(`BigNumber is not finite: ${this._significand} * 2^${this._exponent}`);
+
+        return finite;
+    }
     write(writer) {
         writer.writeNumber(this._significand);
         writer.writeInt53AutoLength(this._exponent);
