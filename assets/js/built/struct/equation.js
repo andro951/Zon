@@ -700,7 +700,8 @@
         static replaceConstantsWithReferences(equation) {
             const constantsMap = new Map();
             if (equation._equationTreeHead instanceof Constant || equation._equationTreeHead instanceof NamedConstant) {
-                return new CachedConstantReference(equation._equationTreeHead, constantsMap, equation);
+                const name = equation._equationTreeHead instanceof NamedConstant ? equation._equationTreeHead.name : null;
+                return new CachedConstantReference(equation._equationTreeHead, constantsMap, equation, name);
             }
 
             const constants = [];
@@ -711,7 +712,8 @@
             }
 
             for (const constant of constants) {
-                new CachedConstantReference(constant, constantsMap, equation);
+                const name = constant instanceof NamedConstant ? constant.name : null;
+                new CachedConstantReference(constant, constantsMap, equation, name);
             }
 
             const validationError = equation._equationTreeHead.validate();
@@ -967,7 +969,7 @@
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!varsStrings[this.index])
-                varsStrings[this.index] = `const ${this.name} = ${vars}[${this.index}];`;
+                varsStrings[this.index] = `\tconst ${this.name} = ${vars}[${this.index}];\n`;
         }
     }
     class ArgReference extends VariableGetter {
@@ -1014,7 +1016,7 @@
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!argStrings[this.index])
-                argStrings[this.index] = `const ${this.name} = ${args}[${this.index}];`;
+                argStrings[this.index] = `\tconst ${this.name} = ${args}[${this.index}];\n`;
         }
     }
     class ConstantReference extends VariableGetter {
@@ -1061,11 +1063,11 @@
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!nconstsStrings[this.index])
-                nconstsStrings[this.index] = `const ${this.name} = ${nconsts}[${this.index}];`;
+                nconstsStrings[this.index] = `\tconst ${this.name} = ${nconsts}[${this.index}];\n`;
         }
     }
     class CachedConstantReference extends VariableGetter {
-        constructor(replacedNode, currentCachedVariablesMapOrIndex, equation, fromClone = false) {
+        constructor(replacedNode, currentCachedVariablesMapOrIndex, equation, name = null, fromClone = false) {
             super(!fromClone ? replacedNode.parent : null);
             if (fromClone && typeof currentCachedVariablesMapOrIndex === 'number') {
                 this.index = currentCachedVariablesMapOrIndex;
@@ -1091,6 +1093,7 @@
             }
 
             this.equation = equation;
+            this.name = name;
             this.replacedNode = replacedNode instanceof Constant ? replacedNode.replacedNode ?? replacedNode : replacedNode;
             if (this.replacedNode === undefined || this.replacedNode === null)
                 throw new Error(`Invalid replaced node for constant reference: ${this.toString()}. Replaced node is undefined or null.`);
@@ -1100,7 +1103,7 @@
         }
         clone() {
             this.validate(this.parent);
-            return new ConstantReference(this.replacedNode, this.index, this.equation);
+            return new ConstantReference(this.replacedNode, this.index, this.equation, this.name, true);
         }
         get value() {
             const constant = this.equation._cachedConstants[this.index];
@@ -1110,7 +1113,7 @@
             return constant;
         }
         toString() {
-            return `${this.value}`;
+            return this.name ?? `${this.value}`;
         }
         validate(parent = null) {
             if (parent !== this.parent)
@@ -1131,11 +1134,11 @@
             return true;
         }
         writeToString(stringArr) {
-            stringArr.push(`${cconsts}${this.index}`);
+            stringArr.push(this.name ?? `${cconsts}${this.index}`);
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!cconstsStrings[this.index])
-                cconstsStrings[this.index] = `const ${cconsts}${this.index} = ${cconsts}[${this.index}];//${this.replacedNode.toString()}\n`;
+                cconstsStrings[this.index] = `\tconst ${(this.name ?? `${cconsts}${this.index}`)} = ${cconsts}[${this.index}];${(this.name === null ? `//${this.replacedNode.toString()}` : '')}\n`;
         }
     }
     class Operation extends ParentNode {
