@@ -161,6 +161,7 @@ Struct.BigNumber = class BigNumber {
             return this;
 
         this._significand = -this._significand;
+        return this;
     }
     negative() {
         if (this._significand === 0)
