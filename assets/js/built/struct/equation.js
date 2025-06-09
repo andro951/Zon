@@ -1,7 +1,7 @@
 "use strict";
 
 {
-    const debugEquation = zonDebug && false;
+    const debugEquation = zonDebug && true;
     Zon.Equation = class Equation {
         constructor() {
             if (new.target === Zon.Equation)
@@ -16,6 +16,7 @@
             this._constantsMap = new Map();
             this._constantsTrees = [];
             this.constantsArr = [];
+            this.constantsArrNames = [];
             this.constantsArrLookupMap = new Map();
             this._cachedConstants = [];
             this._equationTreeHeadNotCondensed = null;
@@ -30,8 +31,6 @@
             equation.variablesArr = equation.defaultVariablesArr;
             equation.argsNames = Array.from(argsArr);
             equation.constantsMap = constantsMap;
-            equation.constantsArr = [];
-            equation.constantsArrLookupMap = new Map();
             for (const [key, constantEquationString] of constantsMap) {
                 if (constantEquationString === undefined || constantEquationString === null) {
                     console.error(`Skipping constant "${key}" with undefined or null value.`);
@@ -43,6 +42,7 @@
                 equation._constantsTrees.push(constantTree);
                 const constantValue = constantTree.value;
                 equation.constantsArr.push(constantValue);
+                equation.constantsArrNames.push(key);
                 equation.constantsArrLookupMap.set(key, equation.constantsArr.length - 1);
                 if (debugEquation) {
                     console.log(`const: ${constantTree.toString()} = ${constantValue}`);
@@ -59,7 +59,7 @@
                 }
             }
 
-            equation._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation._equationTreeHeadNotCondensed.clone());
+            equation._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation._equationTreeHeadNotCondensed);
             if (debugEquation) {
                 console.log(`equationString_s: ${equation._equationTreeHead.toString()}`);
             }
@@ -323,7 +323,7 @@
         ];
         static createTree(s, equation, operationsSet, variablesArr, argsArr, constantsArrLookupMap) {
             if (debugEquation) console.log(`Creating equation tree for:\n${s}`);
-            const argsSet = new Set(argsArr);
+            const argsMap = new Map(argsArr.map((arg, index) => [arg.name, index]));
             const variablesMap = new Map(variablesArr.map((v, i) => [v.name, i]));
 
             let tree = null;
@@ -420,8 +420,8 @@
                     return true;
                 }
 
-                const argIndex = argsSet.has(word) ? argsArr.indexOf(word) : -1;
-                if (argIndex !== -1) {
+                const argIndex = argsMap.get(word);
+                if (argIndex !== undefined) {
                     placeConstantOrVariable(new ArgReference(equation, word, argIndex));
                     return true;
                 }
@@ -834,7 +834,10 @@
             return 0;
         }
         simplify() {
-            return this;
+            return this.clone();
+        }
+        populateFunctionReferences(variables, nconstants, cconstants, args) {
+            throw new Error(`populateFunctionReferences must be implemented by subclasses.  ${this.toString()}`);
         }
         *traverse() {
             yield this;
@@ -852,13 +855,14 @@
         }
     }
     class Constant extends VariableGetter {
-        constructor(value, parent = null) {
+        constructor(value, parent = null, replacedNode = null) {
             super(parent);
             this._value = value;
+            this.replacedNode = replacedNode;
         }
         clone() {
             this.validate(this.parent);
-            return new Constant(this._value);
+            return new Constant(this._value, null, this.replacedNode);
         }
         get value() {
             return this._value;
@@ -959,11 +963,18 @@
             return null;
         }
         writeToString(stringArr) {
-            stringArr.push(`${vars}[${this.index}].value`);
+            stringArr.push(`${this.name}.value`);
+        }
+        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
+            if (!varsStrings[this.index])
+                varsStrings[this.index] = `const ${this.name} = ${vars}[${this.index}];`;
         }
     }
     class ArgReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
+            if (index === undefined || index === null)
+                throw new Error(`Invalid index for argument reference: ${name}. Index cannot be undefined or null.`);
+
             super(parent);
             this.equation = equation;
             this.name = name;
@@ -999,7 +1010,11 @@
             return null;
         }
         writeToString(stringArr) {
-            stringArr.push(`${args}[${this.index}]`);
+            stringArr.push(this.name);
+        }
+        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
+            if (!argStrings[this.index])
+                argStrings[this.index] = `const ${this.name} = ${args}[${this.index}];`;
         }
     }
     class ConstantReference extends VariableGetter {
@@ -1042,20 +1057,25 @@
             return true;
         }
         writeToString(stringArr) {
-            stringArr.push(`${nconsts}[${this.index}]`);
+            stringArr.push(this.name);
+        }
+        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
+            if (!nconstsStrings[this.index])
+                nconstsStrings[this.index] = `const ${this.name} = ${nconsts}[${this.index}];`;
         }
     }
     class CachedConstantReference extends VariableGetter {
-        constructor(constantOrNull, currentCachedVariablesMapOrIndex, equation) {
-            super(constantOrNull ? constantOrNull.parent : null);
-            if (constantOrNull === null && typeof currentCachedVariablesMapOrIndex === 'number') {
+        constructor(constantOrClonedReplacedNode, currentCachedVariablesMapOrIndex, equation) {
+            const isConstant = constantOrClonedReplacedNode instanceof Constant;
+            super(isConstant ? constantOrClonedReplacedNode.parent : null);
+            if (!isConstant && typeof currentCachedVariablesMapOrIndex === 'number') {
                 this.index = currentCachedVariablesMapOrIndex;
             }
             else {
-                if (!(constantOrNull instanceof Constant) && !(constantOrNull instanceof NamedConstant))
-                    throw new Error(`Invalid constant type: ${constantOrNull.constructor.name}. Expected Constant.`);
+                if (!(constantOrClonedReplacedNode instanceof Constant) && !(constantOrClonedReplacedNode instanceof NamedConstant))
+                    throw new Error(`Invalid constant type: ${constantOrClonedReplacedNode.constructor.name}. Expected Constant.`);
 
-                const value = constantOrNull.value;
+                const value = constantOrClonedReplacedNode.value;
                 if (debugEquation) {
                     //console.log(`Creating CachedConstantReference for constant: ${constantOrNull.toString()} with value: ${value}`);
                 }
@@ -1072,9 +1092,10 @@
             }
 
             this.equation = equation;
+            this.replacedNode = isConstant ? constantOrClonedReplacedNode.replacedNode : constantOrClonedReplacedNode;
 
             if (this.parent)
-                this.parent.swap(constantOrNull, this);
+                this.parent.swap(constantOrClonedReplacedNode, this);
         }
         clone() {
             this.validate(this.parent);
@@ -1106,7 +1127,11 @@
             return true;
         }
         writeToString(stringArr) {
-            stringArr.push(`${cconsts}[${this.index}]`);
+            stringArr.push(`${cconsts}${this.index}`);
+        }
+        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
+            if (!cconstsStrings[this.index])
+                cconstsStrings[this.index] = `const ${cconsts}${this.index} = ${cconsts}[${this.index}];//${this.replacedNode.toString()}`;
         }
     }
     class Operation extends ParentNode {
@@ -1123,9 +1148,9 @@
             if (this.right)
                 this.right.parent = this;
         }
-        clone() {
+        clone(left = null, right = null) {
             this.validate(this.parent);
-            return new Operation(this.equation, this.operationID, this.left.clone(), this.right.clone());
+            return new Operation(this.equation, this.operationID, left ?? this.left.clone(), right ?? this.right.clone());
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -1216,8 +1241,8 @@
                 //console.log(`Simplifying operation: ${this.toString()}`);
             }
 
-            this.left.simplify();
-            this.right.simplify();
+            const left = this.left.simplify();
+            const right = this.right.simplify();
 
             if (debugEquation) {
                 // if (this.left.isConstant() || this.right.isConstant()) {
@@ -1228,19 +1253,13 @@
                 // }
             }
 
-            if (this.left.isConstant() && this.right.isConstant()) {
+            if (left.isConstant() && right.isConstant()) {
                 const newValue = this.value;
-                const newConstant = new Constant(newValue, this.parent);
-                if (this.parent) {
-                    this.parent.swap(this, newConstant);
-                    return this.parent;
-                }
-                else {
-                    return newConstant;
-                }
+                const newConstant = new Constant(newValue, null, this);
+                return newConstant;
             }
 
-            return this;
+            return this.clone(left, right);
         }
         writeToString(stringArr) {
             this.equation.operationsSet.writeOperationToString(stringArr, this.operationID, this.left, this.right);
@@ -1277,9 +1296,9 @@
 
             this.func = equation.operationsSet.getSingleVariableOperation(singleOperationID);
         }
-        clone() {
+        clone(variable = null) {
             this.validate(this.parent);
-            return new SingleVariableOperation(this.equation, this.singleOperationID, this.variable.clone());
+            return new SingleVariableOperation(this.equation, this.singleOperationID, variable ?? this.variable.clone());
         }
         get value() {
             if (this.variable === null)
@@ -1353,34 +1372,22 @@
                 switch (this.singleOperationID) {
                     case SingleVariableOperationID.NEGATE:
                         if (this.variable.singleOperationID === SingleVariableOperationID.NEGATE) {
-                            this.variable.variable.parent = this.parent;
-                            if (this.parent) {
-                                this.parent.swap(this, this.variable.variable);
-                                return this.parent.simplify();
-                            }
-                            else {
-                                return this.variable.variable.simplify();
-                            }
+                            const newVariable = this.variable.variable.simplify();
+                            return newVariable;
                         }
                         break;
                 }
             }
 
-            this.variable.simplify();
+            const variable = this.variable.simplify();
 
-            if (this.variable.isConstant()) {
+            if (variable.isConstant()) {
                 const newValue = this.value;
-                const newConstant = new Constant(newValue, this.parent);
-                if (this.parent) {
-                    this.parent.swap(this, newConstant);
-                    return this.parent;
-                }
-                else {
-                    return newConstant;
-                }
+                const newConstant = new Constant(newValue, null, this);
+                return newConstant;
             }
 
-            return this;
+            return this.clone(variable);
         }
         writeToString(stringArr) {
             this.equation.operationsSet.writeSingleOperationToString(stringArr, this.singleOperationID, this.variable);
@@ -1412,9 +1419,9 @@
             if (this.right)
                 this.right.parent = this;
         }
-        clone() {
+        clone(left = null, right = null) {
             this.validate(this.parent);
-            return new PrecursorOperation(this.equation, this.precursorOperationID, this.left.clone(), this.right.clone(), null, this.hasPrecursorConstant);
+            return new PrecursorOperation(this.equation, this.precursorOperationID, left ?? this.left.clone(), right ?? this.right.clone(), null, this.hasPrecursorConstant);
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -1516,22 +1523,16 @@
             return 0;
         }
         simplify() {
-            this.left.simplify();
-            this.right.simplify();
+            const left = this.left.simplify();
+            const right = this.right.simplify();
 
-            if (this.left.isConstant() && this.right.isConstant()) {
+            if (left.isConstant() && right.isConstant()) {
                 const newValue = this.value;
-                const newConstant = new Constant(newValue, this.parent);
-                if (this.parent) {
-                    this.parent.swap(this, newConstant);
-                    return this.parent;
-                }
-                else {
-                    return newConstant;
-                }
+                const newConstant = new Constant(newValue, null, this);
+                return newConstant;
             }
 
-            return this;
+            return this.clone(left, right);
         }
         writeToString(stringArr) {
             this.equation.operationsSet.writePrecursorOperationToString(stringArr, this.precursorOperationID, this.left, this.right);
@@ -1564,9 +1565,9 @@
             if (this.innerValue)
                 this.innerValue.parent = this;
         }
-        clone() {
+        clone(innerValue = null) {
             this.validate(this.parent);
-            return new Parenthesis(this.equation, this.innerValue.clone());
+            return new Parenthesis(this.equation, innerValue ?? this.innerValue.clone());
         }
         get value() {
             if (this.innerValue === null)
@@ -1624,20 +1625,13 @@
             return 0;
         }
         simplify() {
-            this.innerValue.simplify();
+            const innerValue = this.innerValue.simplify();
 
-            if (this.innerValue instanceof VariableGetter || this.innerValue instanceof Parenthesis || this.innerValue instanceof SingleVariableOperation && EquationTreeBuilder.singleVariableOperationUsesParentheses[this.innerValue.singleOperationID]) {
-                this.innerValue.parent = this.parent;
-                if (this.parent) {
-                    this.parent.swap(this, this.innerValue);
-                    return this.parent;
-                }
-                else {
-                    return this.innerValue;
-                }
+            if (innerValue instanceof VariableGetter || innerValue instanceof Parenthesis || innerValue instanceof SingleVariableOperation && EquationTreeBuilder.singleVariableOperationUsesParentheses[innerValue.singleOperationID]) {
+                return innerValue;
             }
 
-            return this;
+            return this.clone(innerValue);
         }
         writeToString(stringArr) {
             this.equation.operationsSet.writeParenthesisToString(stringArr, this.innerValue);
@@ -1709,10 +1703,47 @@
 
     //#region OperationSets
 
+    Zon.TypeID = {
+        NONE: 0,
+        NUMBER: 1,
+        BIG_NUMBER: 2,
+        BOOL: 3,
+    }
+    Enum.freezeObj(Zon.TypeID);
+
+    Zon.Type = class Type {
+        constructor(typeID, name) {
+            this.typeID = typeID;
+            this.name = name;
+        }
+    }
+
+    Zon.Type_N = class Type_N extends Zon.Type {
+        constructor(name) {
+            super(Zon.TypeID.NUMBER, name);
+        }
+    }
+
+    Zon.Type_BN = class Type_BN extends Zon.Type {
+        constructor(name) {
+            super(Zon.TypeID.BIG_NUMBER, name);
+        }
+    }
+
+    Zon.Type_B = class Type_B extends Zon.Type {
+        constructor(name) {
+            super(Zon.TypeID.BOOL, name);
+        }
+    }
+
     class OperationsSet {
         constructor() {
             if (new.target === OperationsSet)
                 throw new TypeError("Cannot construct OperationsSet instances directly.");
+        }
+
+        get type() {
+            throw new Error("Type must be implemented by subclasses.");
         }
 
         add(a, b) {
@@ -1874,6 +1905,10 @@
         }
 
         static instance = null;
+        
+        get type() {
+            return Zon.TypeID.NUMBER;
+        }
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -1961,9 +1996,64 @@
         ]);
         createFunction(equation) {
             const stringArr = [];
+            
+            const variablesArr = equation.variablesArr;
+            const constantsArr = equation.constantsArr;
+            const cachedConstants = equation._cachedConstants;
+            const argsArr = equation.argsArr;
+
+            const varsStrings = new Array(variablesArr.length);
+            const nconstsStrings = new Array(constantsArr.length);
+            const cconstsStrings = new Array(cachedConstants.length);
+            const argStrings = new Array(argsArr.length);
+
+            for (const node of equation.traverse()) {
+                if (node instanceof VariableGetter) {
+                    node.populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings);
+                }
+            }
+
+            for (const varsString of varsStrings) {
+                if (varsString)
+                    stringArr.push(varsString);
+            }
+
+            for (const nconstsString of nconstsStrings) {
+                if (nconstsString)
+                    stringArr.push(nconstsString);
+            }
+
+            for (const cconstsString of cconstsStrings) {
+                if (cconstsString)
+                    stringArr.push(cconstsString);
+            }
+
+            for (const argString of argStrings) {
+                if (argString)
+                    stringArr.push(argString);
+            }
+
+            // for (let i = 0; i < variablesArr.length; i++) {
+            //     stringArr.push(`const ${variablesArr[i].name} = ${vars}[${i}];\n`);
+            // }
+
+            // for (let i = 0; i < constantsArr.length; i++) {
+            //     stringArr.push(`const ${equation.constantsArrNames[i]} = ${nconsts}[${i}];\n`);
+            // }
+
+            // for (let i = 0; i < cachedConstants.length; i++) {
+            //     stringArr.push(`const ${cconsts}${i} = ${cconsts}[${i}];\n`);
+            // }
+
+            // for (let i = 0; i < argsArr.length; i++) {
+            //     stringArr.push(`const ${argsArr[i].name} = ${args}[${i}];\n`);
+            // }
+
+            stringArr.push('\treturn ');
             equation._equationTreeHead.writeToString(stringArr);
-            const mainEquationString = stringArr.join('');
-            return new Function(vars, nconsts, cconsts, args, `\treturn ${mainEquationString};`);
+            stringArr.push(';');
+            const equationString = stringArr.join('');
+            return new Function(vars, nconsts, cconsts, args, equationString);
         }
         writeOperationToString(stringArr, operationID, left, right) {
             left.writeToString(stringArr);
@@ -2060,6 +2150,10 @@
         }
 
         static instance = null;
+        
+        get type() {
+            return Zon.TypeID.BIG_NUMBER;
+        }
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -2135,12 +2229,35 @@
         static _symbolConstants = new Map([...NumberOperationSet._symbolConstants].map(([key, value]) => [key, Struct.BigNumber.create(value)]));
         createFunction(equation) {
             const stringArr = [];
+            
+            const variablesArr = equation.variablesArr;
+            for (let i = 0; i < variablesArr.length; i++) {
+                stringArr.push(`\tconst ${variablesArr[i].name} = ${vars}[${i}];\n`);
+            }
+
+            const constantsArr = equation.constantsArr;
+            for (let i = 0; i < constantsArr.length; i++) {
+                stringArr.push(`\tconst ${equation.constantsArrNames[i]} = ${nconsts}[${i}];\n`);
+            }
+
+            const cachedConstants = equation._cachedConstants;
+            for (let i = 0; i < cachedConstants.length; i++) {
+                stringArr.push(`\tconst ${cconsts}${i} = ${cconsts}[${i}];\n`);
+            }
+
+            const argsArr = equation.argsNames;
+            for (let i = 0; i < argsArr.length; i++) {
+                stringArr.push(`\tconst ${argsArr[i].name} = ${args}[${i}];\n`);
+            }
+
+            stringArr.push('\treturn ');
             equation._equationTreeHead.writeToString(stringArr);
             if (equation._equationTreeHead instanceof VariableGetter)
                 stringArr.push('.clone');
 
-            const mainEquationString = stringArr.join('');
-            return new Function(vars, nconsts, cconsts, args, `\treturn ${mainEquationString};`);
+            stringArr.push(';');
+            const equationString = stringArr.join('');
+            return new Function(vars, nconsts, cconsts, args, equationString);
         }
         writeOperationToString(stringArr, operationID, left, right) {
             left.writeToString(stringArr);
@@ -2234,6 +2351,10 @@
         }
 
         static instance = null;
+        
+        get type() {
+            return Zon.TypeID.BOOL;
+        }
 
         getUniqueOperation(operationID) {
             switch (operationID) {

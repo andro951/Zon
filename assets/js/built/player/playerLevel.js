@@ -3,37 +3,39 @@
 Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level system from BlocksAII.
     constructor() {
         this.xp = Zon.playerInventory.aether;
-        this.level = new Variable.BigNumberVar(this.xpToLevel(this.xp.value), `PlayerLevel`);
-        this.xp.onChangedAction.add(() => {
-            while (this.xp.value.greaterThanOrEqual(this.xpAtNextLevel.value)) {
-                this.level.value = this.level.value.add(Struct.BigNumber.ONE);
-            }
-        });
-        
-        this.xpAtLevel = new Variable.Dependent(() => {
-            return this.levelToXP(this.level.value); 
-        }, `XPAtPlayerLevel`, this);
-        this.xpAtNextLevel = new Variable.Dependent(() => {
-            return this.levelToXP(this.level.value.add(Struct.BigNumber.ONE));
-        }, `XPAtNextPlayerLevel`, this);
-        this.progressToNextLevel = new Variable.Dependent(() => {
-            return this.xp.value.logarithmicProgress(this.xpAtLevel.value, this.xpAtNextLevel.value);
-        }, `ProgressToNextPlayerLevel`, this);
-
-        this.createEquations();
+        this.level = new Variable.BigNumberVar(Struct.BigNumber.ZERO, `PlayerLevel`);//temp
+        this.progressToNextLevel = new Variable.Value(Struct.BigNumber.ZERO, `ProgressToNextPlayerLevel`);//temp
+        // const levelToXPEquation = this._createLevelToXPEquation();
+        // const xpToLevelEquation = this._createXPToLevelEquation();
+        // this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
+        // this.levelToXP = this._playerLevelTracker.levelToProgress;
+        // this.level = this._playerLevelTracker.level;
+        // this.xpToLevel = this._playerLevelTracker.progressToLevel;
+        // this.progressToNextLevel = this._playerLevelTracker.progressToNextLevel;
     }
     
-    createEquations() {
-        const constants = new Map();
+    _createLevelToXPEquation() {
         const r = `r`;
-        constants.set(r, `2^(1 / 7)`);
+        const constants = new Map([
+            [r, `2^(1 / 7)`]
+        ]);
         const level = `level`;
         const args = [level];
         const levelToXPStr = `trunc(0.25 * (${level} * (${level} + 1) * 0.5 + 300 / (${r} - 1) * (${r}^${level} - ${r})) - round((${level} - 1) * (42.2425 / 120)))`;
+        return Zon.Equation_BN.create(`TotalXpNeededAtPlayerLevel`, levelToXPStr, [], args, constants);
+    }
 
-        //this.levelToXPEquation = Zon.Equation_BN.create(`LevelToXP`, levelToXPStr, args, constants);
-        //this.levelToXPEquation = Zon.Equation_N.create(`LevelToXP`, levelToXPStr, [], args, constants);
-        //name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()
+    _createXPToLevelEquation() {
+        const r = `r`;
+        const constants = new Map([
+            [r, `2^(1 / 7)`]
+        ]);
+        const xp = `xp`;
+        const args = [xp];
+        const xpToLevelStr = `floor(7 * log2((${xp} + 1) * (${r} - 1) / 75 + ${r}))`;
+        //const xpToLevelStr = `floor(7 * log((${xp} + 1) * (${r} - 1) / 75 + ${r}, 2))`;
+        //const xpToLevelStr = `floor(7 * log(n, 2))`;
+        return Zon.Equation_BN.create(`PlayerLevelFromXp`, xpToLevelStr, [], args, constants);
     }
 
     static _r = Struct.BigNumber.create(Math.pow(2, 1 / 7));
@@ -43,14 +45,14 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
     static _seven = Struct.BigNumber.create(7);
     static _seventyFive = Struct.BigNumber.create(75);
 
-    levelToXP = (level) => {
+    levelToXPOld = (level) => {
         const levelSum = level.multiply(level.add(Struct.BigNumber.ONE)).multiply(Struct.BigNumber.HALF);
         const a = Zon.PlayerLevel._a;
         const r = Zon.PlayerLevel._r;
         const sum = a.divide(r.subtract(Struct.BigNumber.ONE)).multiply(r.pow(level).subtract(r));
         return Zon.PlayerLevel._quarter.multiply(levelSum.add(sum)).subtract(level.subtract(Struct.BigNumber.ONE).multiply(Zon.PlayerLevel._correctionFactor).round()).trunc();
     }
-    xpToLevel = (xp) => {
+    xpToLevelOld = (xp) => {
         if (!xp.isPositive)
             return Struct.BigNumber.ONE;
 
