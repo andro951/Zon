@@ -1065,17 +1065,16 @@
         }
     }
     class CachedConstantReference extends VariableGetter {
-        constructor(constantOrClonedReplacedNode, currentCachedVariablesMapOrIndex, equation) {
-            const isConstant = constantOrClonedReplacedNode instanceof Constant || constantOrClonedReplacedNode instanceof NamedConstant;
-            super(isConstant ? constantOrClonedReplacedNode.parent : null);
-            if (!isConstant && typeof currentCachedVariablesMapOrIndex === 'number') {
+        constructor(replacedNode, currentCachedVariablesMapOrIndex, equation, fromClone = false) {
+            super(!fromClone ? replacedNode.parent : null);
+            if (fromClone && typeof currentCachedVariablesMapOrIndex === 'number') {
                 this.index = currentCachedVariablesMapOrIndex;
             }
             else {
-                if (!(constantOrClonedReplacedNode instanceof Constant) && !(constantOrClonedReplacedNode instanceof NamedConstant))
-                    throw new Error(`Invalid constant type: ${constantOrClonedReplacedNode.constructor.name}. Expected Constant.`);
+                if (!(replacedNode instanceof Constant) && !(replacedNode instanceof NamedConstant))
+                    throw new Error(`Invalid constant type: ${replacedNode.constructor.name}. Expected Constant.`);
 
-                const value = constantOrClonedReplacedNode.value;
+                const value = replacedNode.value;
                 if (debugEquation) {
                     //console.log(`Creating CachedConstantReference for constant: ${constantOrNull.toString()} with value: ${value}`);
                 }
@@ -1092,14 +1091,16 @@
             }
 
             this.equation = equation;
-            this.replacedNode = isConstant ? constantOrClonedReplacedNode.replacedNode : constantOrClonedReplacedNode;
+            this.replacedNode = replacedNode instanceof Constant ? replacedNode.replacedNode ?? replacedNode : replacedNode;
+            if (this.replacedNode === undefined || this.replacedNode === null)
+                throw new Error(`Invalid replaced node for constant reference: ${this.toString()}. Replaced node is undefined or null.`);
 
             if (this.parent)
-                this.parent.swap(constantOrClonedReplacedNode, this);
+                this.parent.swap(replacedNode, this);
         }
         clone() {
             this.validate(this.parent);
-            return new ConstantReference(null, this.index, this.equation);
+            return new ConstantReference(this.replacedNode, this.index, this.equation);
         }
         get value() {
             const constant = this.equation._cachedConstants[this.index];
@@ -1121,6 +1122,9 @@
             if (this.index < 0 || this.index >= this.equation._cachedConstants.length)
                 return `Invalid constant reference index.  Index is out of bounds on constant reference: ${this.toString()}.  Index: ${this.index}, Length: ${this.equation._cachedConstants.length}`;
 
+            if (this.replacedNode === undefined || this.replacedNode === null)
+                throw new Error(`Invalid replaced node for constant reference: ${this.toString()}. Replaced node is undefined or null.`);
+
             return null;
         }
         isConstant() {
@@ -1131,7 +1135,7 @@
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!cconstsStrings[this.index])
-                cconstsStrings[this.index] = `const ${cconsts}${this.index} = ${cconsts}[${this.index}];//${this.replacedNode.toString()}`;
+                cconstsStrings[this.index] = `const ${cconsts}${this.index} = ${cconsts}[${this.index}];//${this.replacedNode.toString()}\n`;
         }
     }
     class Operation extends ParentNode {
@@ -2007,7 +2011,7 @@
             const cconstsStrings = new Array(cachedConstants.length);
             const argStrings = new Array(argsArr.length);
 
-            for (const node of equation.traverse()) {
+            for (const node of equation.traverseNodes()) {
                 if (node instanceof VariableGetter) {
                     node.populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings);
                 }
@@ -2032,22 +2036,6 @@
                 if (argString)
                     stringArr.push(argString);
             }
-
-            // for (let i = 0; i < variablesArr.length; i++) {
-            //     stringArr.push(`const ${variablesArr[i].name} = ${vars}[${i}];\n`);
-            // }
-
-            // for (let i = 0; i < constantsArr.length; i++) {
-            //     stringArr.push(`const ${equation.constantsArrNames[i]} = ${nconsts}[${i}];\n`);
-            // }
-
-            // for (let i = 0; i < cachedConstants.length; i++) {
-            //     stringArr.push(`const ${cconsts}${i} = ${cconsts}[${i}];\n`);
-            // }
-
-            // for (let i = 0; i < argsArr.length; i++) {
-            //     stringArr.push(`const ${argsArr[i].name} = ${args}[${i}];\n`);
-            // }
 
             stringArr.push('\treturn ');
             equation._equationTreeHead.writeToString(stringArr);
@@ -2231,23 +2219,39 @@
             const stringArr = [];
             
             const variablesArr = equation.variablesArr;
-            for (let i = 0; i < variablesArr.length; i++) {
-                stringArr.push(`\tconst ${variablesArr[i].name} = ${vars}[${i}];\n`);
-            }
-
             const constantsArr = equation.constantsArr;
-            for (let i = 0; i < constantsArr.length; i++) {
-                stringArr.push(`\tconst ${equation.constantsArrNames[i]} = ${nconsts}[${i}];\n`);
-            }
-
             const cachedConstants = equation._cachedConstants;
-            for (let i = 0; i < cachedConstants.length; i++) {
-                stringArr.push(`\tconst ${cconsts}${i} = ${cconsts}[${i}];\n`);
+            const argsArr = equation.argsArr;
+
+            const varsStrings = new Array(variablesArr.length);
+            const nconstsStrings = new Array(constantsArr.length);
+            const cconstsStrings = new Array(cachedConstants.length);
+            const argStrings = new Array(argsArr.length);
+
+            for (const node of equation.traverseNodes()) {
+                if (node instanceof VariableGetter) {
+                    node.populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings);
+                }
             }
 
-            const argsArr = equation.argsNames;
-            for (let i = 0; i < argsArr.length; i++) {
-                stringArr.push(`\tconst ${argsArr[i].name} = ${args}[${i}];\n`);
+            for (const varsString of varsStrings) {
+                if (varsString)
+                    stringArr.push(varsString);
+            }
+
+            for (const nconstsString of nconstsStrings) {
+                if (nconstsString)
+                    stringArr.push(nconstsString);
+            }
+
+            for (const cconstsString of cconstsStrings) {
+                if (cconstsString)
+                    stringArr.push(cconstsString);
+            }
+
+            for (const argString of argStrings) {
+                if (argString)
+                    stringArr.push(argString);
             }
 
             stringArr.push('\treturn ');
