@@ -1066,7 +1066,7 @@
     }
     class CachedConstantReference extends VariableGetter {
         constructor(constantOrClonedReplacedNode, currentCachedVariablesMapOrIndex, equation) {
-            const isConstant = constantOrClonedReplacedNode instanceof Constant;
+            const isConstant = constantOrClonedReplacedNode instanceof Constant || constantOrClonedReplacedNode instanceof NamedConstant;
             super(isConstant ? constantOrClonedReplacedNode.parent : null);
             if (!isConstant && typeof currentCachedVariablesMapOrIndex === 'number') {
                 this.index = currentCachedVariablesMapOrIndex;

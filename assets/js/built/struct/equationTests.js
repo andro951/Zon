@@ -321,14 +321,14 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
         }
     }
     const testCases = [
-        // new EquationTest_BN(`0.25`, (args, variables) => Struct.BigNumber.create(0.25), [], [], new Map(), [], []),
-        // new EquationTest_BN(`2.5e-1`, (args, variables) => Struct.BigNumber.create(2.5e-1), [], [], new Map(), [], []),
-        // new EquationTest_BN(`2.5e5`, (args, variables) => Struct.BigNumber.create(2.5e5), [], [], new Map(), [], []),
-        // new EquationTest_BN(`trunc(0.25)`, (args, variables) => Struct.BigNumber.create(0.25).trunc(), [], [], new Map(), [], []),
-        // new EquationTest_BN(`0.25 * 100`, (args, variables) => Struct.BigNumber.create(0.25).multiply(Struct.BigNumber.create(100)), [], [], new Map(), [], []),
-        // new EquationTest_BN(`pi`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
-        // new EquationTest_BN(`π`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
-        // new EquationTest_BN(`log2(8)`, (args, variables) => Struct.BigNumber.create(8).log(Struct.BigNumber.create(2)), [], [], new Map(), [], []),
+        new EquationTest_BN(`0.25`, (args, variables) => Struct.BigNumber.create(0.25), [], [], new Map(), [], []),
+        new EquationTest_BN(`2.5e-1`, (args, variables) => Struct.BigNumber.create(2.5e-1), [], [], new Map(), [], []),
+        new EquationTest_BN(`2.5e5`, (args, variables) => Struct.BigNumber.create(2.5e5), [], [], new Map(), [], []),
+        new EquationTest_BN(`trunc(0.25)`, (args, variables) => Struct.BigNumber.create(0.25).trunc(), [], [], new Map(), [], []),
+        new EquationTest_BN(`0.25 * 100`, (args, variables) => Struct.BigNumber.create(0.25).multiply(Struct.BigNumber.create(100)), [], [], new Map(), [], []),
+        new EquationTest_BN(`pi`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
+        new EquationTest_BN(`π`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
+        new EquationTest_BN(`log2(8)`, (args, variables) => Struct.BigNumber.create(8).log(Struct.BigNumber.create(2)), [], [], new Map(), [], []),
         (() => {
             const level = `level`;
             const args = [
@@ -340,261 +340,261 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
             ];
             return new EquationTest_BN(`pi * ${level}`, (args, variables) => Struct.BigNumber.create(Math.PI).multiply(args[0]), [], args, new Map(), testArgs, []);
         })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`π * ${level}`, (args, variables) => Struct.BigNumber.create(Math.PI).multiply(args[0]), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`0.25 * ${level}`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`0.25 * ${level} * (${level} + 1) * 0.5`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]).multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5)), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`0.25 * (${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]).multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5)), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`trunc(${level})`, (args, variables) => args[0].trunc(), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`floor(${level})`, (args, variables) => args[0].floor(), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`0.25 * trunc(${level})`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].trunc()), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`0.25 * trunc(${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`trunc(trunc(${level}))`, (args, variables) => args[0].trunc().trunc(), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`0.25 * trunc(trunc(${level}) * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(8)],
-        //         [Struct.BigNumber.create(10)]
-        //     ];
-        //     return new EquationTest_BN(`log(${level}, 2)`, (args, variables) => args[0].log(2), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(8)],
-        //         [Struct.BigNumber.create(10)]
-        //     ];
-        //     return new EquationTest_BN(`log(log(${level}, 2), 3)`, (args, variables) => args[0].log(2).log(3), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(8)],
-        //         [Struct.BigNumber.create(10)]
-        //     ];
-        //     return new EquationTest_BN(`5 * log(${level}, 2)`, (args, variables) => Struct.BigNumber.create(5).multiply(args[0].log(2)), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(8)],
-        //         [Struct.BigNumber.create(10)]
-        //     ];
-        //     return new EquationTest_BN(`trunc(log(${level}, 2))`, (args, variables) => args[0].log(2).trunc(), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const r = `r`;
-        //     const constants = new Map([
-        //         [r, `2^(1 / 7)`]
-        //     ]);
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     const rV = Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)));
-        //     return new EquationTest_BN(`level - r^2`, (args, variables) => args[0].subtract(rV.pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`-level`, (args, variables) => args[0].negative(), [], args, new Map(), testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const r = `r`;
-        //     const constants = new Map([
-        //         [r, `2^(1 / 7)`]
-        //     ]);
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`(-level - --r)^2`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const r = `r`;
-        //     const constants = new Map([
-        //         [r, `2^(1 / 7)`]
-        //     ]);
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     return new EquationTest_BN(`(-level - r)^2`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
-        // })(),
-        // (() => {
-        //     const level = `level`;
-        //     const args = [
-        //         new Zon.Type_BN(level)
-        //     ];
-        //     const r = `r`;
-        //     const constants = new Map([
-        //         [r, `2^(1 / 7)`]
-        //     ]);
-        //     const testArgs = [
-        //         [Struct.BigNumber.create(10)],
-        //         [Struct.BigNumber.create(20)]
-        //     ];
-        //     const testVar = new Variable.BigNumberVar(Struct.BigNumber.create(3), `TestVar`);
-        //     const variables = [testVar];
-        //     return new EquationTest_BN(`(-level - r)^${testVar.name}`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(variables[0].value)), variables, args, constants, testArgs, []);
-        // })(),
-        // (() => {
-        //     const a = 'a';
-        //     const b = 'b';
-        //     const constants = new Map([
-        //         [a, `-2^2`],
-        //         [b, `(-2)^2`]
-        //     ]);
-        //     return new EquationTest_BN(`${a} + ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
-        // })(),
-        // (() => {
-        //     const a = 'a';
-        //     const b = 'b';
-        //     const constants = new Map([
-        //         [a, `1 + 2 * 3`],
-        //         [b, `2 * 3 + 1`]
-        //     ]);
-        //     return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
-        // })(),
-        // (() => {
-        //     const a = 'a';
-        //     const b = 'b';
-        //     const constants = new Map([
-        //         [a, `1 + 2 + 3 * 4`],
-        //         [b, `1 + 3 * 4 + 2`]
-        //     ]);
-        //     return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
-        // })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`π * ${level}`, (args, variables) => Struct.BigNumber.create(Math.PI).multiply(args[0]), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * ${level}`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * ${level} * (${level} + 1) * 0.5`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]).multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * (${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0]).multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`trunc(${level})`, (args, variables) => args[0].trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`floor(${level})`, (args, variables) => args[0].floor(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(${level})`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].trunc()), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`trunc(trunc(${level}))`, (args, variables) => args[0].trunc().trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(trunc(${level}) * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(args[0].multiply(args[0].add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`log(${level}, 2)`, (args, variables) => args[0].log(2), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`log(log(${level}, 2), 3)`, (args, variables) => args[0].log(2).log(3), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`5 * log(${level}, 2)`, (args, variables) => Struct.BigNumber.create(5).multiply(args[0].log(2)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(8)],
+                [Struct.BigNumber.create(10)]
+            ];
+            return new EquationTest_BN(`trunc(log(${level}, 2))`, (args, variables) => args[0].log(2).trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            const rV = Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)));
+            return new EquationTest_BN(`level - r^2`, (args, variables) => args[0].subtract(rV.pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`-level`, (args, variables) => args[0].negative(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`(-level - --r)^2`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`(-level - r)^2`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(2))), [], args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            const testVar = new Variable.BigNumberVar(Struct.BigNumber.create(3), `TestVar`);
+            const variables = [testVar];
+            return new EquationTest_BN(`(-level - r)^${testVar.name}`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(variables[0].value)), variables, args, constants, testArgs, []);
+        })(),
+        (() => {
+            const a = 'a';
+            const b = 'b';
+            const constants = new Map([
+                [a, `-2^2`],
+                [b, `(-2)^2`]
+            ]);
+            return new EquationTest_BN(`${a} + ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
+        })(),
+        (() => {
+            const a = 'a';
+            const b = 'b';
+            const constants = new Map([
+                [a, `1 + 2 * 3`],
+                [b, `2 * 3 + 1`]
+            ]);
+            return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
+        })(),
+        (() => {
+            const a = 'a';
+            const b = 'b';
+            const constants = new Map([
+                [a, `1 + 2 + 3 * 4`],
+                [b, `1 + 3 * 4 + 2`]
+            ]);
+            return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
+        })(),
     ];
 
     for (let i = 0; i < testCases.length; i++) {
