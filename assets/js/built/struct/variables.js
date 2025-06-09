@@ -199,6 +199,10 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
     reset() {
         this.uint = this._defaultValue;
     }
+    
+    resetSkipActions() {
+        this.uint = this._defaultValue;
+    }
 }
 
 Variable.Dependent = class DependentVariable extends Variable.Base {
@@ -447,9 +451,15 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this.needsRecalculate = true;
         super.onChanged();
     }
+    reset() {
+        this.needsRecalculate = true;
+        this.onChanged();
+    }
+    
+    resetSkipActions() {
+        this.needsRecalculate = true;
+    }
 }
-
-Zon.GlobalVariables = new Map();
 
 Variable.EquationVar = class EquationVariable extends Variable.Base {
     constructor(equationClass, variables, equationString, name) {

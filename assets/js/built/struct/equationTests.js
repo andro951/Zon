@@ -8,8 +8,8 @@ Struct.EquationTests.runTests = () => {
         Struct.EquationTests.equationTests_BN(Zon.Equation_BN);
     }
     
-    Struct.EquationTests.exampleWithLevelToXP();
-    Struct.EquationTests.exampleWithLevelToXP_BN();
+    // Struct.EquationTests.exampleWithLevelToXP();
+    // Struct.EquationTests.exampleWithLevelToXP_BN();
 }
 
 Struct.EquationTests.equationTests_N = (testClass) => {
@@ -32,6 +32,7 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         new EquationTest_N(`0.25 * 100`, (args, variables) => 0.25 * 100, [], [], new Map(), [], []),
         new EquationTest_N(`pi`, (args, variables) => Math.PI, [], [], new Map(), [], []),
         new EquationTest_N(`π`, (args, variables) => Math.PI, [], [], new Map(), [], []),
+        new EquationTest_N(`log2(8)`, (args, variables) => Math.log(8) / Math.log(2), [], [], new Map(), [], []),
         (() => {
             const level = `level`;
             const args = [level];
@@ -318,6 +319,7 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
         new EquationTest_BN(`0.25 * 100`, (args, variables) => Struct.BigNumber.create(0.25).multiply(Struct.BigNumber.create(100)), [], [], new Map(), [], []),
         new EquationTest_BN(`pi`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
         new EquationTest_BN(`π`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
+        new EquationTest_BN(`log2(8)`, (args, variables) => Struct.BigNumber.create(8).log(Struct.BigNumber.create(2)), [], [], new Map(), [], []),
         (() => {
             const level = `level`;
             const args = [level];

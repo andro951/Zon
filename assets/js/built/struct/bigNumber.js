@@ -1,21 +1,6 @@
 "use strict";
 
 Struct.BigNumber = class BigNumber {
-    static get ZERO() {
-        return new Struct.BigNumber(0, 0);
-    }
-    static get ONE() {
-        return new Struct.BigNumber(1, 0);
-    }
-    static get NEGATIVE_ONE() {
-        return new Struct.BigNumber(-1, 0);
-    }
-    static get HALF() {
-        return new Struct.BigNumber(1, -1);
-    }
-    static get HUNDRED() {
-        return new Struct.BigNumber(25, 2);
-    }
     constructor(significand, exponent) {
         //Only use this constructor if you know for certain that the values are already normalized.
         this._significand = significand;
@@ -51,6 +36,27 @@ Struct.BigNumber = class BigNumber {
 
         return Struct.BigNumber.create(significand, exponentBase10 * Struct.BigNumber.LOG2_OF_10);
     }
+    
+    static get ZERO() {
+        return new Struct.BigNumber(0, 0);
+    }
+    static ZERO_ = new this(0, 0);
+    static get ONE() {
+        return new Struct.BigNumber(1, 0);
+    }
+    static ONE_ = new this(1, 0);
+    static get NEGATIVE_ONE() {
+        return new Struct.BigNumber(-1, 0);
+    }
+    static NEGATIVE_ONE_ = new this(-1, 0);
+    static get HALF() {
+        return new Struct.BigNumber(1, -1);
+    }
+    static HALF_ = new this(1, -1);
+    static get HUNDRED() {
+        return new Struct.BigNumber(25, 2);
+    }
+    static HUNDRED_ = new this(25, 2);
 
     static _buffer = new ArrayBuffer(8);
     static _view = new DataView(this._buffer);
@@ -445,6 +451,39 @@ Struct.BigNumber = class BigNumber {
     trunc() {
         return this.clone.truncI();
     }
+    floorI() {
+        if (this._significand === 0) {
+            this._significand = 0;
+            this._exponent = 0;
+            return this;
+        }
+
+        if (this._exponent >= 53)
+            return this;
+
+        if (this._exponent < 0) {
+            // If exponent is negative, value is between -1 and 1, so floor is:
+            this._significand = this._significand < 0 ? -1 : 0;
+            this._exponent = 0;
+            return this;
+        }
+
+        const bigNumber = Struct.BigNumber;
+        const float64Arr = bigNumber._float64Arr;
+        const uint32Arr = bigNumber._uint32Arr;
+
+        float64Arr[0] = this._significand;
+        uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((this._exponent + 1023) << 20);
+        this._significand = Math.floor(float64Arr[0]);
+        float64Arr[0] = this._significand;
+        uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+        this._significand = float64Arr[0];
+
+        return this;
+    }
+    floor() {
+        return this.clone.floorI();
+    }
     roundI() {
         if (this._significand === 0) {
             this._significand = 0;
@@ -561,6 +600,18 @@ Struct.BigNumber = class BigNumber {
     //     const reducedSignificand = Math.floor(this._significand * factor) / factor;
     //     return Struct.BigNumber.create(reducedSignificand, this._exponent)._normalize();
     // }
+    linearProgress(start, end) {
+        if (start.greaterThanOrEqual(end))
+            return Struct.BigNumber.ZERO;
+
+        if (this.lessThanOrEqual(start))
+            return Struct.BigNumber.ZERO;
+
+        if (this.greaterThanOrEqual(end))
+            return Struct.BigNumber.ONE;
+
+        return this.subtract(start).divideI(end.subtract(start));
+    }
     logarithmicProgress(start, end) {
         if (start.greaterThanOrEqual(end))
             return Struct.BigNumber.ZERO;

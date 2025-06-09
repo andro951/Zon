@@ -187,6 +187,7 @@
         ROUND: 3,
         TRUNC: 4,
         //NOT: 5,
+        FLOOR: 6,
     }
     const PrecursorOperationID = {
         NONE: 0,
@@ -213,6 +214,7 @@
             ['round', SingleVariableOperationID.ROUND],
             ['trunc', SingleVariableOperationID.TRUNC],
             //['!', SingleOperationID.NOT],
+            ['floor', SingleVariableOperationID.FLOOR],
         ]);
         static precursorOperations = new Map([
             ['log', PrecursorOperationID.LOG],
@@ -249,10 +251,15 @@
 
             throw new Error(`Unknown operation ID: ${operationID}`);
         }
-        static precursorOperationString(precursorOperationID, left, right) {
+        static precursorOperationString(precursorOperationID, left, right, hasPrecursorConstant = false) {
             switch (precursorOperationID) {
                 case PrecursorOperationID.LOG:
-                    return `log(${left}, ${right})`;
+                    if (hasPrecursorConstant) {
+                        return `log${right}(${left})`;
+                    }
+                    else {
+                        return `log(${left}, ${right})`;
+                    }
             }
 
             throw new Error(`Unknown precursor operation ID: ${precursorOperationID}`);
@@ -269,6 +276,8 @@
                     return `trunc(${variable})`;
                 // case SingleOperationID.NOT:
                 //     return `!${variable}`;
+                case SingleVariableOperationID.FLOOR:
+                    return `floor(${variable})`;
             }
 
             throw new Error(`Unknown single operation ID: ${singleOperationID}`);
@@ -301,6 +310,7 @@
             10000,//ROUND
             10000,//TRUNC
             //600,//NOT
+            10000,//FLOOR
         ];
         static singleVariableOperationUsesParentheses = [
             false,//NONE
@@ -309,6 +319,7 @@
             true,//ROUND
             true,//TRUNC
             //false,//NOT
+            true,//FLOOR
         ];
         static createTree(s, equation, operationsSet, variablesArr, argsArr, constantsArrLookupMap) {
             if (debugEquation) console.log(`Creating equation tree for:\n${s}`);
@@ -317,6 +328,7 @@
 
             let tree = null;
             let precursorOperation = PrecursorOperationID.NONE;
+            let precursorConstant = null;
             let singleVariableOperation = SingleVariableOperationID.NONE;
             let needToCloseNonParentheseSingleVariableOperation = false;
             const notAllowedInVariableName = new Set([...EquationTreeBuilder.operations.keys()].flatMap(s => [...s]).concat([...operationsSet.symbolConstants.keys()]).concat(['(', ')', ' ', ',']));
@@ -465,7 +477,13 @@
                 const value = operationsSet.parse(valueString);
                 if (value !== undefined && value !== null) {
                     const constant = new Constant(value);
-                    placeConstantOrVariable(constant);
+                    if (precursorOperation === PrecursorOperationID.LOG) {
+                        precursorConstant = constant;
+                    }
+                    else {
+                        placeConstantOrVariable(constant);
+                    }
+                    
                     i = end;
                     return true;
                 }
@@ -520,11 +538,13 @@
                 const operation = new PrecursorOperation(equation, precursorOperationID);
                 //if (debugEquation) console.log(`Applying precursor operation: ${precursorOperationID}`);
                 if (tree == null) {
-                    tree = operation.setup();
+                    tree = operation.setup(precursorConstant);
                 }
                 else {
-                    tree = tree.joinNode(operation).setup();
+                    tree = tree.joinNode(operation).setup(precursorConstant);
                 }
+
+                precursorConstant = null;
             }
             function applySingleVariableOperation(singleVariableOperationID) {
                 if (singleVariableOperationID === SingleVariableOperationID.NONE)
@@ -1378,13 +1398,14 @@
     }
     //class ConvertOperation extends ParentNode {}//Used for converting between different types.
     class PrecursorOperation extends ParentNode {
-        constructor(equation, precursorOperationID, left = null, right = null, parent = null) {
+        constructor(equation, precursorOperationID, left = null, right = null, parent = null, hasPrecursorConstant = false) {
             super(parent);
             this.left = left;
             this.right = right;
             this.precursorOperationID = precursorOperationID;
             this.equation = equation;
             this.func = equation.operationsSet.getPrecursorOperation(precursorOperationID);
+            this.hasPrecursorConstant = hasPrecursorConstant;
             if (this.left)
                 this.left.parent = this;
                 
@@ -1393,7 +1414,7 @@
         }
         clone() {
             this.validate(this.parent);
-            return new PrecursorOperation(this.equation, this.precursorOperationID, this.left.clone(), this.right.clone());
+            return new PrecursorOperation(this.equation, this.precursorOperationID, this.left.clone(), this.right.clone(), null, this.hasPrecursorConstant);
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -1402,12 +1423,20 @@
             return this.func(this.left.value, this.right.value);
         }
         toString() {
-            return EquationTreeBuilder.precursorOperationString(this.precursorOperationID, this.left ? this.left.toString() : 'none', this.right ? this.right.toString() : 'none');
+            return EquationTreeBuilder.precursorOperationString(this.precursorOperationID, this.left ? this.left.toString() : 'none', this.right ? this.right.toString() : 'none', this.hasPrecursorConstant);
         }
-        setup() {
+        setup(precursorConstant) {
+            if (precursorConstant === undefined)
+                throw new Error(`Failed to setup PrecursorOperation because precursorConstant is undefined.  It should be null or a constant. ${this.toString()}`);
+
             if (this.left !== null || this.right !== null)
                 throw new Error(`Failed to setup PrecursorOperation because Left or Right wasnt null.  ${this.toString()}`);
 
+            this.right = precursorConstant;
+            if (this.right)
+                this.right.parent = this;
+
+            this.hasPrecursorConstant = this.right !== null;
             this.left = new FakeParenthesis();
             this.left.parent = this;
             return this.left;
@@ -1416,11 +1445,24 @@
             if (this.left === null)
                 throw new Error(`Failed to transfer to right side of PrecursorOperation because Left was null.  ${this.toString()}`);
 
-            if (this.right !== null)
-                throw new Error(`Failed to transfer to right side of PrecursorOperation because Right wasn't null.  ${this.toString()}`);
+            let right = null;
+            if (this.hasPrecursorConstant) {
+                if (this.right === null)
+                    throw new Error(`Failed to transfer to right side of PrecursorOperation because Right was null, but hasPrecursorConstant is true.  ${this.toString()}`);
+
+                right = this.right;
+            }
+            else {
+                if (this.right !== null)
+                    throw new Error(`Failed to transfer to right side of PrecursorOperation because Right wasn't null.  ${this.toString()}`);
+            }
+            
 
             this.right = new FakeParenthesis();
             this.right.parent = this;
+            if (right !== null)
+                this.right.joinNode(right);
+
             return this.right;
         }
         swap(existing, newOp) {
@@ -1712,6 +1754,9 @@
         trunc(t) {
             throw new Error("Truncate operation must be implemented by subclasses.");
         }
+        floor(t) {
+            throw new Error("Floor operation must be implemented by subclasses.");
+        }
         isFinite(t) {
             throw new Error("IsFinite operation must be implemented by subclasses.");
         }
@@ -1865,6 +1910,7 @@
         negate = (t) => -t;
         round = (t) => Math.round(t);
         trunc = (t) => Math.trunc(t);
+        floor = (t) => Math.floor(t);
         isFinite = (t) => Number.isFinite(t);
         getPrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
@@ -1884,6 +1930,8 @@
                     return this.round;
                 case SingleVariableOperationID.TRUNC:
                     return this.trunc;
+                case SingleVariableOperationID.FLOOR:
+                    return this.floor;
                 default:
                     throw new Error(`No single variable operation found for ${operationID}`);
             }
@@ -1957,6 +2005,9 @@
                     break;
                 case SingleVariableOperationID.TRUNC:
                     operator = 'Math.trunc';
+                    break;
+                case SingleVariableOperationID.FLOOR:
+                    operator = 'Math.floor';
                     break;
                 default:
                     throw new Error(`No single variable operation found for ${singleOperationID}`);
@@ -2045,6 +2096,7 @@
         negate = (t) => t.negative();
         round = (t) => t.round();
         trunc = (t) => t.trunc();
+        floor = (t) => t.floor();
         isFinite = (t) => t instanceof Struct.BigNumber && t.isFinite();
         getPrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
@@ -2064,6 +2116,8 @@
                     return this.round;
                 case SingleVariableOperationID.TRUNC:
                     return this.trunc;
+                case SingleVariableOperationID.FLOOR:
+                    return this.floor;
                 default:
                     throw new Error(`No single variable operation found for ${operationID}`);
             }
@@ -2132,6 +2186,9 @@
                     break;
                 case SingleVariableOperationID.TRUNC:
                     operator = '.truncI()';
+                    break;
+                case SingleVariableOperationID.FLOOR:
+                    operator = '.floorI()';
                     break;
                 default:
                     throw new Error(`No single variable operation found for ${singleOperationID}`);
@@ -2215,6 +2272,7 @@
         negate = (t) => !t;
         round = (t) => t;
         trunc = (t) => t;
+        floor = (t) => t;
         isFinite = (t) => typeof t === 'boolean';
         getPrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
@@ -2234,6 +2292,8 @@
                     return this.round;
                 case SingleVariableOperationID.TRUNC:
                     return this.trunc;
+                case SingleVariableOperationID.FLOOR:
+                    return this.floor;
                 default:
                     throw new Error(`No single variable operation found for ${operationID}`);
             }
