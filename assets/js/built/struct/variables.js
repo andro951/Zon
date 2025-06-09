@@ -85,6 +85,10 @@ Variable.Value = class VariableValue extends Variable.Base {
     reset() {
         this.value = this._defaultValue;
     }
+
+    resetSkipActions() {
+        this._value = this._defaultValue;
+    }
 }
 
 Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
@@ -117,6 +121,10 @@ Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
 
     reset() {
         this.value = this._defaultValue.clone;
+    }
+    
+    resetSkipActions() {
+        this._value = this._defaultValue.clone;
     }
 }
 
@@ -438,5 +446,76 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
     onChanged = () => {
         this.needsRecalculate = true;
         super.onChanged();
+    }
+}
+
+Zon.GlobalVariables = new Map();
+
+Variable.EquationVar = class EquationVariable extends Variable.Base {
+    constructor(equationClass, variables, equationString, name) {
+        throw new Error(`EquationVar isn't finished.`);
+        super(name);
+        const variablesSet = new Set(variables);
+        this._extractGlobalVariables(equationString, variables, variablesSet);
+        this.equation = equationClass.create(name, equationString, variables);
+    }
+
+    _extractGlobalVariables(equationString, variables, variablesSet) {
+        const matches = [];
+        let startIndex = -1;
+        let i = 0;
+        for (; i < equationString.length; i++) {
+            const char = equationString[i];
+            if (startIndex === -1) {
+                if (char >= 'A' && char <= 'Z')
+                    startIndex = i;
+            }
+            else if (char < '0' || char > 'z' || (char > '9' && char < 'A') || (char > 'Z' && char < 'a' && char !== '_')) {
+                const variableName = equationString.substring(startIndex, i);
+                startIndex = -1;
+                matches.push(variableName);
+            }
+        }
+
+        if (startIndex !== -1) {
+            const variableName = equationString.substring(startIndex, i);
+            matches.push(variableName);
+        }
+
+        for (const match of matches) {
+            if (variablesSet.has(match))
+                throw new Error(`Variable ${match} already exists in the variables list, cannot add it again.`);
+
+            if (!Zon.GlobalVariables.has(match))
+                throw new Error(`Variable ${match} not found in Zon.GlobalVariables.  Make sure it is registered before using it in an equation.`);
+
+            variables.push(match);
+            variablesSet.add(match);
+        }
+    }
+
+    get value() {
+        return this.equation.value;
+    }
+    getValueNewVariables(newVariables) {
+        return this.equation.getValueNewVariables(newVariables);
+    }
+}
+
+Variable.EquationVar_N = class EquationVariable_N extends Variable.EquationVar {
+    constructor(equationString, name, variables = []) {
+        super(Zon.Equation_N, variables, equationString, name);
+    }
+}
+
+Variable.EquationVar_BN = class EquationVariable_BN extends Variable.EquationVar {
+    constructor(equationString, name, variables = []) {
+        super(Zon.Equation.BigNumberOperationSet, variables, equationString, name);
+    }
+}
+
+Variable.EquationVar_B = class EquationVariable_B extends Variable.EquationVar {
+    constructor(equationString, name, variables = []) {
+        super(Zon.Equation.BoolOperationSet, variables, equationString, name);
     }
 }
