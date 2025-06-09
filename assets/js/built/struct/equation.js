@@ -1,7 +1,7 @@
 "use strict";
 
 {
-    const debugEquation = zonDebug && true;
+    const debugEquation = zonDebug && false;
     Zon.Equation = class Equation {
         constructor() {
             if (new.target === Zon.Equation)
@@ -67,10 +67,13 @@
             equation._equationTreeHead = Zon.Equation.EquationTreeBuilder.replaceConstantsWithReferences(equation);
             Zon.Equation.EquationTreeBuilder._checkNoConstants(equation._equationTreeHead);
             if (debugEquation) {
-
+                console.log(`equationString_r: ${equation._equationTreeHead.toString()}`);
             }
 
-            equation._equationFunction = null;//TODO
+            equation._equationFunction = equation.operationsSet.createFunction(equation);
+            if (debugEquation) {
+                console.log(`Equation created: ${equation._equationFunction.toString()}`);
+            }
             
             return equation;
         }
@@ -82,11 +85,30 @@
                 yield node;
             }
         }
-        get value() {
+        get treeValue() {
             const result = this._equationTreeHead.value;
             if (!this.operationsSet.isFinite(result))
                 throw new Error(`Equation value is not finite: ${result}.  Equation: ${this.toString()}`);
 
+            return result;
+        }
+        get value() {
+            const result = this._equationFunction(this.variablesArr, this.constantsArr, this._cachedConstants, this.argsArr);
+            if (!this.operationsSet.isFinite(result))
+                throw new Error(`Equation value is not finite: ${result}.  Equation: ${this.toString()}`);
+
+            return result;
+        }
+        getTreeValue(...args) {
+            this.argsArr = args;
+            const result = this.treeValue;
+            this.argsArr = [];
+            return result;
+        }
+        getTreeValueNewVariables(variablesArr, ...args) {
+            this.variablesArr = variablesArr;
+            const result = this.getTreeValue(...args);
+            this.variablesArr = this.defaultVariablesArr;
             return result;
         }
         getValue(...args) {
@@ -484,7 +506,7 @@
                 if (tree == null)
                     throw new Error("Failed to apply operation.  The last Value is null.");
 
-                const operation = new Operation(operationsSet, operationID);
+                const operation = new Operation(equation, operationID);
                 //if (debugEquation) console.log(`Applying operation: ${operationID}`);
                 if (!tree.readyForOperation())
                     throw new Error(`Failed to apply operation: ${operationID}.  The tree is not ready for an operation.  ${tree.toString()}`);
@@ -495,7 +517,7 @@
                 if (precursorOperationID === PrecursorOperationID.NONE)
                     throw new Error("Failed to apply precursor operation.  The precursorOperationID is NONE.");
                 
-                const operation = new PrecursorOperation(operationsSet, precursorOperationID);
+                const operation = new PrecursorOperation(equation, precursorOperationID);
                 //if (debugEquation) console.log(`Applying precursor operation: ${precursorOperationID}`);
                 if (tree == null) {
                     tree = operation.setup();
@@ -508,7 +530,7 @@
                 if (singleVariableOperationID === SingleVariableOperationID.NONE)
                     throw new Error("Failed to apply single variable operation.  The singleVariableOperationID is NONE.");
 
-                const operation = new SingleVariableOperation(operationsSet, singleVariableOperationID);
+                const operation = new SingleVariableOperation(equation, singleVariableOperationID);
                 //if (debugEquation) console.log(`Applying single variable operation: ${singleVariableOperationID}`);
                 if (tree == null) {
                     tree = operation.setup();
@@ -554,7 +576,7 @@
                             singleVariableOperation = SingleVariableOperationID.NONE;
                         }
                         else {
-                            const parenthesis = new Parenthesis(null, tree);
+                            const parenthesis = new Parenthesis(equation, null, tree);
                             if (tree == null) {
                                 tree = parenthesis;
                             }
@@ -643,7 +665,7 @@
                 if (!node)
                     throw new Error(`Node in equation tree is null.  This should not happen.  Equation: ${treeHead.toString()}`);
 
-                if (node instanceof Constant)
+                if (node instanceof Constant || node instanceof NamedConstant)
                     throw new Error(`Constants should be replaced with ConstantReference by this point.  Equation: ${treeHead.toString()}`);
             }
         }
@@ -657,13 +679,13 @@
         }
         static replaceConstantsWithReferences(equation) {
             const constantsMap = new Map();
-            if (equation._equationTreeHead instanceof Constant) {
+            if (equation._equationTreeHead instanceof Constant || equation._equationTreeHead instanceof NamedConstant) {
                 return new CachedConstantReference(equation._equationTreeHead, constantsMap, equation);
             }
 
             const constants = [];
             for (const node of equation._equationTreeHead.traverse()) {
-                if (node instanceof Constant) {
+                if (node instanceof Constant || node instanceof NamedConstant) {
                     constants.push(node);
                 }
             }
@@ -682,6 +704,11 @@
     Zon.Equation.EquationTreeBuilder = EquationTreeBuilder;
 
     //#region Equation Nodes
+
+    const args = `_args`;
+    const vars = `_vars`;
+    const nconsts = `_nconsts`;//Named constants
+    const cconsts = `_cconsts`;//Cashed (unnamed) constants
 
     class TreeNode {
         constructor(parent = null) {
@@ -763,6 +790,9 @@
         clone() {
             throw new Error(`Clone must be implemented by subclasses.  ${this.toString()}`);
         }
+        writeToString(stringArr) {
+            throw new Error(`writeToString must be implemented by subclasses.  ${this.toString()}`);
+        }
         toString() {
             throw new Error(`toString must be implemented by subclasses.  ${this.constructor.name}`);
         }
@@ -822,6 +852,9 @@
 
             return null;
         }
+        writeToString(stringArr) {
+            throw new Error(`writeToString should never be called on a constant.  It should be converted to a ConstantReference.  ${this.toString()}`);
+        }
         isConstant() {
             return true;
         }
@@ -853,6 +886,9 @@
                 return `Invalid constant name: ${this.name}`;
 
             return null;
+        }
+        writeToString(stringArr) {
+            throw new Error(`writeToString should never be called on a constant.  It should be converted to a ConstantReference.  ${this.toString()}`);
         }
         isConstant() {
             return true;
@@ -902,6 +938,9 @@
 
             return null;
         }
+        writeToString(stringArr) {
+            stringArr.push(`${vars}[${this.index}].value`);
+        }
     }
     class ArgReference extends VariableGetter {
         constructor(equation, name, index, parent = null) {
@@ -938,6 +977,9 @@
                 return `Invalid argument reference name: ${this.name}`;
 
             return null;
+        }
+        writeToString(stringArr) {
+            stringArr.push(`${args}[${this.index}]`);
         }
     }
     class ConstantReference extends VariableGetter {
@@ -979,6 +1021,9 @@
         isConstant() {
             return true;
         }
+        writeToString(stringArr) {
+            stringArr.push(`${nconsts}[${this.index}]`);
+        }
     }
     class CachedConstantReference extends VariableGetter {
         constructor(constantOrNull, currentCachedVariablesMapOrIndex, equation) {
@@ -987,7 +1032,7 @@
                 this.index = currentCachedVariablesMapOrIndex;
             }
             else {
-                if (!(constantOrNull instanceof Constant))
+                if (!(constantOrNull instanceof Constant) && !(constantOrNull instanceof NamedConstant))
                     throw new Error(`Invalid constant type: ${constantOrNull.constructor.name}. Expected Constant.`);
 
                 const value = constantOrNull.value;
@@ -1040,14 +1085,18 @@
         isConstant() {
             return true;
         }
+        writeToString(stringArr) {
+            stringArr.push(`${cconsts}[${this.index}]`);
+        }
     }
     class Operation extends ParentNode {
-        constructor(operationsSetOrFunc, operationID, left = null, right = null, parent = null) {
+        constructor(equation, operationID, left = null, right = null, parent = null) {
             super(parent);
             this.left = left;
             this.right = right;
             this.operationID = operationID;
-            this.func = operationsSetOrFunc instanceof OperationsSet ? operationsSetOrFunc.getOperation(operationID) : operationsSetOrFunc;
+            this.equation = equation;
+            this.func = equation.operationsSet.getOperation(operationID);
             if (this.left)
                 this.left.parent = this;
                 
@@ -1056,7 +1105,7 @@
         }
         clone() {
             this.validate(this.parent);
-            return new Operation(this.func, this.operationID, this.left.clone(), this.right.clone());
+            return new Operation(this.equation, this.operationID, this.left.clone(), this.right.clone());
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -1173,6 +1222,9 @@
 
             return this;
         }
+        writeToString(stringArr) {
+            this.equation.operationsSet.writeOperationToString(stringArr, this.operationID, this.left, this.right);
+        }
         *traverse() {
             if (this.left) {
                 for (const item of this.left.traverse()) {
@@ -1195,18 +1247,19 @@
     }
     //class OperationT2 extends ParentNode {}//Used for type operations that work with different input types.
     class SingleVariableOperation extends ParentNode {
-        constructor(operationsSetOrFunc, singleOperationID, variable = null, parent = null) {
+        constructor(equation, singleOperationID, variable = null, parent = null) {
             super(parent);
             this.singleOperationID = singleOperationID;
             this.variable = variable;
+            this.equation = equation;
             if (this.variable)
                 this.variable.parent = this;
 
-            this.func = operationsSetOrFunc instanceof OperationsSet ? operationsSetOrFunc.getSingleVariableOperation(singleOperationID) : operationsSetOrFunc;
+            this.func = equation.operationsSet.getSingleVariableOperation(singleOperationID);
         }
         clone() {
             this.validate(this.parent);
-            return new SingleVariableOperation(this.func, this.singleOperationID, this.variable.clone());
+            return new SingleVariableOperation(this.equation, this.singleOperationID, this.variable.clone());
         }
         get value() {
             if (this.variable === null)
@@ -1309,6 +1362,9 @@
 
             return this;
         }
+        writeToString(stringArr) {
+            this.equation.operationsSet.writeSingleOperationToString(stringArr, this.singleOperationID, this.variable);
+        }
         *traverse() {
             if (this.variable) {
                 for (const item of this.variable.traverse()) {
@@ -1322,12 +1378,13 @@
     }
     //class ConvertOperation extends ParentNode {}//Used for converting between different types.
     class PrecursorOperation extends ParentNode {
-        constructor(operationsSetOrFunc, precursorOperationID, left = null, right = null, parent = null) {
+        constructor(equation, precursorOperationID, left = null, right = null, parent = null) {
             super(parent);
             this.left = left;
             this.right = right;
             this.precursorOperationID = precursorOperationID;
-            this.func = operationsSetOrFunc instanceof OperationsSet ? operationsSetOrFunc.getPrecursorOperation(precursorOperationID) : operationsSetOrFunc;
+            this.equation = equation;
+            this.func = equation.operationsSet.getPrecursorOperation(precursorOperationID);
             if (this.left)
                 this.left.parent = this;
                 
@@ -1336,7 +1393,7 @@
         }
         clone() {
             this.validate(this.parent);
-            return new PrecursorOperation(this.func, this.precursorOperationID, this.left.clone(), this.right.clone());
+            return new PrecursorOperation(this.equation, this.precursorOperationID, this.left.clone(), this.right.clone());
         }
         get value() {
             if (this.left === null || this.right === null)
@@ -1434,6 +1491,9 @@
 
             return this;
         }
+        writeToString(stringArr) {
+            this.equation.operationsSet.writePrecursorOperationToString(stringArr, this.precursorOperationID, this.left, this.right);
+        }
         *traverse() {
             if (this.left) {
                 for (const item of this.left.traverse()) {
@@ -1455,15 +1515,16 @@
         }
     }
     class Parenthesis extends ParentNode {
-        constructor(innerValue = null, parent = null) {
+        constructor(equation, innerValue = null, parent = null) {
             super(parent);
+            this.equation = equation;
             this.innerValue = innerValue;
             if (this.innerValue)
                 this.innerValue.parent = this;
         }
         clone() {
             this.validate(this.parent);
-            return new Parenthesis(this.innerValue.clone());
+            return new Parenthesis(this.equation, this.innerValue.clone());
         }
         get value() {
             if (this.innerValue === null)
@@ -1535,6 +1596,9 @@
             }
 
             return this;
+        }
+        writeToString(stringArr) {
+            this.equation.operationsSet.writeParenthesisToString(stringArr, this.innerValue);
         }
         *traverse() {
             if (this.innerValue) {
@@ -1751,6 +1815,12 @@
         get symbolConstants() {
             throw new Error("SymbolConstants must be implemented by subclasses.");
         }
+        createFunction(equation) {
+            throw new Error("CreateFunction must be implemented by subclasses.");
+        }
+        writeOperationToString(stringArr, operationID, left, right) {
+            throw new Error("WriteOperationToString must be implemented by subclasses.");
+        }
     }
 
     class NumberOperationSet extends OperationsSet {
@@ -1841,6 +1911,94 @@
         static _symbolConstants = new Map([
             ['π', Math.PI],
         ]);
+        createFunction(equation) {
+            const stringArr = [];
+            equation._equationTreeHead.writeToString(stringArr);
+            const mainEquationString = stringArr.join('');
+            return new Function(vars, nconsts, cconsts, args, `\treturn ${mainEquationString};`);
+        }
+        writeOperationToString(stringArr, operationID, left, right) {
+            left.writeToString(stringArr);
+            let operator;
+            switch (operationID) {
+                case OperationID.ADD:
+                    operator = '+';
+                    break;
+                case OperationID.SUBTRACT:
+                    operator = '-';
+                    break;
+                case OperationID.MULTIPLY:
+                    operator = '*';
+                    break;
+                case OperationID.DIVIDE:
+                    operator = '/';
+                    break;
+                case OperationID.POWER:
+                    operator = '**';
+                    break;
+                default:
+                    throw new Error(`No operator found for ${operationID}`);
+            }
+
+            stringArr.push(` ${operator} `);
+            right.writeToString(stringArr);
+        }
+        writeSingleOperationToString(stringArr, singleOperationID, variable) {
+            let operator;
+            switch (singleOperationID) {
+                case SingleVariableOperationID.ABS:
+                    operator = 'Math.abs';
+                    break;
+                case SingleVariableOperationID.NEGATE:
+                    operator = '-';
+                    break;
+                case SingleVariableOperationID.ROUND:
+                    operator = 'Math.round';
+                    break;
+                case SingleVariableOperationID.TRUNC:
+                    operator = 'Math.trunc';
+                    break;
+                default:
+                    throw new Error(`No single variable operation found for ${singleOperationID}`);
+            }
+
+            if (EquationTreeBuilder.singleVariableOperationUsesParentheses[singleOperationID]) {
+                stringArr.push(operator);
+                stringArr.push('(');
+                variable.writeToString(stringArr);
+                stringArr.push(')');
+            }
+            else {
+                stringArr.push(operator);
+                variable.writeToString(stringArr);
+            }
+        }
+        writePrecursorOperationToString(stringArr, precursorOperationID, left, right) {
+            let operator;
+            switch (precursorOperationID) {
+                case PrecursorOperationID.LOG:
+                    stringArr.push('(Math.log(');
+                    left.writeToString(stringArr);
+                    stringArr.push(') / Math.log(');
+                    right.writeToString(stringArr);
+                    stringArr.push('))');
+                    return;
+                default:
+                    throw new Error(`No precursor operation found for ${precursorOperationID}`);
+            }
+
+            stringArr.push(operator);
+            stringArr.push('(');
+            left.writeToString(stringArr);
+            stringArr.push(', ');
+            right.writeToString(stringArr);
+            stringArr.push(')');
+        }
+        writeParenthesisToString(stringArr, innerValue) {
+            stringArr.push('(');
+            innerValue.writeToString(stringArr);
+            stringArr.push(')');
+        }
     }
     NumberOperationSet.instance = new NumberOperationSet();
     Zon.Equation.NumberOperationSet = NumberOperationSet;
@@ -1921,6 +2079,94 @@
             return BigNumberOperationSet._symbolConstants;
         }
         static _symbolConstants = new Map([...NumberOperationSet._symbolConstants].map(([key, value]) => [key, Struct.BigNumber.create(value)]));
+        createFunction(equation) {
+            const stringArr = [];
+            equation._equationTreeHead.writeToString(stringArr);
+            if (equation._equationTreeHead instanceof VariableGetter)
+                stringArr.push('.clone');
+
+            const mainEquationString = stringArr.join('');
+            return new Function(vars, nconsts, cconsts, args, `\treturn ${mainEquationString};`);
+        }
+        writeOperationToString(stringArr, operationID, left, right) {
+            left.writeToString(stringArr);
+            if (left instanceof VariableGetter)
+                stringArr.push('.clone');
+                
+            let operator;
+            switch (operationID) {
+                case OperationID.ADD:
+                    operator = '.addI(';
+                    break;
+                case OperationID.SUBTRACT:
+                    operator = '.subtractI(';
+                    break;
+                case OperationID.MULTIPLY:
+                    operator = '.multiplyI(';
+                    break;
+                case OperationID.DIVIDE:
+                    operator = '.divideI(';
+                    break;
+                case OperationID.POWER:
+                    operator = '.powI(';
+                    break;
+                default:
+                    throw new Error(`No operator found for ${operationID}`);
+            }
+            
+            stringArr.push(operator);
+            right.writeToString(stringArr);
+            stringArr.push(')');
+        }
+        writeSingleOperationToString(stringArr, singleOperationID, variable) {
+            let operator;
+            switch (singleOperationID) {
+                case SingleVariableOperationID.ABS:
+                    operator = '.absI()';
+                    break;
+                case SingleVariableOperationID.NEGATE:
+                    operator = '.negativeI()';
+                    break;
+                case SingleVariableOperationID.ROUND:
+                    operator = '.roundI()';
+                    break;
+                case SingleVariableOperationID.TRUNC:
+                    operator = '.truncI()';
+                    break;
+                default:
+                    throw new Error(`No single variable operation found for ${singleOperationID}`);
+            }
+
+            variable.writeToString(stringArr);
+            if (variable instanceof VariableGetter)
+                stringArr.push('.clone');
+
+            stringArr.push(operator);
+        }
+        writePrecursorOperationToString(stringArr, precursorOperationID, left, right) {
+            left.writeToString(stringArr);
+            if (left instanceof VariableGetter)
+                stringArr.push('.clone');
+
+            let operator;
+            switch (precursorOperationID) {
+                case PrecursorOperationID.LOG:
+                    operator = `.log`;
+                    break;
+                default:
+                    throw new Error(`No precursor operation found for ${precursorOperationID}`);
+            }
+
+            stringArr.push(operator);
+            stringArr.push('(');
+            right.writeToString(stringArr);
+            stringArr.push(')');
+        }
+        writeParenthesisToString(stringArr, innerValue) {
+            innerValue.writeToString(stringArr);
+            if (innerValue instanceof VariableGetter)
+                stringArr.push('.clone');
+        }
     }
     BigNumberOperationSet.instance = new BigNumberOperationSet();
     Zon.Equation.BigNumberOperationSet = BigNumberOperationSet;
@@ -2010,6 +2256,12 @@
         static _symbolConstants = new Map([
             
         ]);
+        createFunction(equation) {
+            throw new Error("Not implemented.");
+        }
+        writeOperationToString(stringArr, operationID, left, right) {
+            throw new Error("Not implemented.");
+        }
     }
     BoolOperationSet.instance = new BoolOperationSet();
     Zon.Equation.BoolOperationSet = BoolOperationSet;

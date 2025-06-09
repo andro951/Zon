@@ -42,7 +42,7 @@ if (zonDebug) {
         //Zon.DevCheats.runSaveLoadTests();
         //BigNumberTests.Test_BigNumberConversions();
         //NumberTests.Test_CalculateSignificandExponent();
-        Struct.EquationTests.runTests();
+        //Struct.EquationTests.runTests();
     }
 
     Zon.DevCheats.simpleBigNumberConversionTest = () => {

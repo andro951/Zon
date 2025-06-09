@@ -8,7 +8,8 @@ Struct.EquationTests.runTests = () => {
         Struct.EquationTests.equationTests_BN(Zon.Equation_BN);
     }
     
-    //Struct.EquationTests.exampleWithLevelToXP();
+    Struct.EquationTests.exampleWithLevelToXP();
+    Struct.EquationTests.exampleWithLevelToXP_BN();
 }
 
 Struct.EquationTests.equationTests_N = (testClass) => {
@@ -29,6 +30,26 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         new EquationTest_N(`2.5e5`, (args, variables) => 2.5e5, [], [], new Map(), [], []),
         new EquationTest_N(`trunc(0.25)`, (args, variables) => Math.trunc(0.25), [], [], new Map(), [], []),
         new EquationTest_N(`0.25 * 100`, (args, variables) => 0.25 * 100, [], [], new Map(), [], []),
+        new EquationTest_N(`pi`, (args, variables) => Math.PI, [], [], new Map(), [], []),
+        new EquationTest_N(`π`, (args, variables) => Math.PI, [], [], new Map(), [], []),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_N(`pi * ${level}`, (args, variables) => Math.PI * args[0], [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_N(`π * ${level}`, (args, variables) => Math.PI * args[0], [], args, new Map(), testArgs, []);
+        })(),
         (() => {
             const level = `level`;
             const args = [level];
@@ -245,25 +266,33 @@ Struct.EquationTests.equationTests_N = (testClass) => {
                 const variableOverrides = test.variableOverrides[j];
                 const value = variableOverrides ? equation.getValueNewVariables(variableOverrides, ...testArgs) : equation.getValue(...testArgs);
                 const value2 = variableOverrides ? equation2.getValueNewVariables(variableOverrides, ...testArgs) : equation2.getValue(...testArgs);
+                const value3 = variableOverrides ? equation.getTreeValueNewVariables(variableOverrides, ...testArgs) : equation.getTreeValue(...testArgs);
                 const expectedValue = test.expectedFunc(testArgs, variableOverrides ?? test.variables);
-                console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2})`);
+                console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2}) (tree: ${value3})`);
                 if (value !== expectedValue)
                     console.error(`  equation getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value}`);
 
                 if (value2 !== expectedValue)
                     console.error(`  equation2 getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value2}`);
+
+                if (value3 !== expectedValue)
+                    console.error(`  equation getTreeValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue}, got ${value3}`);
             }
         }
         else {
             const value = equation.value;
             const value2 = equation2.value;
+            const value3 = equation.treeValue;
             const expectedValue = test.expectedFunc([], []);
-            console.log(`  equation.value: ${value} (v2: ${value2})`);
+            console.log(`  equation.value: ${value} (v2: ${value2}) (tree: ${value3})`);
             if (value !== expectedValue)
                 console.error(`  equation getValue() mismatch: expected ${expectedValue}, got ${value}`);
 
             if (value2 !== expectedValue)
                 console.error(`  equation2 getValue() mismatch: expected ${expectedValue}, got ${value2}`);
+
+            if (value3 !== expectedValue)
+                console.error(`  equation getTreeValue() mismatch: expected ${expectedValue}, got ${value3}`);
         }
 
         console.log(`\n`);
@@ -287,6 +316,25 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
         new EquationTest_BN(`2.5e5`, (args, variables) => Struct.BigNumber.create(2.5e5), [], [], new Map(), [], []),
         new EquationTest_BN(`trunc(0.25)`, (args, variables) => Struct.BigNumber.create(0.25).trunc(), [], [], new Map(), [], []),
         new EquationTest_BN(`0.25 * 100`, (args, variables) => Struct.BigNumber.create(0.25).multiply(Struct.BigNumber.create(100)), [], [], new Map(), [], []),
+        new EquationTest_BN(`pi`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
+        new EquationTest_BN(`π`, (args, variables) => Struct.BigNumber.create(Math.PI), [], [], new Map(), [], []),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`pi * ${level}`, (args, variables) => Struct.BigNumber.create(Math.PI).multiply(args[0]), [], args, new Map(), testArgs, []);
+        })(),(() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`π * ${level}`, (args, variables) => Struct.BigNumber.create(Math.PI).multiply(args[0]), [], args, new Map(), testArgs, []);
+        })(),
         (() => {
             const level = `level`;
             const args = [level];
@@ -504,25 +552,33 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
                 const variableOverrides = test.variableOverrides[j];
                 const value = variableOverrides ? equation.getValueNewVariables(variableOverrides, ...testArgs) : equation.getValue(...testArgs);
                 const value2 = variableOverrides ? equation2.getValueNewVariables(variableOverrides, ...testArgs) : equation2.getValue(...testArgs);
+                const value3 = variableOverrides ? equation.getTreeValueNewVariables(variableOverrides, ...testArgs) : equation.getTreeValue(...testArgs);
                 const expectedValue = test.expectedFunc(testArgs, variableOverrides ?? test.variables);
-                console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2})`);
+                console.log(`  equation getValue(${testArgs}, ${variableOverrides}): ${value} (v2: ${value2}) (tree: ${value3})`);
                 if (value.notEquals(expectedValue))
                     console.error(`  equation getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value.toBinaryFullString()}`);
 
                 if (value2.notEquals(expectedValue))
                     console.error(`  equation2 getValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value2.toBinaryFullString()}`);
+
+                if (value3.notEquals(expectedValue))
+                    console.error(`  equation getTreeValue(${testArgs}, ${variableOverrides}) mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value3.toBinaryFullString()}`);
             }
         }
         else {
             const value = equation.value;
             const value2 = equation2.value;
+            const value3 = equation.treeValue;
             const expectedValue = test.expectedFunc([], []);
-            console.log(`  equation.value: ${value} (v2: ${value2})`);
+            console.log(`  equation.value: ${value} (v2: ${value2}) (tree: ${value3})`);
             if (value.notEquals(expectedValue))
                 console.error(`  equation getValue() mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value.toBinaryFullString()}`);
 
             if (value2.notEquals(expectedValue))
                 console.error(`  equation2 getValue() mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value2.toBinaryFullString()}`);
+
+            if (value3.notEquals(expectedValue))
+                console.error(`  equation getTreeValue() mismatch: expected ${expectedValue.toBinaryFullString()}, got ${value3.toBinaryFullString()}`);
         }
 
         console.log(`\n`);
@@ -539,12 +595,12 @@ Struct.EquationTests.exampleWithLevelToXP = () => {
 
     const levelToXPEquation = Zon.Equation_N.create(`LevelToXP`, levelToXPStr, [], args, constants);
     console.log(levelToXPEquation.toString());
-    const xpToLevelNum = (level) => {
+    const levelToXP = (level) => {
         const r = 2 ** (1 / 7);
         return Math.trunc(0.25 * (level * (level + 1) * 0.5 + 300 / (r - 1) * (r ** level - r)) - Math.round((level - 1) * (42.2425 / 120)));
     };
     for (let i = 1; i <= 120; i++) {
-        const xp = xpToLevelNum(i);
+        const xp = levelToXP(i);
         const equationXP = levelToXPEquation.getValue(i);
         if (xp !== equationXP) {
             console.warn(`Level ${i}: XP = ${xp}, Equation XP: ${equationXP} (${xp === equationXP ? '' : `Fail, diff: ${equationXP - xp}`})`);
@@ -553,7 +609,25 @@ Struct.EquationTests.exampleWithLevelToXP = () => {
         }
     }
 }
+Struct.EquationTests.exampleWithLevelToXP_BN = () => {
+    const constants = new Map();
+    const r = `r`;
+    constants.set(r, `2^(1 / 7)`);
+    const level = `level`;
+    const args = [level];
+    const levelToXPStr = `trunc(0.25 * (${level} * (${level} + 1) * 0.5 + 300 / (${r} - 1) * (${r}^${level} - ${r})) - round((${level} - 1) * (42.2425 / 120)))`;
 
-//Create an actual function from the tree.
-
-//Try to use in place math operations?
+    const levelToXPEquation = Zon.Equation_BN.create(`LevelToXP`, levelToXPStr, [], args, constants);
+    console.log(levelToXPEquation.toString());
+    const levelToXP = Zon.playerLevel.levelToXP;
+    for (let i = 1; i <= 120; i++) {
+        const level = Struct.BigNumber.create(i);
+        const xp = levelToXP(level);
+        const equationXP = levelToXPEquation.getValue(level);
+        if (xp.notEquals(equationXP)) {
+            console.warn(`Level ${i}: XP = ${xp}, Equation XP: ${equationXP} (${xp === equationXP ? '' : `Fail, diff: ${equationXP - xp}`})`);
+        } else {
+            console.log(`Level ${i}: XP = ${xp}, Equation XP: ${equationXP}`);
+        }
+    }
+}
