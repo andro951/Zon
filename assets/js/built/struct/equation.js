@@ -186,7 +186,7 @@
         NEGATE: 2,
         ROUND: 3,
         TRUNC: 4,
-        //NOT: 5,
+        NOT: 5,
         FLOOR: 6,
     }
     const PrecursorOperationID = {
@@ -213,7 +213,7 @@
             ['abs', SingleVariableOperationID.ABS],
             ['round', SingleVariableOperationID.ROUND],
             ['trunc', SingleVariableOperationID.TRUNC],
-            //['!', SingleOperationID.NOT],
+            ['!', SingleVariableOperationID.NOT],
             ['floor', SingleVariableOperationID.FLOOR],
         ]);
         static precursorOperations = new Map([
@@ -274,8 +274,8 @@
                     return `round(${variable})`;
                 case SingleVariableOperationID.TRUNC:
                     return `trunc(${variable})`;
-                // case SingleOperationID.NOT:
-                //     return `!${variable}`;
+                case SingleVariableOperationID.NOT:
+                    return `!${variable}`;
                 case SingleVariableOperationID.FLOOR:
                     return `floor(${variable})`;
             }
@@ -309,7 +309,7 @@
             600,//NEGATE
             10000,//ROUND
             10000,//TRUNC
-            //600,//NOT
+            600,//NOT
             10000,//FLOOR
         ];
         static singleVariableOperationUsesParentheses = [
@@ -318,7 +318,7 @@
             false,//NEGATE
             true,//ROUND
             true,//TRUNC
-            //false,//NOT
+            false,//NOT
             true,//FLOOR
         ];
         static createTree(s, equation, operationsSet, variablesArr, argsArr, constantsArrLookupMap) {

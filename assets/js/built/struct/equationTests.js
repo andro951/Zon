@@ -94,6 +94,15 @@ Struct.EquationTests.equationTests_N = (testClass) => {
                 [10],
                 [20]
             ];
+            return new EquationTest_N(`floor(${level})`, (args, variables) => Math.floor(args[0]), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [10],
+                [20]
+            ];
             return new EquationTest_N(`0.25 * trunc(${level})`, (args, variables) => 0.25 * Math.trunc(args[0]), [], args, new Map(), testArgs, []);
         })(),
         (() => {
@@ -372,6 +381,15 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
                 [Struct.BigNumber.create(20)]
             ];
             return new EquationTest_BN(`trunc(${level})`, (args, variables) => args[0].trunc(), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [level];
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            return new EquationTest_BN(`floor(${level})`, (args, variables) => args[0].floor(), [], args, new Map(), testArgs, []);
         })(),
         (() => {
             const level = `level`;
