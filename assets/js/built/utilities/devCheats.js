@@ -13,6 +13,7 @@ if (zonDebug) {
 
     Zon.DevCheats.onStartGame = () => {
         Zon.DevCheats.makeBalls();
+        Zon.DevCheats.registerKeybindings();
         Zon.DevCheats.runTests();
     }
 
@@ -34,6 +35,18 @@ if (zonDebug) {
             const data = ballData[i];
             Zon.BallManager.createBall(...data);
         }
+    }
+
+    Zon.DevCheats.registerKeybindings = () => {
+        Zon.Keybindings.registerKeyPress(`1`, Zon.DevCheats.killAllBlocks);
+    }
+
+    Zon.DevCheats.killAllBlocks = () => {
+        for (const block of Zon.blocksManager.blocks) {
+            block.kill();
+        }
+
+        console.log(`All blocks killed.`);
     }
 
     Zon.DevCheats.runTests = () => {

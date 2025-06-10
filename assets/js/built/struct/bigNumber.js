@@ -15,6 +15,18 @@ Struct.BigNumber = class BigNumber {
     static {
         this.MAX_NUMBER_EXPONENT_B10 = Math.trunc(Math.log10(Number.MAX_VALUE));
         this.MAX_NUMBER_SIGNIFICAND_B10 = Number.MAX_VALUE / (10 ** this.MAX_NUMBER_EXPONENT_B10);
+
+        const error = (name) => { throw new Error(`BigNumber static constant changed: ${name}`); }
+        this.ZERO_ = new this(0, 0);
+        this.ZERO_.addOnChangedAction(() => { error("ZERO_"); });
+        this.ONE_ = new this(1, 0);
+        this.ONE_.addOnChangedAction(() => { error("ONE_"); });
+        this.NEGATIVE_ONE_ = new this(-1, 0);
+        this.NEGATIVE_ONE_.addOnChangedAction(() => { error("NEGATIVE_ONE_"); });
+        this.HALF_ = new this(1, -1);
+        this.HALF_.addOnChangedAction(() => { error("HALF_"); });
+        this.HUNDRED_ = new this(25, 2);
+        this.HUNDRED_.addOnChangedAction(() => { error("HUNDRED_"); });
     }
     static fromBase10Exp(significand, exponentBase10) {
         if (significand === 0)
@@ -40,23 +52,18 @@ Struct.BigNumber = class BigNumber {
     static get ZERO() {
         return new Struct.BigNumber(0, 0);
     }
-    static ZERO_ = new this(0, 0);
     static get ONE() {
         return new Struct.BigNumber(1, 0);
     }
-    static ONE_ = new this(1, 0);
     static get NEGATIVE_ONE() {
         return new Struct.BigNumber(-1, 0);
     }
-    static NEGATIVE_ONE_ = new this(-1, 0);
     static get HALF() {
         return new Struct.BigNumber(1, -1);
     }
-    static HALF_ = new this(1, -1);
     static get HUNDRED() {
         return new Struct.BigNumber(25, 2);
     }
-    static HUNDRED_ = new this(25, 2);
 
     static _buffer = new ArrayBuffer(8);
     static _view = new DataView(this._buffer);
@@ -130,6 +137,42 @@ Struct.BigNumber = class BigNumber {
 
         return this;
     }
+    addOnChangedAction(action) {
+        if (this._onChangedAction === undefined)
+            this._onChangedAction = new Actions.Action();
+
+        this._onChangedAction.add(action);
+    }
+    set(otherBigNumber) {
+        if (this._onChangedAction !== undefined) {
+            const oldSignificand = this._significand;
+            const oldExponent = this._exponent;
+            this._significand = otherBigNumber._significand;
+            this._exponent = otherBigNumber._exponent;
+            if (oldSignificand !== this._significand || oldExponent !== this._exponent) {
+                this._onChangedAction.call(this);
+            }
+        }
+        else {
+            this._significand = otherBigNumber._significand;
+            this._exponent = otherBigNumber._exponent;
+        }
+    }
+    _set(significand, exponent) {
+        if (this._onChangedAction !== undefined) {
+            const oldSignificand = this._significand;
+            const oldExponent = this._exponent;
+            this._significand = significand;
+            this._exponent = exponent;
+            if (oldSignificand !== this._significand || oldExponent !== this._exponent) {
+                this._onChangedAction.call(this);
+            }
+        }
+        else {
+            this._significand = significand;
+            this._exponent = exponent;
+        }
+    }
     get exponent() {
         return this._exponent;
     }
@@ -139,6 +182,8 @@ Struct.BigNumber = class BigNumber {
 
         this._exponent = value;
         this._normalize();
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
     }
     get significand() {
         return this._significand;
@@ -149,6 +194,8 @@ Struct.BigNumber = class BigNumber {
 
         this._significand = value;
         this._normalize();
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
     }
     get clone() {
         return new Struct.BigNumber(this._significand, this._exponent);
@@ -167,6 +214,9 @@ Struct.BigNumber = class BigNumber {
             return this;
 
         this._significand = -this._significand;
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
+
         return this;
     }
     negative() {
@@ -271,26 +321,28 @@ Struct.BigNumber = class BigNumber {
     }
     addI(other) {
         if (this._significand === 0) {
-            this._significand = other._significand;
-            this._exponent = other._exponent;
+            this.set(other);
             return this;
         }
 
         if (other._significand === 0)
             return this;
 
-        let otherSignificand2;
-        if (this._exponent > other._exponent) {
-            otherSignificand2 = other.clone._setExponentI(this._exponent)._significand;
-        } else {
-            if (this._exponent < other._exponent)
-                this._setExponentI(other._exponent);
+        if (zonDebug) {
+            let otherSignificand2;
+            let thisCopy = this.clone;
+            if (this._exponent > other._exponent) {
+                otherSignificand2 = other.clone._setExponentI(this._exponent)._significand;
+            } else {
+                if (this._exponent < other._exponent)
+                    thisCopy._setExponentI(other._exponent);
 
-            otherSignificand2 = other._significand;
+                otherSignificand2 = other._significand;
+            }
+
+            if (Math.abs(otherSignificand2 + thisCopy._significand) >= 4)
+                console.error(`Significand out of bounds: ${this._significand} + ${otherSignificand2}`);
         }
-
-        if (Math.abs(otherSignificand2 + this._significand) >= 4)
-            console.error(`Significand out of bounds: ${this._significand} + ${otherSignificand2}`);
 
         let otherSignificand;
         if (this._exponent > other._exponent) {
@@ -306,6 +358,9 @@ Struct.BigNumber = class BigNumber {
         if (this._significand === 0) {
             this._significand = 0;
             this._exponent = 0;
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
             return this;
         }
 
@@ -318,6 +373,9 @@ Struct.BigNumber = class BigNumber {
                     throw new Error(`Significand out of bounds: ${this._significand}`);
             }
 
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
             return this;
         }
         else if (this._significand <= 0 && otherSignificand <= 0) {
@@ -329,11 +387,19 @@ Struct.BigNumber = class BigNumber {
                     throw new Error(`Significand out of bounds: ${this._significand}`);
             }
 
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
             return this;
         }
         else {
             //added values were different signs, so the result could be a lot less than +/-0.5
-            return this._normalize();
+            const result = this._normalize();
+            
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
+            return result;
         }
     }
     add(other) {
@@ -349,12 +415,17 @@ Struct.BigNumber = class BigNumber {
         if (this._significand === 0 || other._significand === 0) {
             this._significand = 0;
             this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
         this._significand *= other._significand;
         this._exponent += other._exponent;
-        return this._normalize();
+        const result = this._normalize();
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
+
+        return result;
     }
     multiply(other) {
         return this.clone.multiplyI(other);
@@ -364,14 +435,17 @@ Struct.BigNumber = class BigNumber {
             throw new Error("Cannot divide by zero");
 
         if (this._significand === 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
         this._significand /= other._significand;
         this._exponent -= other._exponent;
-        return this._normalize();
+        const result = this._normalize();
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
+
+        return result;
     }
     divide(other) {
         return this.clone.divideI(other);
@@ -419,8 +493,7 @@ Struct.BigNumber = class BigNumber {
     }
     truncI() {
         if (this._significand === 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -429,8 +502,7 @@ Struct.BigNumber = class BigNumber {
             return this;
 
         if (this._exponent < 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -441,10 +513,22 @@ Struct.BigNumber = class BigNumber {
         float64Arr[0] = this._significand;
         //uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((bumped._exponent + 1023) << 20);
         uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((this._exponent + 1023) << 20);
-        this._significand = Math.trunc(float64Arr[0]);
-        float64Arr[0] = this._significand;
-        uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
-        this._significand = float64Arr[0];
+        if (this._onChangedAction !== undefined) {
+            let significand = Math.trunc(float64Arr[0]);
+            float64Arr[0] = significand;
+            uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+            significand = float64Arr[0];
+            if (this._significand !== significand) {
+                this._significand = significand;
+                this._onChangedAction.call(this);
+            }
+        }
+        else {
+            this._significand = Math.trunc(float64Arr[0]);
+            float64Arr[0] = this._significand;
+            uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+            this._significand = float64Arr[0];
+        }
 
         return this;
     }
@@ -453,8 +537,7 @@ Struct.BigNumber = class BigNumber {
     }
     floorI() {
         if (this._significand === 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -463,8 +546,7 @@ Struct.BigNumber = class BigNumber {
 
         if (this._exponent < 0) {
             // If exponent is negative, value is between -1 and 1, so floor is:
-            this._significand = this._significand < 0 ? -1 : 0;
-            this._exponent = 0;
+            this._set(this._significand < 0 ? -1 : 0, 0);
             return this;
         }
 
@@ -474,10 +556,22 @@ Struct.BigNumber = class BigNumber {
 
         float64Arr[0] = this._significand;
         uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((this._exponent + 1023) << 20);
-        this._significand = Math.floor(float64Arr[0]);
-        float64Arr[0] = this._significand;
-        uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
-        this._significand = float64Arr[0];
+        if (this._onChangedAction !== undefined) {
+            let significand = Math.floor(float64Arr[0]);
+            float64Arr[0] = significand;
+            uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+            significand = float64Arr[0];
+            if (this._significand !== significand) {
+                this._significand = significand;
+                this._onChangedAction.call(this);
+            }
+        }
+        else {
+            this._significand = Math.floor(float64Arr[0]);
+            float64Arr[0] = this._significand;
+            uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+            this._significand = float64Arr[0];
+        }
 
         return this;
     }
@@ -486,8 +580,7 @@ Struct.BigNumber = class BigNumber {
     }
     roundI() {
         if (this._significand === 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -496,8 +589,7 @@ Struct.BigNumber = class BigNumber {
             return this;
 
         if (this._exponent < -1) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -508,13 +600,27 @@ Struct.BigNumber = class BigNumber {
         float64Arr[0] = this._significand;
         //uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((bumped._exponent + 1023) << 20);
         uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | ((this._exponent + 1023) << 20);
-        this._significand = Math.round(float64Arr[0]);
-        float64Arr[0] = this._significand;
-        this._exponent = ((uint32Arr[1] >> 20) & 0x7FF) - 1023;// Extract exponent bits
+        if (this._onChangedAction !== undefined) {
+            let significand = Math.round(float64Arr[0]);
+            float64Arr[0] = significand;
+            const exponent = ((uint32Arr[1] >> 20) & 0x7FF) - 1023;// Extract exponent bits
+            uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+            significand = float64Arr[0];
+            const changed = this._significand !== significand || this._exponent !== exponent;
+            if (changed) {
+                this._significand = significand;
+                this._exponent = exponent;
+                this._onChangedAction.call(this);
+            }
+        }
+        else {
+            this._significand = Math.round(float64Arr[0]);
+            float64Arr[0] = this._significand;
+            this._exponent = ((uint32Arr[1] >> 20) & 0x7FF) - 1023;// Extract exponent bits
 
-        float64Arr[0] = this._significand;
-        uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
-        this._significand = float64Arr[0];
+            uint32Arr[1] = (uint32Arr[1] & 0x800FFFFF) | 0x3FF00000;// Set exponent to 1023 (bias for double precision)
+            this._significand = float64Arr[0];
+        }
 
         return this;
     }
@@ -570,7 +676,17 @@ Struct.BigNumber = class BigNumber {
         return this.greaterThan(other) ? this.clone : other.clone;
     }
     absI() {
-        this._significand = Math.abs(this._significand);
+        if (this._onChangedAction !== undefined) {
+            const significand = Math.abs(this._significand);
+            if (this._significand !== significand) {
+                this._significand = significand;
+                this._onChangedAction.call(this);
+            }
+        }
+        else {
+            this._significand = Math.abs(this._significand);
+        }
+
         return this;
     }
     abs() {
@@ -651,7 +767,11 @@ Struct.BigNumber = class BigNumber {
     log2I() {
         this._significand = this.log2Number();
         this._exponent = 0;
-        return this._normalize();
+        const result = this._normalize();
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
+
+        return result;
     }
     log2() {
         return this.clone.log2I();
@@ -669,21 +789,23 @@ Struct.BigNumber = class BigNumber {
     logI(base) {
         this._significand = this.logNumber(base);
         this._exponent = 0;
-        return this._normalize();
+        const result = this._normalize();
+        if (this._onChangedAction !== undefined)
+            this._onChangedAction.call(this);
+
+        return result;
     }
     log(base) {
         return this.clone.logI(base);
     }
     powI(bigNumberExponent) {
         if (bigNumberExponent._significand === 0) {
-            this._significand = 1;
-            this._exponent = 0;
+            this._set(1, 0);
             return this;
         }
 
         if (this._significand === 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -692,7 +814,11 @@ Struct.BigNumber = class BigNumber {
             logBase2.multiplyI(bigNumberExponent);
             this._significand = 1;
             this._exponent = logBase2.toNumber();
-            return this._normalize();
+            const result = this._normalize();
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
+            return result;
         }
         else {
             if (bigNumberExponent.trunc().notEquals(bigNumberExponent))
@@ -705,7 +831,11 @@ Struct.BigNumber = class BigNumber {
             logBase2.multiplyI(bigNumberExponent);
             this._significand = sign;
             this._exponent = logBase2.toNumber();
-            return this._normalize();
+            const result = this._normalize();
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+            
+            return result;
         }
     }
     pow(bigNumberExponent) {
@@ -713,14 +843,12 @@ Struct.BigNumber = class BigNumber {
     }
     powNumberExponentI(exponent) {
         if (exponent === 0) {
-            this._significand = 1;
-            this._exponent = 0;
+            this._set(1, 0);
             return this;
         }
 
         if (this._significand === 0) {
-            this._significand = 0;
-            this._exponent = 0;
+            this._set(0, 0);
             return this;
         }
 
@@ -731,7 +859,11 @@ Struct.BigNumber = class BigNumber {
 
             this._significand = 1;
             this._exponent = logBase2 * exponent;
-            return this._normalize();
+            const result = this._normalize();
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
+            return result;
         }
         else {
             if (Math.trunc(exponent) !== exponent)
@@ -744,7 +876,11 @@ Struct.BigNumber = class BigNumber {
 
             this._significand = (exponent % 2 === 0) ? 1 : -1;
             this._exponent = logBase2 * exponent;
-            return this._normalize();
+            const result = this._normalize();
+            if (this._onChangedAction !== undefined)
+                this._onChangedAction.call(this);
+
+            return result;
         }
     }
     powNumberExponent(exponent) {
@@ -943,66 +1079,6 @@ Struct.BigNumber = class BigNumber {
         "n": 10,
         "d": 11
     };
-    // static tryParse(valueString) {
-    //     let backValue = 0;
-    //     for (const [key, val] of Object.entries(Struct.BigNumber.abbreviationGroups)) {
-    //         const index = valueString.indexOf(key);
-    //         if (index > -1) {
-    //             const abrLength = key.length;
-    //             let newString = valueString.substring(0, index);
-    //             if (valueString.length >= index + abrLength) {
-    //                 const backString = valueString.substring(index + abrLength);
-    //                 newString += backString;
-    //             }
-
-    //             valueString = newString;
-    //             backValue = val * 3;
-    //             break;
-    //         }
-    //     }
-
-    //     let e = valueString.indexOf('e');
-    //     if (e < 0)
-    //         e = valueString.indexOf('E');
-
-    //     if (e >= 0) {
-    //         if (e === 0)
-    //             return [false, Struct.BigNumber.ZERO];
-
-    //         const front = valueString.substring(0, e);
-    //         const frontValue = parseFloat(front);
-    //         if (isNaN(frontValue))
-    //             return [false, Struct.BigNumber.ZERO];
-
-    //         if (e < valueString.length - 1) {
-    //             const back = valueString.substring(e + 1);
-    //             const backValue2 = parseFloat(back);
-    //             if (isNaN(backValue2))
-    //                 return [false, Struct.BigNumber.ZERO];
-
-    //             backValue += backValue2;
-    //         }
-
-    //         return [true, Struct.BigNumber.fromBase10Exp(frontValue, backValue)];
-    //     } else {
-    //         const doubleValue = parseFloat(valueString);
-    //         if (!isNaN(doubleValue)) {
-    //             if (backValue > 0)
-    //                 return [true, Struct.BigNumber.fromBase10Exp(doubleValue, backValue)];
-
-    //             return [true, Struct.BigNumber.create(doubleValue)];
-    //         }
-    //     }
-
-    //     return [false, Struct.BigNumber.ZERO];
-    // };
-    // static parse(valueString) {
-    //     const [ result, string ] = Struct.BigNumber.tryParse(valueString);
-    //     if (result)
-    //         return string;
-
-    //     throw new Error(`Failed to parse ${valueString} into a BigNumber.`);
-    // }
     static parse(valueString) {
         const smallFloat = parseFloat(valueString);
         if (!isNaN(smallFloat)) {

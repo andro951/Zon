@@ -67,11 +67,17 @@ Variable.Base = class VariableBase {
 Variable.Value = class VariableValue extends Variable.Base {
     constructor(defaultValue, name) {
         super(name);
+        if (zonDebug && typeof defaultValue === 'object')
+            throw new Error(`Variable.Value is not suitable for objects, got: ${defaultValue}`);
+
         this._defaultValue = defaultValue;
         this._value = defaultValue;
     }
 
     set value(newValue) {
+        if (zonDebug && typeof newValue === 'object')
+            throw new Error(`Variable.Value is not suitable for objects, got: ${newValue}`);
+
         if (this._value === newValue)
             return;
 
@@ -96,6 +102,7 @@ Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
         super(name);
         this._defaultValue = defaultValue;
         this._value = defaultValue.clone;
+        this.value.addOnChangedAction(this.onChanged);
     }
     static ZERO(name) {
         return new Variable.BigNumberVar(Struct.BigNumber.ZERO, name);
@@ -111,7 +118,7 @@ Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
         if (this._value.equals(newValue))
             return;
 
-        this._value = newValue.clone;
+        this._value.set(newValue);
         this.onChanged();
     }
 
