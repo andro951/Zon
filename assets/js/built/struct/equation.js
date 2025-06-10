@@ -1,7 +1,7 @@
 "use strict";
 
 {
-    const debugEquation = zonDebug && true;
+    const debugEquation = zonDebug && false;
     Zon.Equation = class Equation {
         constructor() {
             if (new.target === Zon.Equation)

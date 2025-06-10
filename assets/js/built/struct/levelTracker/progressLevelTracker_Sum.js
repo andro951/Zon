@@ -13,21 +13,21 @@ Struct.ProgressLevelTracker_Sum = class ProgressLevelTracker_Sum extends Struct.
         this.totalProgressAtLevel = new Variable.Dependent(() => {
             return this.levelToProgress(this.level.value);
         }, `ProgressAt${levelName}`, this);
-        this.progressAtNextLevel = new Variable.Dependent(() => {
-            return this.levelToProgress(this.level.value.add(Struct.BigNumber.ONE_));
+        this.totalProgressAtNextLevel = new Variable.Dependent(() => {
+            return this.levelToProgress(this.level.value + 1);
         }, `ProgressAtNext${levelName}`, this);
         this.progressNeededFromThisLevelToNextLevel = new Variable.Dependent(() => {
-            return this.progressAtNextLevel.value.subtract(this.totalProgressAtLevel.value);
+            return this.totalProgressAtNextLevel.value.subtract(this.totalProgressAtLevel.value);
         }, `ProgressNeededFromThisLevelToNext${levelName}`, this);
         this.logProgressToNextLevel = new Variable.Dependent(() => {
-            return this.totalProgress.value.logarithmicProgress(this.totalProgressAtLevel.value, this.progressAtNextLevel.value);
+            return this.totalProgress.value.logarithmicProgress(this.totalProgressAtLevel.value, this.totalProgressAtNextLevel.value);
         }, `LogarithmicProgressToNext${levelName}`, this);
         this.progressToNextLevel = new Variable.Dependent(() => {
-            return this.totalProgress.value.linearProgress(this.totalProgressAtLevel.value, this.progressAtNextLevel.value);
+            return this.totalProgress.value.linearProgress(this.totalProgressAtLevel.value, this.totalProgressAtNextLevel.value);
         }, `ProgressToNext${levelName}`, this);
     }
     updateLevelFromProgress = () => {
-        if (this.totalProgress.value.greaterThanOrEqual(this.xpAtNextLevel.value)) {
+        if (this.totalProgress.value.greaterThanOrEqual(this.totalProgressAtNextLevel.value)) {
             this.level.value = this.progressToLevel(this.totalProgress.value);
         }
         else if (this.totalProgress.value.lessThan(this.totalProgressAtLevel.value)) {
@@ -42,17 +42,17 @@ Struct.ProgressLevelTracker_Sum = class ProgressLevelTracker_Sum extends Struct.
                 if (!progress.isPositive)
                     return Struct.BigNumber.ZERO;
 
-                let level = this._progressToLevelEquation.getValue(progress);
+                let level = this._progressToLevelEquation.getValue(progress).toNumber();
                 let progressAtLevel = this.levelToProgress(level);
                 if (progressAtLevel.greaterThan(progress)) {
                     do {
-                        level.subtractI(Struct.BigNumber.ONE_);
+                        level -= 1;
                         progressAtLevel = this.levelToProgress(level);
                     } while (progressAtLevel.greaterThan(progress));
                 }
                 else if (progressAtLevel.lessThan(progress)) {
                     do {
-                        const nextLevel = level.add(Struct.BigNumber.ONE_);
+                        const nextLevel = level + 1;
                         const progressAtNextLevel = this.levelToProgress(nextLevel);
                         if (progressAtNextLevel.greaterThan(progress))
                             break;
@@ -74,7 +74,7 @@ Struct.ProgressLevelTracker_Sum = class ProgressLevelTracker_Sum extends Struct.
         super.setDefaultProgress();
         this.level.resetSkipActions();
         this.totalProgressAtLevel.resetSkipActions();
-        this.progressAtNextLevel.resetSkipActions();
+        this.totalProgressAtNextLevel.resetSkipActions();
         this.progressNeededFromThisLevelToNextLevel.resetSkipActions();
         this.logProgressToNextLevel.resetSkipActions();
         this.progressToNextLevel.resetSkipActions();

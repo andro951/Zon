@@ -1,17 +1,20 @@
 "use strict";
 
-Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level system from BlocksAII.
+Zon.PlayerLevel = class PlayerLevel {
     constructor() {
-        this.xp = Zon.playerInventory.aether;
-        this.level = new Variable.BigNumberVar(Struct.BigNumber.ZERO, `PlayerLevel`);//temp
-        this.progressToNextLevel = new Variable.Value(Struct.BigNumber.ZERO, `ProgressToNextPlayerLevel`);//temp
-        // const levelToXPEquation = this._createLevelToXPEquation();
-        // const xpToLevelEquation = this._createXPToLevelEquation();
-        // this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
-        // this.levelToXP = this._playerLevelTracker.levelToProgress;
-        // this.level = this._playerLevelTracker.level;
-        // this.xpToLevel = this._playerLevelTracker.progressToLevel;
-        // this.progressToNextLevel = this._playerLevelTracker.progressToNextLevel;
+        Zon.playerInventory.onGainAether.add((qty) => {
+            this.totalXP.value.addI(qty);
+            this.totalXP.onChanged();
+        });
+        
+        const levelToXPEquation = this._createLevelToXPEquation();
+        const xpToLevelEquation = this._createXPToLevelEquation();
+        this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
+        this.levelToXP = this._playerLevelTracker.levelToProgress;
+        this.level = this._playerLevelTracker.level;
+        this.xpToLevel = this._playerLevelTracker.progressToLevel;
+        this.progressToNextLevel = this._playerLevelTracker.progressToNextLevel;
+        this.totalXP = this._playerLevelTracker.totalProgress;
     }
     
     _createLevelToXPEquation() {
@@ -20,7 +23,9 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
             [r, `2^(1 / 7)`]
         ]);
         const level = `level`;
-        const args = [level];
+        const args = [
+            new Zon.Type_N(level),
+        ];
         const levelToXPStr = `trunc(0.25 * (${level} * (${level} + 1) * 0.5 + 300 / (${r} - 1) * (${r}^${level} - ${r})) - round((${level} - 1) * (42.2425 / 120)))`;
         return Zon.Equation_BN.create(`TotalXpNeededAtPlayerLevel`, levelToXPStr, [], args, constants);
     }
@@ -31,10 +36,10 @@ Zon.PlayerLevel = class PlayerLevel {//TODO: replace this with generic level sys
             [r, `2^(1 / 7)`]
         ]);
         const xp = `xp`;
-        const args = [xp];
+        const args = [
+            new Zon.Type_BN(xp),
+        ];
         const xpToLevelStr = `floor(7 * log2((${xp} + 1) * (${r} - 1) / 75 + ${r}))`;
-        //const xpToLevelStr = `floor(7 * log((${xp} + 1) * (${r} - 1) / 75 + ${r}, 2))`;
-        //const xpToLevelStr = `floor(7 * log(n, 2))`;
         return Zon.Equation_BN.create(`PlayerLevelFromXp`, xpToLevelStr, [], args, constants);
     }
 
