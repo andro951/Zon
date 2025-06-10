@@ -47,7 +47,6 @@ Zon.PlayerLevel = class PlayerLevel {
     postLoadSetup = () => {
         Zon.playerInventory.onGainAether.add((qty) => {
             this.totalXP.value.addI(qty);
-            this.totalXP.onChanged();
         });
     }
     
