@@ -123,116 +123,44 @@ class ExperienceCalculator {
         }
         return levelEstimate;
     }
-
-    // levelToXPNew(level) {
-    //     const levelSum = level * (level + 1) * 0.5;
-    //     const a = 300;
-    //     const r = Math.pow(2, 1 / 7);
-    //     const sum = a * (Math.pow(r, level) - r) / (r - 1);
-    //     return Math.floor(0.25 * (levelSum + sum)) - Math.round((level - 1) * (42.2425 / 120));
-    // }
-    // xpToLevelNew(xp) {
-    //     if (xp <= 0)
-    //         return 1;
-        
-    //     const r = Math.pow(2, 1 / 7);
-    //     const estimatedLevel = Math.floor(7 * Math.log2((xp + 1) * (r - 1) / 75 + r));//Always underestimates how much xp is needed for the next level.
-    //     const xpAtLevel = this.levelToXPNew(estimatedLevel);
-    //     if (xpAtLevel > xp)
-    //         return estimatedLevel - 1;
-
-    //     return estimatedLevel;
-    // }
-    levelToXPNew(level) {
-        const levelSum = level.multiply(level.add(Struct.BigNumber.ONE)).multiply(Struct.BigNumber.HALF);
-        const a = Zon.PlayerLevel._a;
-        const r = Zon.PlayerLevel._r;
-        const sum = a.divide(r.subtract(Struct.BigNumber.ONE)).multiply(r.pow(level).subtract(r));
-        return Zon.PlayerLevel._quarter.multiply(levelSum.add(sum)).subtract(level.subtract(Struct.BigNumber.ONE).multiply(Zon.PlayerLevel._correctionFactor).round()).trunc();
-    }
-    xpToLevelNew(xp) {
-        if (!xp.isPositive)
-            return Struct.BigNumber.ONE;
-
-        const r = Zon.PlayerLevel._r;
-        const estimatedLevel = Zon.PlayerLevel._seven.multiply(xp.add(Struct.BigNumber.ONE).multiply(r.subtract(Struct.BigNumber.ONE)).divide(Zon.PlayerLevel._seventyFive).add(r).log2()).trunc();
-        const xpAtLevel = this.levelToXPNew(estimatedLevel);
-        if (xpAtLevel.greaterThan(xp))
-            return estimatedLevel.subtract(Struct.BigNumber.ONE);
-
-        return estimatedLevel;
-    }
 }
 
 Zon.experienceCalculator = new ExperienceCalculator();
 
 (function() {
     const getLevelXPStart = (level, xp) => {
-        if (level.equals(Struct.BigNumber.ONE) && !xp.isPositive)
+        if (level === 1 && !xp.isPositive)
             return xp;
 
-        const expectedLevel = Zon.experienceCalculator.xpToLevelNew(xp);
+        const expectedLevel = Zon.playerLevel.xpToLevel(xp);
         if (expectedLevel === undefined)
             throw new Error(`Expected level for XP ${xp} is undefined.`);
 
-        if (expectedLevel.lessThan(level)) {
+        if (expectedLevel < level) {
             for (let x = Math.floor(xp.toNumber()) + 1; x <= 1000000000; x++) {
                 const xpBigNumber = Struct.BigNumber.create(x);
-                const estimatedLevel = Zon.experienceCalculator.xpToLevelNew(xpBigNumber);
-                if (estimatedLevel.equals(level)) {
+                const estimatedLevel = Zon.playerLevel.xpToLevel(xpBigNumber);
+                if (estimatedLevel === level) {
                     return xpBigNumber;
                 }
 
-                if (estimatedLevel.greaterThan(level))
+                if (estimatedLevel > level)
                     throw new Error(`Failed to find XP for level ${level} starting from ${xp}. Reached ${xpBigNumber.toNumber()} with estimated level ${estimatedLevel.toString()}.`);
             }
         }
         else {
             for (let x = Math.floor(xp.toNumber()) - 1; x >= 0; x--) {
                 const xpBigNumber = Struct.BigNumber.create(x);
-                const estimatedLevel = Zon.experienceCalculator.xpToLevelNew(xpBigNumber);
-                if (estimatedLevel.equals(level.subtract(Struct.BigNumber.ONE))) {
-                    return xpBigNumber.add(Struct.BigNumber.ONE);
+                const estimatedLevel = Zon.playerLevel.xpToLevel(xpBigNumber);
+                if (estimatedLevel === level - 1) {
+                    return xpBigNumber.add(Struct.BigNumber.ONE_);
                 }
             }
         }
     };
-    const getLevelXPStart2 = (level, xp) => {
-        if (level.equals(Struct.BigNumber.ONE) && !xp.isPositive)
-            return xp;
-
-        const expectedLevel = Zon.experienceCalculator2.xpToLevelNew(xp);
-        if (expectedLevel === undefined)
-            throw new Error(`Expected level for XP ${xp} is undefined.`);
-
-        if (expectedLevel.lessThan(level)) {
-            for (let x = Math.floor(xp.toNumber()) + 1; x <= 1000000000; x++) {
-                const xpBigNumber = Struct.BigNumber.create(x);
-                const estimatedLevel = Zon.experienceCalculator2.xpToLevelNew(xpBigNumber);
-                if (estimatedLevel.equals(level)) {
-                    return xpBigNumber;
-                }
-
-                if (estimatedLevel.greaterThan(level))
-                    throw new Error(`Failed to find XP for level ${level} starting from ${xp}. Reached ${xpBigNumber.toNumber()} with estimated level ${estimatedLevel.toString()}.`);
-            }
-        }
-        else {
-            for (let x = Math.floor(xp.toNumber()) - 1; x >= 0; x--) {
-                const xpBigNumber = Struct.BigNumber.create(x);
-                const estimatedLevel = Zon.experienceCalculator2.xpToLevelNew(xpBigNumber);
-                if (estimatedLevel.equals(level.subtract(Struct.BigNumber.ONE))) {
-                    return xpBigNumber.add(Struct.BigNumber.ONE);
-                }
-            }
-        }
-    };
-    //return;
     for (let i = 1; i <= 120; i++) {
         const xp = Zon.experienceCalculator.levelToXP(i);
-        //const estimatedXP = Zon.experienceCalculator.levelToXPNew(i);
-        //const estimatedXP = getLevelXPStart(Struct.BigNumber.create(i), Struct.BigNumber.create(xp));
-        const estimatedXPBigNumber = getLevelXPStart(Struct.BigNumber.create(i), Struct.BigNumber.create(xp));
+        const estimatedXPBigNumber = getLevelXPStart(i, Struct.BigNumber.create(xp));
         const estimatedXP = estimatedXPBigNumber.toNumber();
         const fail = xp !== estimatedXP;
         const msg = `Level ${i}: XP = ${xp}, Estimated XP: ${estimatedXP} (${xp === estimatedXP ? '' : `Fail, diff: ${estimatedXP - xp}`})  BigNumber: ${estimatedXPBigNumber.toString()}`;
