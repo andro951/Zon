@@ -1836,6 +1836,16 @@
         }
         tryGetCommonOperation(operationID) {
             switch (operationID) {
+                case OperationID.ADD:
+                    return this.add;
+                case OperationID.SUBTRACT:
+                    return this.subtract;
+                case OperationID.MULTIPLY:
+                    return this.multiply;
+                case OperationID.DIVIDE:
+                    return this.divide;
+                case OperationID.POWER:
+                    return this.pow;
                 case OperationID.OR:
                     return this.or;
                 case OperationID.AND:
@@ -1852,8 +1862,6 @@
                     return this.equalTo;
                 case OperationID.NOT_EQUAL_TO:
                     return this.notEqualTo;
-                //case OperationID.NOT:
-                //	return this.not;
             }
 
             return null;
@@ -1869,10 +1877,35 @@
             throw new Error(`GetUniqueOperation must be implemented by subclasses.  OperationID: ${operationID}`);
         }
         getPrecursorOperation(precursorOperationID) {
-            throw new Error(`GetPrecursorOperation must be implemented by subclasses.  PrecursorOperationID: ${precursorOperationID}`);
+            const commonOperation = this.tryGetCommonPrecursorOperation(precursorOperationID);
+            if (commonOperation)
+                return commonOperation;
+
+            return this.getUniquePrecursorOperation(precursorOperationID);
+        }
+        getUniquePrecursorOperation(precursorOperationID) {
+            throw new Error(`GetUniquePrecursorOperation must be implemented by subclasses.  PrecursorOperationID: ${precursorOperationID}`);
+        }
+        tryGetCommonPrecursorOperation(precursorOperationID) {
+            switch (precursorOperationID) {
+                case PrecursorOperationID.LOG:
+                    return this.log;
+            }
+
+            return null;
         }
         tryGetCommonSingleVariableOperation(operationID) {
             switch (operationID) {
+                case SingleVariableOperationID.ABS:
+                    return this.abs;
+                case SingleVariableOperationID.NEGATE:
+                    return this.negate;
+                case SingleVariableOperationID.ROUND:
+                    return this.round;
+                case SingleVariableOperationID.TRUNC:
+                    return this.trunc;
+                case SingleVariableOperationID.FLOOR:
+                    return this.floor;
                 case SingleVariableOperationID.NOT:
                     return this.not;
             }
@@ -1919,16 +1952,6 @@
 
         getUniqueOperation(operationID) {
             switch (operationID) {
-                case OperationID.ADD:
-                    return this.add;
-                case OperationID.SUBTRACT:
-                    return this.subtract;
-                case OperationID.MULTIPLY:
-                    return this.multiply;
-                case OperationID.DIVIDE:
-                    return this.divide;
-                case OperationID.POWER:
-                    return this.pow;
                 default:
                     throw new Error(`No operation found for ${operationID}`);
             }
@@ -1954,26 +1977,14 @@
         trunc = (t) => Math.trunc(t);
         floor = (t) => Math.floor(t);
         isFinite = (t) => Number.isFinite(t);
-        getPrecursorOperation(precursorOperationID) {
+        getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
-                case PrecursorOperationID.LOG:
-                    return this.log;
                 default:
                     throw new Error(`No precursor operation found for ${precursorOperationID}`);
             }
         }
         getUniqueSingleVariableOperation(operationID) {
             switch (operationID) {
-                case SingleVariableOperationID.ABS:
-                    return this.abs;
-                case SingleVariableOperationID.NEGATE:
-                    return this.negate;
-                case SingleVariableOperationID.ROUND:
-                    return this.round;
-                case SingleVariableOperationID.TRUNC:
-                    return this.trunc;
-                case SingleVariableOperationID.FLOOR:
-                    return this.floor;
                 default:
                     throw new Error(`No single variable operation found for ${operationID}`);
             }
@@ -2148,16 +2159,6 @@
 
         getUniqueOperation(operationID) {
             switch (operationID) {
-                case OperationID.ADD:
-                    return this.add;
-                case OperationID.SUBTRACT:
-                    return this.subtract;
-                case OperationID.MULTIPLY:
-                    return this.multiply;
-                case OperationID.DIVIDE:
-                    return this.divide;
-                case OperationID.POWER:
-                    return this.pow;
                 default:
                     throw new Error(`No operation found for ${operationID}`);
             }
@@ -2183,26 +2184,14 @@
         trunc = (t) => t.trunc();
         floor = (t) => t.floor();
         isFinite = (t) => t instanceof Struct.BigNumber && t.isFinite();
-        getPrecursorOperation(precursorOperationID) {
+        getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
-                case PrecursorOperationID.LOG:
-                    return this.log;
                 default:
                     throw new Error(`No precursor operation found for ${precursorOperationID}`);
             }
         }
         getUniqueSingleVariableOperation(operationID) {
             switch (operationID) {
-                case SingleVariableOperationID.ABS:
-                    return this.abs;
-                case SingleVariableOperationID.NEGATE:
-                    return this.negate;
-                case SingleVariableOperationID.ROUND:
-                    return this.round;
-                case SingleVariableOperationID.TRUNC:
-                    return this.trunc;
-                case SingleVariableOperationID.FLOOR:
-                    return this.floor;
                 default:
                     throw new Error(`No single variable operation found for ${operationID}`);
             }
@@ -2223,6 +2212,7 @@
             
             const variablesArr = equation.variablesArr;
             const constantsArr = equation.constantsArr;
+            const constantsArrNames = equation.constantsArrNames;
             const cachedConstants = equation._cachedConstants;
             const argsArr = equation.argsArr;
 
@@ -2237,24 +2227,47 @@
                 }
             }
 
-            for (const varsString of varsStrings) {
-                if (varsString)
+            for (let i = 0; i < varsStrings.length; i++) {
+                const varsString = varsStrings[i];
+                if (varsString) {
                     stringArr.push(varsString);
+                }
+                else {
+                    const variable = variablesArr[i];
+                    stringArr.push(`\t//${variable.name}: ${variable.value} (not used)\n`);
+                }
             }
 
-            for (const nconstsString of nconstsStrings) {
-                if (nconstsString)
+            for (let i = 0; i < nconstsStrings.length; i++) {
+                const nconstsString = nconstsStrings[i];
+                if (nconstsString) {
                     stringArr.push(nconstsString);
+                }
+                else {
+                    const constant = constantsArr[i];
+                    stringArr.push(`\t//${constantsArrNames[i]}: ${constant} (not used directly)\n`);
+                }
             }
 
-            for (const cconstsString of cconstsStrings) {
-                if (cconstsString)
+            for (let i = 0; i < cconstsStrings.length; i++) {
+                const cconstsString = cconstsStrings[i];
+                if (cconstsString) {
                     stringArr.push(cconstsString);
+                }
+                else {
+                    throw new Error(`A cached constant was not found in the equation.  This should never happen.`);
+                }
             }
 
-            for (const argString of argStrings) {
-                if (argString)
+            for (let i = 0; i < argStrings.length; i++) {
+                const argString = argStrings[i];
+                if (argString) {
                     stringArr.push(argString);
+                }
+                else {
+                    const arg = argsArr[i];
+                    stringArr.push(`\t//${arg.name}: ${arg.value} (not used)\n`);
+                }
             }
 
             stringArr.push('\treturn ');
@@ -2365,16 +2378,6 @@
 
         getUniqueOperation(operationID) {
             switch (operationID) {
-                case OperationID.ADD:
-                    return this.add;
-                case OperationID.SUBTRACT:
-                    return this.subtract;
-                case OperationID.MULTIPLY:
-                    return this.multiply;
-                case OperationID.DIVIDE:
-                    return this.divide;
-                case OperationID.POWER:
-                    return this.pow;
                 default:
                     throw new Error(`No operation found for ${operationID}`);
             }
@@ -2402,26 +2405,14 @@
         trunc = (t) => t;
         floor = (t) => t;
         isFinite = (t) => typeof t === 'boolean';
-        getPrecursorOperation(precursorOperationID) {
+        getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
-                case PrecursorOperationID.LOG:
-                    return this.log;
                 default:
                     throw new Error(`No precursor operation found for ${precursorOperationID}`);
             }
         }
         getUniqueSingleVariableOperation(operationID) {
             switch (operationID) {
-                case SingleVariableOperationID.ABS:
-                    return this.abs;
-                case SingleVariableOperationID.NEGATE:
-                    return this.negate;
-                case SingleVariableOperationID.ROUND:
-                    return this.round;
-                case SingleVariableOperationID.TRUNC:
-                    return this.trunc;
-                case SingleVariableOperationID.FLOOR:
-                    return this.floor;
                 default:
                     throw new Error(`No single variable operation found for ${operationID}`);
             }

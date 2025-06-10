@@ -35,7 +35,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         new EquationTest_N(`log2(8)`, (args, variables) => Math.log(8) / Math.log(2), [], [], new Map(), [], []),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -44,7 +46,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -53,7 +57,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -62,7 +68,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -71,7 +79,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -80,7 +90,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -89,7 +101,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -98,7 +112,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -107,7 +123,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -116,7 +134,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -125,7 +145,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -134,7 +156,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [8],
                 [10]
@@ -143,7 +167,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [8],
                 [10]
@@ -152,7 +178,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [8],
                 [10]
@@ -161,7 +189,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [8],
                 [10]
@@ -170,7 +200,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const r = `r`;
             const constants = new Map([
                 [r, `2^(1 / 7)`]
@@ -183,7 +215,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const testArgs = [
                 [10],
                 [20]
@@ -192,7 +226,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const r = `r`;
             const constants = new Map([
                 [r, `2^(1 / 7)`]
@@ -205,7 +241,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const r = `r`;
             const constants = new Map([
                 [r, `2^(1 / 7)`]
@@ -218,7 +256,9 @@ Struct.EquationTests.equationTests_N = (testClass) => {
         })(),
         (() => {
             const level = `level`;
-            const args = [level];
+            const args = [
+                new Zon.Type_N(level)
+            ];
             const r = `r`;
             const constants = new Map([
                 [r, `2^(1 / 7)`]
