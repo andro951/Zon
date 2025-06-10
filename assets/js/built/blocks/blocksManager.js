@@ -80,7 +80,7 @@ Zon.BlocksManager = class {
         return !!this.getBlock(xIndex, yIndex);
     }
     get blocks() {
-        return this._blocksSet;//TODO: make sure this works as a map.
+        return [...this._blocksSet];//TODO: make sure this works as a map.
     }
     get blocksCount() {
         return this._blocksSet.size;
