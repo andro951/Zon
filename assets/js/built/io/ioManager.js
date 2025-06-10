@@ -187,6 +187,12 @@ Zon.IOManager.getSaveName = (saveFileTypeID, saveNum) => {
 }
 
 Zon.IOManager.registerSaveLoadInfo = (saveFileTypeID, saveLoadInfo) => {
+    if (saveLoadInfo === undefined || saveLoadInfo === null)
+        throw new Error(`Cannot register SaveLoadInfo.  saveLoadInfo is undefined or null.`);
+
+    if (saveLoadInfo.ID === undefined || saveLoadInfo.ID === null)
+        throw new Error(`Cannot register SaveLoadInfo.  saveLoadInfo.ID is undefined or null.`);
+
     let arr = Zon.IOManager.saveLoadInfos.get(saveFileTypeID);
     if (!arr) {
         arr = [];
@@ -324,6 +330,10 @@ Zon.IOManager.loadProcess = function*(saveFileTypeID, saveLoadInfos, saveNum) {
     catch (error) {
         const errorMessage = `Error loading ${Zon.SaveFileTypeIDNames[saveFileTypeID]}: ${error}`;
         console.error(errorMessage);
+        //delete the local storage save file
+        const saveName = Zon.IOManager.getSaveName(saveFileTypeID, saveNum);//TODO: remove this!!!!!  Only for early development.
+        console.warn(`Deleting save file: ${saveName}`);//TODO: remove this!!!!!  Only for early development.
+        localStorage.removeItem(saveName);//TODO: remove this!!!!!  Only for early development.
         if (zonDebug)
             throw new Error(errorMessage);
     }
@@ -407,6 +417,7 @@ Zon.SaveLoadID = {
     PLAYER_STATS: 13,
     MANA_BAR: 14,
     STAMINA_BAR: 15,
+    PLAYER: 16,
 }
 Zon.SaveLoadIDNames = [];
 Enum.createEnum(Zon.SaveLoadID, Zon.SaveLoadIDNames, false);

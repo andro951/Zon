@@ -2,11 +2,6 @@
 
 Zon.PlayerLevel = class PlayerLevel {
     constructor() {
-        Zon.playerInventory.onGainAether.add((qty) => {
-            this.totalXP.value.addI(qty);
-            this.totalXP.onChanged();
-        });
-        
         const levelToXPEquation = this._createLevelToXPEquation();
         const xpToLevelEquation = this._createXPToLevelEquation();
         this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
@@ -15,6 +10,45 @@ Zon.PlayerLevel = class PlayerLevel {
         this.xpToLevel = this._playerLevelTracker.progressToLevel;
         this.progressToNextLevel = this._playerLevelTracker.progressToNextLevel;
         this.totalXP = this._playerLevelTracker.totalProgress;
+
+        Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
+        Zon.Setup.postLoadSetupActions.add(this.postLoadSetup);
+    }
+
+    preLoadSetup = () => {
+        Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.GAME, this.saveLoadInfo());
+    }
+
+    saveLoadInfo = () => {
+        const info = new Zon.PlayerLevel.PlayerLevelSaveLoadInfo();
+        info.add(this._playerLevelTracker.saveLoadHelper());
+        return info;
+    }
+
+    static PlayerLevelSaveLoadInfo = class PlayerLevelSaveLoadInfo extends Zon.SaveLoadInfo {
+        constructor() {
+            super(Zon.SaveLoadID.PLAYER);
+        }
+
+        write = (writer) => {
+            super.write(writer);
+        }
+        read = (reader) => {
+            super.read(reader);
+        }
+        get = () => {
+            super.get();
+        }
+        set = () => {
+            super.set();
+        }
+    }
+
+    postLoadSetup = () => {
+        Zon.playerInventory.onGainAether.add((qty) => {
+            this.totalXP.value.addI(qty);
+            this.totalXP.onChanged();
+        });
     }
     
     _createLevelToXPEquation() {

@@ -74,7 +74,7 @@ Zon.SaveLoadHelper_T = class SaveLoadHelper_T extends Zon.SaveLoadHelper {
         super(get, set);
     }
     static fromVariable(variable) {
-        return new Zon.SaveLoadHelper_T(() => variable.value, (value) => variable.value = value);
+        return new Zon.SaveLoadHelper_T(() => variable.value.clone, (value) => variable.value = value);
     }
     _write = (writer, value) => {
         value.write(writer);
@@ -360,12 +360,15 @@ Zon.SaveLoadHelper_List = class SaveLoadHelper_List {
         this.saveLoadHelpers.push(saveLoadHelper);
     }
     write(writer) {
+        writer.writeUInt32AutoLength(this.saveLoadHelpers.length);
         for (const item of this.saveLoadHelpers) {
             item.write(writer);
         }
     }
     read(reader) {
-        for (const item of this.saveLoadHelpers) {
+        const length = reader.readUInt32AutoLength();
+        for (let i = 0; i < length; i++) {
+            const item = this.saveLoadHelpers[i];
             item.read(reader);
         }
     }
@@ -384,6 +387,9 @@ Zon.SaveLoadHelper_List = class SaveLoadHelper_List {
 Zon.SaveLoadInfo = class SaveLoadInfo extends Zon.SaveLoadHelper_List {
     constructor(id, saveLoadHelpers = null) {
         super(saveLoadHelpers);
+        if (id === undefined || id === null)
+            throw new Error("SaveLoadInfo: ID cannot be null or undefined.");
+            
         this.id = id;
     }
 
