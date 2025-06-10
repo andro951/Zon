@@ -114,16 +114,15 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
 
 {
     Zon.Setting = class Setting extends Zon.IHasSaveLoadHelper {
-        constructor(id, defaultValue, name = null) {
-            if (new.target === Zon.Setting) {
+        constructor(id, defaultValue, name = null, variableClass = Variable.Value) {
+            if (new.target === Zon.Setting)
                 throw new TypeError("Cannot construct Setting instances directly");
-            }
 
             super();
             this.id = id;
             this.defaultValue = defaultValue;
             this.name = name ?? Zon.GameSettingsIDNames[id];
-            this._value = new Variable.Value(defaultValue, `Setting${this.name}Value`);
+            this._value = new variableClass(defaultValue, `Setting${this.name}Value`);
             this.onChangedAction = this._value.onChangedAction;
             this.onChangedByPlayerAction = new Actions.Action();
         }
@@ -366,8 +365,8 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             if (defaultValue < Zon.ColorSetting.minValue || defaultValue > Zon.ColorSetting.maxValue)
                 throw new Error(`Default value ${defaultValue} is out of range [${Zon.ColorSetting.minValue}, ${Zon.ColorSetting.maxValue}]`);
 
-            super(id, defaultValue, name);
-            this._value.value = Struct.Color.fromUInt(defaultValue);
+            super(id, defaultValue, name, Variable.ColorVar);
+            this._value.uint = defaultValue;
         }
 
         get value() {
@@ -383,11 +382,11 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                 newValueUint = Zon.ColorSetting.maxValue;
             }
 
-            this._value.value.uint = newValueUint;
+            this._value.uint = newValueUint;
         }
 
         get isDefaultValue() {
-            return this._value.value.uint === this.defaultValue;
+            return this._value.uint === this.defaultValue;
         }
 
         createButton = (canvas, x, y, width, height) => {//TODO
