@@ -29,7 +29,7 @@
             equation.operationsSet = operationsSet;
             equation.defaultVariablesArr = Array.from(variablesArr);
             equation.variablesArr = equation.defaultVariablesArr;
-            equation.argsNames = Array.from(argsArr);
+            equation.argsArr = Array.from(argsArr);
             equation.constantsMap = constantsMap;
             for (const [key, constantEquationString] of constantsMap) {
                 if (constantEquationString === undefined || constantEquationString === null) {
@@ -188,6 +188,7 @@
         TRUNC: 4,
         NOT: 5,
         FLOOR: 6,
+        CONVERT: 7,
     }
     const PrecursorOperationID = {
         NONE: 0,
@@ -278,6 +279,8 @@
                     return `!${variable}`;
                 case SingleVariableOperationID.FLOOR:
                     return `floor(${variable})`;
+                case SingleVariableOperationID.CONVERT:
+                    return `${variable}`;
             }
 
             throw new Error(`Unknown single operation ID: ${singleOperationID}`);
@@ -311,6 +314,7 @@
             10000,//TRUNC
             600,//NOT
             10000,//FLOOR
+            10000,//CONVERT
         ];
         static singleVariableOperationUsesParentheses = [
             false,//NONE
@@ -320,6 +324,7 @@
             true,//TRUNC
             false,//NOT
             true,//FLOOR
+            false,//CONVERT
         ];
         static createTree(s, equation, operationsSet, variablesArr, argsArr, constantsArrLookupMap) {
             if (debugEquation) console.log(`Creating equation tree for:\n${s}`);
@@ -416,12 +421,20 @@
                 //if (debugEquation) console.log(`Extracted word2: ${word}`);
                 const variableIndex = variablesMap.get(word);
                 if (variableIndex !== undefined) {
+                    const variable = variablesArr[variableIndex];
+                    if (Zon.Util.getType(variable.value) !== operationsSet.typeString)
+                        applySingleVariableOperation(SingleVariableOperationID.CONVERT);
+
                     placeConstantOrVariable(new VariableReference(equation, word, variableIndex));
                     return true;
                 }
 
                 const argIndex = argsMap.get(word);
                 if (argIndex !== undefined) {
+                    const arg = argsArr[argIndex];
+                    if (arg.typeID !== operationsSet.type)
+                        applySingleVariableOperation(SingleVariableOperationID.CONVERT);
+
                     placeConstantOrVariable(new ArgReference(equation, word, argIndex));
                     return true;
                 }
@@ -727,10 +740,11 @@
 
     //#region Equation Nodes
 
-    const args = `_args`;
-    const vars = `_vars`;
-    const nconsts = `_nconsts`;//Named constants
-    const cconsts = `_cconsts`;//Cashed (unnamed) constants
+    const args = `_arguments`;
+    const vars = `_variables`;
+    const nconsts = `_namedConstants`;//Named constants
+    const cconsts = `_cachedConstants`;//Cashed (unnamed) constants
+    const cc = `_cc`;
 
     class TreeNode {
         constructor(parent = null) {
@@ -840,6 +854,9 @@
         }
         populateFunctionReferences(variables, nconstants, cconstants, args) {
             throw new Error(`populateFunctionReferences must be implemented by subclasses.  ${this.toString()}`);
+        }
+        populateFunctionReferencesCounts(varsCounts, argCounts) {
+            throw new Error(`populateFunctionReferencesCounts must be implemented by subclasses.  ${this.toString()}`);
         }
         *traverse() {
             yield this;
@@ -965,11 +982,19 @@
             return null;
         }
         writeToString(stringArr) {
-            stringArr.push(`${this.name}.value`);
+            stringArr.push(`${this.name}`);
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
-            if (!varsStrings[this.index])
-                varsStrings[this.index] = `\tconst ${this.name} = ${vars}[${this.index}];\n`;
+            if (varsStrings[this.index])
+                return;
+            
+            const variable = this.equation.variablesArr[this.index];
+            const type = Zon.Util.getType(variable.value);
+            const wrongType = type !== this.equation.operationsSet.typeString;
+            varsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${vars}[${this.index}].value);//${type}\n` : `${vars}[${this.index}].value;\n`)}`;
+        }
+        populateFunctionReferencesCounts(varsCounts, argCounts) {
+            varsCounts[this.index]++;
         }
     }
     class ArgReference extends VariableGetter {
@@ -1003,8 +1028,8 @@
             if (this.equation === undefined || this.equation === null)
                 return `Invalid argument reference equation.  Equation is undefined or null on argument reference: ${this.name}`;
 
-            if (this.index < 0 || this.index >= this.equation.argsNames.length)
-                return `Invalid argument reference index.  Index is out of bounds on argument reference: ${this.name}.  Index: ${this.index}, Length: ${this.equation.argsNames.length}`;
+            if (this.index < 0 || this.index >= this.equation.argsArr.length)
+                return `Invalid argument reference index.  Index is out of bounds on argument reference: ${this.name}.  Index: ${this.index}, Length: ${this.equation.argsArr.length}`;
 
             if (this.name === undefined || this.name === null)
                 return `Invalid argument reference name: ${this.name}`;
@@ -1015,8 +1040,15 @@
             stringArr.push(this.name);
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
-            if (!argStrings[this.index])
-                argStrings[this.index] = `\tconst ${this.name} = ${args}[${this.index}];\n`;
+            if (argStrings[this.index])
+                return;
+
+            const arg = this.equation.argsArr[this.index];
+            const wrongType = arg.typeID !== this.equation.operationsSet.type;
+            argStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${args}[${this.index}]);//${Zon.TypeNames[arg.typeID]}\n` : `${args}[${this.index}];\n`)}`;
+        }
+        populateFunctionReferencesCounts(varsCounts, argCounts) {
+            argCounts[this.index]++;
         }
     }
     class ConstantReference extends VariableGetter {
@@ -1064,6 +1096,9 @@
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!nconstsStrings[this.index])
                 nconstsStrings[this.index] = `\tconst ${this.name} = ${nconsts}[${this.index}];\n`;
+        }
+        populateFunctionReferencesCounts(varsCounts, argCounts) {
+            throw new Error(`Not used on ConstantReference.`);
         }
     }
     class CachedConstantReference extends VariableGetter {
@@ -1134,11 +1169,14 @@
             return true;
         }
         writeToString(stringArr) {
-            stringArr.push(this.name ?? `${cconsts}${this.index}`);
+            stringArr.push(this.name ?? `${cc}${this.index}`);
         }
         populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
             if (!cconstsStrings[this.index])
-                cconstsStrings[this.index] = `\tconst ${(this.name ?? `${cconsts}${this.index}`)} = ${cconsts}[${this.index}];${(this.name === null ? `//${this.replacedNode.toString()}` : '')}\n`;
+                cconstsStrings[this.index] = `\tconst ${(this.name ?? `${cc}${this.index}`)} = ${cconsts}[${this.index}];${(this.name === null ? `//${this.replacedNode.toString()}` : '')}\n`;
+        }
+        populateFunctionReferencesCounts(varsCounts, argCounts) {
+            throw new Error(`Not used on CachedConstants.`);
         }
     }
     class Operation extends ParentNode {
@@ -1717,6 +1755,13 @@
         BOOL: 3,
     }
     Enum.freezeObj(Zon.TypeID);
+    Zon.TypeNames = {
+        0: `None`,
+        1: `number`,
+        2: `BigNumber`,
+        3: `bool`,
+    }
+    Enum.freezeObj(Zon.TypeNames);
 
     Zon.Type = class Type {
         constructor(typeID, name) {
@@ -1751,6 +1796,9 @@
 
         get type() {
             throw new Error("Type must be implemented by subclasses.");
+        }
+        get typeString() {
+            throw new Error("TypeString must be implemented by subclasses.");
         }
 
         add(a, b) {
@@ -1834,6 +1882,9 @@
         notEqualTo(a, b) {
             return !this.equalToBool(a, b) ? this.one : this.zero;
         }
+        convert(t) {
+            throw new Error("Convert operation must be implemented by subclasses.");
+        }
         tryGetCommonOperation(operationID) {
             switch (operationID) {
                 case OperationID.ADD:
@@ -1908,6 +1959,8 @@
                     return this.floor;
                 case SingleVariableOperationID.NOT:
                     return this.not;
+                case SingleVariableOperationID.CONVERT:
+                    return this.convert;
             }
 
             return null;
@@ -1949,6 +2002,9 @@
         get type() {
             return Zon.TypeID.NUMBER;
         }
+        get typeString() {
+            return "number";
+        }
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -1977,6 +2033,8 @@
         trunc = (t) => Math.trunc(t);
         floor = (t) => Math.floor(t);
         isFinite = (t) => Number.isFinite(t);
+        convert = (t) => Number(t);
+        convertString = `Number(`;
         getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 default:
@@ -2101,6 +2159,12 @@
                 case SingleVariableOperationID.FLOOR:
                     operator = 'Math.floor';
                     break;
+                case SingleVariableOperationID.CONVERT:
+                    variable.writeToString(stringArr);
+                    return;
+                case SingleVariableOperationID.NOT:
+                    operator = '!';
+                    break;
                 default:
                     throw new Error(`No single variable operation found for ${singleOperationID}`);
             }
@@ -2156,6 +2220,9 @@
         get type() {
             return Zon.TypeID.BIG_NUMBER;
         }
+        get typeString() {
+            return "BigNumber";
+        }
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -2184,6 +2251,8 @@
         trunc = (t) => t.trunc();
         floor = (t) => t.floor();
         isFinite = (t) => t instanceof Struct.BigNumber && t.isFinite();
+        convert = (t) => t.toBigNumber();
+        convertString = `Struct.BigNumber.create(`;
         getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 default:
@@ -2221,9 +2290,15 @@
             const cconstsStrings = new Array(cachedConstants.length);
             const argStrings = new Array(argsArr.length);
 
+            this.varsCounts = new Array(variablesArr.length).fill(0);
+            this.argsCounts = new Array(argsArr.length).fill(0);
+
             for (const node of equation.traverseNodes()) {
                 if (node instanceof VariableGetter) {
                     node.populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings);
+                    if (node instanceof VariableReference || node instanceof ArgReference) {
+                        node.populateFunctionReferencesCounts(this.varsCounts, this.argsCounts);
+                    }
                 }
             }
 
@@ -2277,6 +2352,10 @@
 
             stringArr.push(';');
             const equationString = stringArr.join('');
+
+            this.varsCounts = undefined;
+            this.argsCounts = undefined;
+
             return new Function(vars, nconsts, cconsts, args, equationString);
         }
         writeOperationToString(stringArr, operationID, left, right) {
@@ -2327,6 +2406,20 @@
                 case SingleVariableOperationID.FLOOR:
                     operator = '.floorI()';
                     break;
+                case SingleVariableOperationID.CONVERT:
+                    variable.writeToString(stringArr);
+                    if (variable instanceof VariableReference) {
+                        if (this.varsCounts[variable.index] !== 1)//Skip clone if only used once.
+                            stringArr.push('.clone');
+                    }
+                    else if (variable instanceof ArgReference) {
+                        if (this.argsCounts[variable.index] !== 1)//Skip clone if only used once.
+                            stringArr.push('.clone');
+                    }
+                    else {
+                        throw new Error(`Variable type not supported for conversion: ${variable.constructor.name}`);
+                    }
+                    return;
                 default:
                     throw new Error(`No single variable operation found for ${singleOperationID}`);
             }
@@ -2375,6 +2468,9 @@
         get type() {
             return Zon.TypeID.BOOL;
         }
+        get typeString() {
+            return "bool";
+        }
 
         getUniqueOperation(operationID) {
             switch (operationID) {
@@ -2405,6 +2501,8 @@
         trunc = (t) => t;
         floor = (t) => t;
         isFinite = (t) => typeof t === 'boolean';
+        convert = (t) => !!t;
+        convertString = `(!!`;
         getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 default:

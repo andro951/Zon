@@ -635,6 +635,46 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
             ]);
             return new EquationTest_BN(`${a} - ${b}`, (args, variables) => Struct.BigNumber.ZERO, [], [], constants);
         })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_N(level),
+            ];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_BN(`0.25 * trunc(${level} * (${level} + 1) * 0.5)`, (args, variables) => Struct.BigNumber.create(0.25).multiply(Struct.BigNumber.create(args[0]).multiply(Struct.BigNumber.create(args[0]).add(Struct.BigNumber.create(1))).multiply(Struct.BigNumber.create(0.5))), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_BN(level)
+            ];
+            const r = `r`;
+            const constants = new Map([
+                [r, `2^(1 / 7)`]
+            ]);
+            const testArgs = [
+                [Struct.BigNumber.create(10)],
+                [Struct.BigNumber.create(20)]
+            ];
+            const testVar = new Variable.Value(3, `TestVar`);
+            const testVar2 = new Variable.BigNumberVar(Struct.BigNumber.create(4), `TestVar2`);
+            const variables = [testVar, testVar2];
+            return new EquationTest_BN(`(-level - r)^${testVar.name} + ${testVar2.name}`, (args, variables) => (args[0].negative().subtract(Struct.BigNumber.create(2).pow(Struct.BigNumber.create(1).divide(Struct.BigNumber.create(7)))).pow(Struct.BigNumber.create(variables[0].value))).add(variables[1].value), variables, args, constants, testArgs, []);
+        })(),
+        (() => {
+            const level = `level`;
+            const args = [
+                new Zon.Type_N(level),
+            ];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_BN(`${level} + 1`, (args, variables) => Struct.BigNumber.create(args[0]).add(Struct.BigNumber.ONE_), [], args, new Map(), testArgs, []);
+        })(),
     ];
 
     for (let i = 0; i < testCases.length; i++) {

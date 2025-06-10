@@ -8,6 +8,7 @@ const Trig = {};
 const Algebra = {};
 Zon.UI = {};
 const Enum = {};
+Zon.Util = {};
 
 Zon.name = "Zon";
 
