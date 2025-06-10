@@ -72,9 +72,12 @@ Zon.SaveLoadHelper = class SaveLoadHelper {
 Zon.SaveLoadHelper_T = class SaveLoadHelper_T extends Zon.SaveLoadHelper {
     constructor(get, set) {
         super(get, set);
+        this.value = Struct.BigNumber.ZERO;
+        this.get = () => this.value.set(get());
+        this.set = () => set(this.value);
     }
     static fromVariable(variable) {
-        return new Zon.SaveLoadHelper_T(() => variable.value.clone, (value) => variable.value = value);
+        return new Zon.SaveLoadHelper_T(() => variable.value, (value) => variable.value.set(value));
     }
     _write = (writer, value) => {
         value.write(writer);
@@ -174,7 +177,7 @@ Zon.SaveLoadHelper_Color = class SaveLoadHelper_Color extends Zon.SaveLoadHelper
         super(get, set);
     }
     static fromVariable(variable) {
-        return new Zon.SaveLoadHelper_Color(() => variable.value.uint, (value) => variable.value.uint = value);
+        return new Zon.SaveLoadHelper_Color(() => variable.uint, (value) => variable.uint = value);
     }
     _write = (writer, value) => {
         writer.writeUInt32(value.uint >>> 0);
