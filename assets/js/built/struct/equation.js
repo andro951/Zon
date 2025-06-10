@@ -2,6 +2,7 @@
 
 {
     const debugEquation = zonDebug && false;
+    const debugEquationFunction = zonDebug && false;
     Zon.Equation = class Equation {
         constructor() {
             if (new.target === Zon.Equation)
@@ -2345,10 +2346,27 @@
                 }
             }
 
-            stringArr.push('\treturn ');
-            equation._equationTreeHead.writeToString(stringArr);
-            if (equation._equationTreeHead instanceof VariableGetter)
-                stringArr.push('.clone');
+            if (debugEquationFunction) {
+                this.constCount = 0;
+                equation._equationTreeHead.writeToString(stringArr);
+                stringArr.push('\treturn ');
+                if (equation._equationTreeHead instanceof VariableGetter) {
+                    equation._equationTreeHead.writeToString(stringArr);
+                    stringArr.push('.clone');
+                }   
+                else {
+                    this._writeConst(stringArr, this.constCount - 1);
+                }
+
+                //this._writeEndLine(stringArr);
+                this.constCount = undefined;
+            }
+            else {
+                stringArr.push('\treturn ');
+                equation._equationTreeHead.writeToString(stringArr);
+                if (equation._equationTreeHead instanceof VariableGetter)
+                    stringArr.push('.clone');
+            }
 
             stringArr.push(';');
             const equationString = stringArr.join('');
@@ -2358,55 +2376,122 @@
 
             return new Function(vars, nconsts, cconsts, args, equationString);
         }
-        writeOperationToString(stringArr, operationID, left, right) {
-            left.writeToString(stringArr);
-            if (left instanceof VariableGetter)
-                stringArr.push('.clone');
-                
-            let operator;
+        _getConst(num) {
+            return `_v${num}`;
+        }
+        _writeLineStart(stringArr) {
+            stringArr.push(`\tconst ${this._getConst(this.constCount++)} = `);
+        }
+        _writeConst(stringArr, num) {
+            stringArr.push(this._getConst(num));
+        }
+        _writeEndLine(stringArr) {
+            stringArr.push(';\n');
+        }
+        _getOperatorString(operationID) {
             switch (operationID) {
                 case OperationID.ADD:
-                    operator = '.addI(';
-                    break;
+                    return '.addI(';
                 case OperationID.SUBTRACT:
-                    operator = '.subtractI(';
-                    break;
+                    return '.subtractI(';
                 case OperationID.MULTIPLY:
-                    operator = '.multiplyI(';
-                    break;
+                    return '.multiplyI(';
                 case OperationID.DIVIDE:
-                    operator = '.divideI(';
-                    break;
+                    return '.divideI(';
                 case OperationID.POWER:
-                    operator = '.powI(';
-                    break;
+                    return '.powI(';
                 default:
                     throw new Error(`No operator found for ${operationID}`);
             }
-            
-            stringArr.push(operator);
-            right.writeToString(stringArr);
-            stringArr.push(')');
         }
-        writeSingleOperationToString(stringArr, singleOperationID, variable) {
-            let operator;
+        writeOperationToString(stringArr, operationID, left, right) {
+            if (debugEquationFunction) {
+                const leftIsVariableGetter = left instanceof VariableGetter;
+                let leftConstNum;
+                if (!leftIsVariableGetter) {
+                    left.writeToString(stringArr);
+                    leftConstNum = this.constCount - 1;
+                }
+
+                const rightIsVariableGetter = right instanceof VariableGetter;
+                let rightConstNum;
+                if (!rightIsVariableGetter) {
+                    right.writeToString(stringArr);
+                    rightConstNum = this.constCount - 1;
+                }
+                
+                this._writeLineStart(stringArr);
+                if (leftIsVariableGetter) {
+                    left.writeToString(stringArr);
+                    stringArr.push('.clone');
+                }
+                else {
+                    this._writeConst(stringArr, leftConstNum);
+                }
+                
+                stringArr.push(this._getOperatorString(operationID));
+                if (rightIsVariableGetter) {
+                    right.writeToString(stringArr);
+                }
+                else {
+                    this._writeConst(stringArr, rightConstNum);
+                }
+
+                stringArr.push(')');
+                this._writeEndLine(stringArr);
+            }
+            else {
+                left.writeToString(stringArr);
+                if (left instanceof VariableGetter)
+                    stringArr.push('.clone');
+                
+                stringArr.push(_getOperatorString(operationID));
+                right.writeToString(stringArr);
+                stringArr.push(')');
+            }
+        }
+        _getSingleOperatorString(singleOperationID) {
             switch (singleOperationID) {
                 case SingleVariableOperationID.ABS:
-                    operator = '.absI()';
-                    break;
+                    return '.absI()';
                 case SingleVariableOperationID.NEGATE:
-                    operator = '.negativeI()';
-                    break;
+                    return '.negativeI()';
                 case SingleVariableOperationID.ROUND:
-                    operator = '.roundI()';
-                    break;
+                    return '.roundI()';
                 case SingleVariableOperationID.TRUNC:
-                    operator = '.truncI()';
-                    break;
+                    return '.truncI()';
                 case SingleVariableOperationID.FLOOR:
-                    operator = '.floorI()';
-                    break;
+                    return '.floorI()';
                 case SingleVariableOperationID.CONVERT:
+                    return ``;
+                default:
+                    throw new Error(`No single operator found for ${singleOperationID}`);
+            }
+        }
+        writeSingleOperationToString(stringArr, singleOperationID, variable) {
+            if (debugEquationFunction) {
+                const isVariableGetter = variable instanceof VariableGetter;
+                let variableConstNum;
+                if (!isVariableGetter) {
+                    variable.writeToString(stringArr);
+                    variableConstNum = this.constCount - 1;
+                }
+
+                this._writeLineStart(stringArr);
+                if (isVariableGetter) {
+                    variable.writeToString(stringArr);
+                    stringArr.push('.clone');
+                }
+                else {
+                    this._writeConst(stringArr, variableConstNum);
+                }
+                
+                stringArr.push(this._getSingleOperatorString(singleOperationID));
+                this._writeEndLine(stringArr);
+            }
+            else {
+                switch (singleOperationID) {
+                    case SingleVariableOperationID.CONVERT:
                     variable.writeToString(stringArr);
                     if (variable instanceof VariableReference) {
                         if (this.varsCounts[variable.index] !== 1)//Skip clone if only used once.
@@ -2420,39 +2505,94 @@
                         throw new Error(`Variable type not supported for conversion: ${variable.constructor.name}`);
                     }
                     return;
-                default:
-                    throw new Error(`No single variable operation found for ${singleOperationID}`);
+                }
+
+                variable.writeToString(stringArr);
+                if (variable instanceof VariableGetter)
+                    stringArr.push('.clone');
+
+                stringArr.push(this._getSingleOperatorString(singleOperationID));
             }
-
-            variable.writeToString(stringArr);
-            if (variable instanceof VariableGetter)
-                stringArr.push('.clone');
-
-            stringArr.push(operator);
         }
-        writePrecursorOperationToString(stringArr, precursorOperationID, left, right) {
-            left.writeToString(stringArr);
-            if (left instanceof VariableGetter)
-                stringArr.push('.clone');
-
-            let operator;
+        _getPrecursorOperatorString(precursorOperationID) {
             switch (precursorOperationID) {
                 case PrecursorOperationID.LOG:
-                    operator = `.log`;
-                    break;
+                    return '.logI(';
                 default:
                     throw new Error(`No precursor operation found for ${precursorOperationID}`);
             }
+        }
+        writePrecursorOperationToString(stringArr, precursorOperationID, left, right) {
+            if (debugEquationFunction) {
+                const leftIsVariableGetter = left instanceof VariableGetter;
+                let leftConstNum;
+                if (!leftIsVariableGetter) {
+                    left.writeToString(stringArr);
+                    leftConstNum = this.constCount - 1;
+                }
 
-            stringArr.push(operator);
-            stringArr.push('(');
-            right.writeToString(stringArr);
-            stringArr.push(')');
+                const rightIsVariableGetter = right instanceof VariableGetter;
+                let rightConstNum;
+                if (!rightIsVariableGetter) {
+                    right.writeToString(stringArr);
+                    rightConstNum = this.constCount - 1;
+                }
+                
+                this._writeLineStart(stringArr);
+                if (leftIsVariableGetter) {
+                    left.writeToString(stringArr);
+                    stringArr.push('.clone');
+                }
+                else {
+                    this._writeConst(stringArr, leftConstNum);
+                }
+                
+                stringArr.push(this._getPrecursorOperatorString(precursorOperationID));
+                if (rightIsVariableGetter) {
+                    right.writeToString(stringArr);
+                }
+                else {
+                    this._writeConst(stringArr, rightConstNum);
+                }
+
+                stringArr.push(')');
+                this._writeEndLine(stringArr);
+            }
+            else {
+                left.writeToString(stringArr);
+                if (left instanceof VariableGetter)
+                    stringArr.push('.clone');
+
+                stringArr.push(this._getPrecursorOperatorString(precursorOperationID));
+                right.writeToString(stringArr);
+                stringArr.push(')');
+            }
         }
         writeParenthesisToString(stringArr, innerValue) {
-            innerValue.writeToString(stringArr);
-            if (innerValue instanceof VariableGetter)
-                stringArr.push('.clone');
+            if (debugEquationFunction) {
+                const isVariableGetter = innerValue instanceof VariableGetter;
+                let innerValueConstNum;
+                if (!isVariableGetter) {
+                    innerValue.writeToString(stringArr);
+                    innerValueConstNum = this.constCount - 1;
+                }
+
+                this._writeLineStart(stringArr);
+                if (isVariableGetter) {
+                    innerValue.writeToString(stringArr);
+                    stringArr.push('.clone');
+                }
+                else {
+                    this._writeConst(stringArr, innerValueConstNum);
+                }
+
+                this._writeEndLine(stringArr);
+            }
+            else {
+                innerValue.writeToString(stringArr);
+                if (innerValue instanceof VariableGetter)
+                    stringArr.push('.clone');
+            }
         }
     }
     BigNumberOperationSet.instance = new BigNumberOperationSet();

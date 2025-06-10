@@ -44,6 +44,9 @@ Struct.ProgressLevelTracker_Sum = class ProgressLevelTracker_Sum extends Struct.
 
                 let level = this._progressToLevelEquation.getValue(progress).toNumber();
                 let progressAtLevel = this.levelToProgress(level);
+                if (progressAtLevel === undefined || progressAtLevel === null)
+                    throw new Error(`Progress at level ${level} is undefined or null.`);
+
                 if (progressAtLevel.greaterThan(progress)) {
                     do {
                         level -= 1;
@@ -54,6 +57,9 @@ Struct.ProgressLevelTracker_Sum = class ProgressLevelTracker_Sum extends Struct.
                     do {
                         const nextLevel = level + 1;
                         const progressAtNextLevel = this.levelToProgress(nextLevel);
+                        if (!progressAtNextLevel.isPositive)
+                            throw new Error(`Progress at next level ${nextLevel} is not positive.`);
+                        
                         if (progressAtNextLevel.greaterThan(progress))
                             break;
 
