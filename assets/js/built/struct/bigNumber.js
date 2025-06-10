@@ -289,13 +289,13 @@ Struct.BigNumber = class BigNumber {
         const diff = this._exponent - newExponent;
         if (diff < -53) {
             this._significand = 0;
-            this._exponent = 0;
+            this._exponent = newExponent;
             return this;
         }
         
         if (zonDebug) {
             if (diff > 0)
-                throw new Error(`_setExpenentI() is only meant to decrease the exponent of a BigNumber.  this._exponent should always be less than newExponent: ${this._exponent} > ${newExponent}`);
+                throw new Error(`_setExpenentI() is only meant to increase the exponent of a BigNumber.  this._exponent should always be less than newExponent: ${this._exponent} > ${newExponent}`);
         }
 
         const bigNumber = Struct.BigNumber;
