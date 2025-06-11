@@ -4,7 +4,7 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
     constructor(buttonName, onClick, buttonText, parent, leftFunct, topFunct, widthFunct, heightFunct, {
         textColor = 0xFFFFFFFF,
         backgroundColorUint = 0x040404FF,
-        hoverColorUint = 0x060606FF,
+        hoverColorUint = 0x101010FF,
         border = `2px solid #AAA`,
         borderRadius = 8,
         fontWeight = 'bold'
