@@ -2445,7 +2445,7 @@
                 if (left instanceof VariableGetter)
                     stringArr.push('.clone');
                 
-                stringArr.push(_getOperatorString(operationID));
+                stringArr.push(this._getOperatorString(operationID));
                 right.writeToString(stringArr);
                 stringArr.push(')');
             }
