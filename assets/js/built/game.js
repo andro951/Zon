@@ -191,6 +191,10 @@ Zon.Game = class Game {
 
     //#endregion Update/Loop
 
+
+
+
+
     //#region Load
 
     _saveFileExists = (saveFileTypeID, saveNum) => {
@@ -241,6 +245,10 @@ Zon.Game = class Game {
 
     //#endregion Load
 
+
+
+
+
     //#region Draw
 
     drawLoop = () => {
@@ -251,6 +259,7 @@ Zon.Game = class Game {
     preDrawActions = new Actions.Action();
     draw = () => {
         Zon.combatUI.clearCanvas();
+        Zon.musicManager.preDraw();
         this.preDrawActions.call();
         Zon.blocksManager.draw();
         Zon.BallManager.draw();

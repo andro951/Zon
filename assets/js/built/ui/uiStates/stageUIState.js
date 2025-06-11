@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
+Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
         super('stageSelectUI', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x404040FF).cssString;
@@ -28,4 +28,4 @@ Zon.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     }
 }
 
-Zon.stageUIState = Zon.StageUIState.create();
+Zon.UI.stageUIState = Zon.UI.StageUIState.create();

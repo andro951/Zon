@@ -192,6 +192,7 @@
 				"InfoIcon": "assets/textures/ui/Icons/InfoIcon.png",
 				"InventoryIcon": "assets/textures/ui/Icons/InventoryIcon.png",
 				"LockIcon": "assets/textures/ui/Icons/LockIcon.png",
+				"MusicIcon": "assets/textures/ui/Icons/MusicIcon.png",
 				"NavigationIcon": "assets/textures/ui/Icons/NavigationIcon.png",
 				"PauseIcon": "assets/textures/ui/Icons/PauseIcon.png",
 				"Phoenix": "assets/textures/ui/Icons/Phoenix.png",

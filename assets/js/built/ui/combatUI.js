@@ -41,7 +41,7 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         super.postConstructor();
     }
     setup = () => {
-        this.backGroundColor.uint = 0x060606FF;
+        this.backgroundColor.uint = 0x060606FF;
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Math.min(Zon.device.height * this.topUIPercentOfHeight, Zon.device.width / this.topUIAspectRatio));

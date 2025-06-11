@@ -33,10 +33,12 @@ Zon.UI.UIElementBase = class UIElementBase {
             this.shown = new Variable.Value(false, shownName);
         }
 
-        this.backGroundColor = new Variable.ColorVar(`${this.element.id}BackGroundColor`);
-        this.backGroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backGroundColor.value.cssString);
+        this.backgroundColor = new Variable.ColorVar(`${this.element.id}BackGroundColor`);
+        this.backgroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backgroundColor.value.cssString);
         this.border = new Variable.Value(this.element.style.border, `${this.element.id}Border`);
         this.border.onChangedAction.add(() => this.element.style.border = this.border.value);
+        this.borderRadius = new Variable.Value(this.element.style.borderRadius, `${this.element.id}BorderRadius`);
+        this.borderRadius.onChangedAction.add(() => this.element.style.borderRadius = `${this.borderRadius.value}px`);
         (parent instanceof Zon.UI.UIElementBase ? parent.element : parent).appendChild(this.element);
         this.dependentVariables = [
             this._leftEquationVar,
@@ -44,6 +46,23 @@ Zon.UI.UIElementBase = class UIElementBase {
             this.rect._width,
             this.rect._height,
         ];
+    }
+    setHoverColor(colorUint) {
+        if (colorUint === undefined || colorUint === null)
+            return;
+
+        this._hoverColor = colorUint;
+        this._backgroundColor = this.backgroundColor.uint;
+        this.element.addEventListener('mouseenter', () => {
+            if (this._hoverColor) {
+                this.backgroundColor.uint = this._hoverColor;
+            }
+        });
+        this.element.addEventListener('mouseleave', () => {
+            if (this._backgroundColor) {
+                this.backgroundColor.uint = this._backgroundColor;
+            }
+        });
     }
     static create(...args) {
         const uiElement = new this(...args);
@@ -251,6 +270,10 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         super(newDiv, zIndex, parent);
         this.fontSize = new Variable.Dependent(() => this.height * 0.8, `${this.element.id}FontSize`, this);
         this.fontSize.onChangedAction.add(() => this.element.style.fontSize = `${this.fontSize.value}px`);
+        this.textColor = new Variable.ColorVar(`${this.element.id}TextColor`);
+        this.textColor.onChangedAction.add(() => this.element.style.color = this.textColor.value.cssString);
+        this.fontWeight = new Variable.Value(this.element.style.fontWeight, `${this.element.id}FontWeight`);
+        this.fontWeight.onChangedAction.add(() => this.element.style.fontWeight = this.fontWeight.value);
     }
     static create(...args) {
         const uiDiv = new this(...args);

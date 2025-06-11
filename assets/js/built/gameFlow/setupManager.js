@@ -87,7 +87,7 @@ Zon.Setup.postLoadSetup = () => {
     Zon.abilityController.postLoadSetup();
     Zon.abilityUIState.postLoadSetup();//After abilityController
     Zon.inventoryUIState.postLoadSetup();
-    Zon.stageUIState.postLoadSetup();
+    Zon.UI.stageUIState.postLoadSetup();
     Zon.timeController.postLoadSetup();
     Zon.StageSmartReset.postLoadSetup();
     Zon.craftingManager.postLoadSetup();//After playerInventory

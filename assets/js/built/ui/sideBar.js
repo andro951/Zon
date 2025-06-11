@@ -73,15 +73,17 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         this.replaceWidth(() => Zon.device.width * 0.12);
         this.replaceHeight(() => Zon.bottomUI.top - this.top - 10);
 
-        this._addIconButton('stageSelectButton', Zon.stageUIState.show, 'StageIcon');
-        //this._addIconButton('stageSelectButton2', () => console.log("Clicked Stage Select2"), 'StageIcon');
+        this._addIconButton('stageSelectButton', Zon.UI.stageUIState.show, 'StageIcon');
+        const musicButton = this._addIconButton('musicButton', Zon.UI.musicUIState.show, 'MusicIcon');
+        musicButton.rectFunctions.left = () => Zon.device.width * 0.01 - 5 * Zon.musicManager.currentSongSmoothedAmplitude.value;
+        musicButton.rectFunctions.width = () => Zon.device.width * 0.1 + 10 * Zon.musicManager.currentSongSmoothedAmplitude.value;
 
         super.setup();
     }
 
     _addIconButton(buttonName, onClick, iconName) {
         const iconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, iconName);
-        this._addButton(buttonName, onClick, iconPath);
+        return this._addButton(buttonName, onClick, iconPath);
     }
     _addButton(buttonName, onClick, iconPath) {
         const padding = 4;
@@ -89,6 +91,7 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         const topFunct = lastChild ? () => lastChild.bottom + padding : () => padding;
         const button = Zon.UI.SimpleIconButton.create(buttonName, onClick, iconPath, this, () => Zon.device.width * 0.01, topFunct);
         this.lastChild = button;
+        return button;
     }
 }
 
