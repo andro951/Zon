@@ -106,6 +106,7 @@ Zon.Setup.startedLinkAndFinalizeUISetupActions = false;
 Zon.Setup.finalizeUI = () => {
     Zon.Setup.startedLinkAndFinalizeUISetupActions = true;
     Zon.Setup.linkAndFinalizeUISetupActions.call();
+    Zon.Setup.linkAndFinalizeUISetupActions = null;
     Zon.Setup.postLinkAndFinalizeUiSetupActions.call();
 }
 

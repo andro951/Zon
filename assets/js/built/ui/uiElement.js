@@ -71,14 +71,22 @@ Zon.UI.UIElementBase = class UIElementBase {
         return uiElement;
     }
     postConstructor() {
-        Zon.Setup.linkAndFinalizeUISetupActions.add(this.setup);
-
         this.rect._left.onChangedAction.add(this._updateLeft);
         this.rect._top.onChangedAction.add(this._updateTop);
         this.rect._width.onChangedAction.add(this._updateWidth);
         this.rect._height.onChangedAction.add(this._updateHeight);
 
         this.shown.onChangedAction.add(this._updateShown);
+
+        if (Zon.Setup.linkAndFinalizeUISetupActions) {
+            Zon.Setup.linkAndFinalizeUISetupActions.add(this.setup);
+        }
+        else {
+            this.setup();
+            if (this.shown.value)
+                this._updateShown();
+        }
+
     }
     get _top() {
         return this.rect._top;

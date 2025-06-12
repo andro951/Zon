@@ -53,6 +53,8 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
         this.element.appendChild(this.textNode);
 
         this.element.addOnClick(this.onClick);
+
+        
     }
 
     setup() {

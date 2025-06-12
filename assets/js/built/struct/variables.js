@@ -325,13 +325,7 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             }
             else {
                 const reference = references[firstPart];
-                if (firstPart !== `this` && firstPart !== `0`) {
-                    console.error(`Using reference for first part: ${firstPart};  references`, references);
-                }
                 if (reference) {
-                    if (firstPart !== `this`)
-                        console.error(`Using reference for first part: ${firstPart} -> ${reference}`);
-
                     current = reference;
                     i = 1;
                 }

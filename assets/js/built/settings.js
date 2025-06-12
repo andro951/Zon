@@ -6,6 +6,7 @@ Zon.Settings.preLoadSetup = () => {
     Zon.Settings.createAllSettings();
     Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.GAME_SETTINGS, new Zon.Settings.SettingsSaveLoadInfo(Zon.SaveLoadID.SETTINGS, Zon.Settings.allGameSettings));
     Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.DISPLAY_SETTINGS, new Zon.Settings.SettingsSaveLoadInfo(Zon.SaveLoadID.SETTINGS, Zon.Settings.allDisplaySettings));
+    Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.PREFERENCES, new Zon.Settings.SettingsSaveLoadInfo(Zon.SaveLoadID.SETTINGS, Zon.Settings.allPreferenceSettings));
 }
 
 Zon.Settings.postLoadSetup = () => {
@@ -73,6 +74,22 @@ Zon.Settings.postLoadSetup = () => {
     }
     Zon.Settings.setDisplayByPlayer = (id, value) => {
         Zon.Settings.allDisplaySettings[id].setByPlayer(value);
+    }
+
+    Zon.Settings.getPreferenceSetting = (id) => {
+        return Zon.Settings.allPreferenceSettings[id];
+    }
+    Zon.Settings.getPreferenceVariable = (id) => {
+        return Zon.Settings.allPreferenceSettings[id].variable;
+    }
+    Zon.Settings.getPreference = (id) => {
+        return Zon.Settings.allPreferenceSettings[id].value;
+    }
+    Zon.Settings.setPreference = (id, value) => {
+        Zon.Settings.allPreferenceSettings[id].set(value);
+    }
+    Zon.Settings.setPreferenceByPlayer = (id, value) => {
+        Zon.Settings.allPreferenceSettings[id].setByPlayer(value);
     }
 }//get/set
 
@@ -468,6 +485,11 @@ Zon.DisplaySettingsID = {
 };
 Zon.DisplaySettingsIDNames = [];
 Enum.createEnum(Zon.DisplaySettingsID, Zon.DisplaySettingsIDNames);
+
+Zon.PreferenceSettingsID = {
+    SHUFFLE_SONGS: 0,
+}
+
 Zon.Settings.createAllSettings = () => {
     if (Zon.Settings.allGameSettings) {
         console.warn("Zon.Settings.allGameSettings already created");
@@ -500,6 +522,10 @@ Zon.Settings.createAllSettings = () => {
         new Zon.BoolSetting(Zon.DisplaySettingsID.BLOCK_HEALTH_OUTLINE, true),
     ];
 
+    Zon.Settings.allPreferenceSettings = [
+        new Zon.BoolSetting(Zon.PreferenceSettingsID.SHUFFLE_SONGS, false),
+    ];
+
     Zon.Settings.ScientificNotation = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.SCIENTIFIC_NOTATION);
 }
 
@@ -527,4 +553,8 @@ Zon.Settings.displaySettingsDisplayOrder = [
     Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_STYLE,
     Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_COLOR,
     Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_WIDTH,
+];
+
+Zon.Settings.preferenceSettingsDisplayOrder = [
+    Zon.PreferenceSettingsID.SHUFFLE_SONGS,
 ];

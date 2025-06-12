@@ -12,7 +12,7 @@ if (zonDebug) {
     }
 
     Zon.DevCheats.onStartGame = () => {
-        Zon.DevCheats.makeBalls();
+        //Zon.DevCheats.makeBalls();
         Zon.DevCheats.registerKeybindings();
         Zon.DevCheats.runTests();
     }

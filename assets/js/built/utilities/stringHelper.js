@@ -141,3 +141,11 @@ String.prototype.addSpaces = function(s, checkLowerCaseWords = false, space = " 
 
     return result;
 }
+
+String.prototype.removeFileExtension = function() {
+    const lastDotIndex = this.lastIndexOf('.');
+    if (lastDotIndex === -1)
+        return this;
+    
+    return this.substring(0, lastDotIndex);
+}

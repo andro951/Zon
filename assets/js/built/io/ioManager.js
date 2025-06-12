@@ -394,8 +394,9 @@ Zon.SaveFileTypeID = {
     GAME: 0,
     GAME_SETTINGS: 1,
     DISPLAY_SETTINGS: 2,
-    MODS: 3,
-    MOD_SETTINGS: 4,
+    PREFERENCES: 3,
+    MODS: 4,
+    MOD_SETTINGS: 5,
 }
 Zon.SaveFileTypeIDNames = [];
 Enum.createEnum(Zon.SaveFileTypeID, Zon.SaveFileTypeIDNames, false);

@@ -73,10 +73,28 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         this.replaceWidth(() => Zon.device.width * 0.12);
         this.replaceHeight(() => Zon.bottomUI.top - this.top - 10);
 
+        //Stage Select Button
         this._addIconButton('stageSelectButton', Zon.UI.stageUIState.show, 'StageIcon');
+
+        //Music Button
         const musicButton = this._addIconButton('musicButton', Zon.UI.musicUIState.show, 'MusicIcon');
         musicButton.rectFunctions.left = () => Zon.device.width * 0.01 - 5 * Zon.musicManager.currentSongSmoothedAmplitude.value;
         musicButton.rectFunctions.width = () => Zon.device.width * 0.1 + 10 * Zon.musicManager.currentSongSmoothedAmplitude.value;
+
+        //Pause Button
+        const pauseButton = this._addIconButton('pauseButton', Zon.musicManager.playButtonPressed, 'PlayIcon');
+        pauseButton.pauseIconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, `PauseIcon`);
+        Zon.musicManager._paused.onChangedAction.add(() => {
+            if (Zon.musicManager._paused.value) {
+                pauseButton.icon.setBackgroundImage(pauseButton.iconPath);//TODO: also needs to change based on a song playing or not.
+            }
+            else {
+                pauseButton.icon.setBackgroundImage(pauseButton.pauseIconPath);
+            }
+        });
+
+        //Delete All Music Button
+        this._addIconButton('deleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
 
         super.setup();
     }
@@ -88,7 +106,7 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
     _addButton(buttonName, onClick, iconPath) {
         const padding = 4;
         const lastChild = this.lastChild;
-        const topFunct = lastChild ? () => lastChild.bottom + padding : () => padding;
+        const topFunct = lastChild ? new Variable.DependentFunction(() => lastChild.bottom + padding, { lastChild }) : () => padding;
         const button = Zon.UI.SimpleIconButton.create(buttonName, onClick, iconPath, this, () => Zon.device.width * 0.01, topFunct);
         this.lastChild = button;
         return button;
