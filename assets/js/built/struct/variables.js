@@ -215,8 +215,8 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
 Variable.Dependent = class DependentVariable extends Variable.Base {
     constructor(getValue, name, thisObj = undefined, linkDependentActions = true) {
         super(name);
-        if (typeof getValue !== 'function')
-            throw new Error(`getValue must be a function, got ${typeof getValue}: ${getValue}`);
+        if (typeof getValue !== 'function' && !(getValue instanceof Variable.DependentFunction))
+            throw new Error(`getValue must be a function or Variable.DependentFunction, got ${typeof getValue}: ${getValue}`);
 
         this.dependentActions = new Set();
         this._dependentActionsLinked = linkDependentActions;
@@ -228,14 +228,15 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
     }
     static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
     replaceEquation(newGetValue, thisObj = undefined) {
-        if (typeof newGetValue !== 'function')
-            throw new Error(`newGetValue must be a function, got ${typeof newGetValue}: ${newGetValue}`);
+        if (typeof newGetValue !== 'function' && !(newGetValue instanceof Variable.DependentFunction))
+            throw new Error(`newGetValue must be a function or Variable.DependentFunction, got ${typeof newGetValue}: ${newGetValue}`);
 
         if (zonDebug) {
             //console.log(`Replacing equation of DependentVariable with: ${newGetValue}, thisObj: ${thisObj}, thisObj name: ${thisObj ? thisObj.constructor.name : 'undefined'}`);
         }
         
-        this.getValue = newGetValue;
+        const isDependentFunction = newGetValue instanceof Variable.DependentFunction;
+        this.getValue = isDependentFunction ? newGetValue.getValue : newGetValue;
         this.needsRecalculate = true;
         const linked = this._dependentActionsLinked;
         if (linked)
@@ -245,7 +246,22 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             return;
 
         this.dependentActions.clear();
-        this.extractVariables(newGetValue, thisObj ?? this._thisObj);
+        if (isDependentFunction) {
+            const references = newGetValue.references;
+            const referenceThis = thisObj ?? this._thisObj;
+            if (referenceThis)
+                references.this = referenceThis;
+
+            this.extractVariables(newGetValue.getValue, references);
+        }
+        else {
+            const references = {};
+            const referenceThis = thisObj ?? this._thisObj;
+            if (referenceThis)
+                references.this = referenceThis;
+
+            this.extractVariables(newGetValue, references);
+        }
         this._dependentActionsLinked = false;
         if (linked)
             this.linkDependentActions();
@@ -281,12 +297,12 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         }
     }
     static debuggExtractVariables = zonDebug && false;
-    extractVariables(fn, thisContext = undefined) {
+    extractVariables(fn, references) {
         if (Variable.Dependent.debuggExtractVariables) console.log(`Extracting variables from function: ${fn}`);
         const fnStr = fn.toString();
-        this._extractVariablesFromString(fnStr, thisContext);
+        this._extractVariablesFromString(fnStr, references);
     }
-    _extractVariablesFromString(fnStr, thisContext = undefined) {
+    _extractVariablesFromString(fnStr, references) {
         const matches = [...new Set(fnStr.match(/\b(?:\w+\.)+\w+\b/g))];
         if (!matches) {
             if (Variable.Dependent.debuggExtractVariables) console.warn(`No matches found in function: ${fnStr}`);
@@ -307,14 +323,25 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             if (firstPart === 'Zon') {
                 i = 1;
             }
-            else if (firstPart === 'this') {
-                if (!thisContext) {
-                    if (Variable.Dependent.debuggExtractVariables) console.warn(`'this' context is not defined, cannot resolve path: ${match}`);
+            else {
+                const reference = references[firstPart];
+                if (firstPart !== `this` && firstPart !== `0`) {
+                    console.error(`Using reference for first part: ${firstPart};  references`, references);
+                }
+                if (reference) {
+                    if (firstPart !== `this`)
+                        console.error(`Using reference for first part: ${firstPart} -> ${reference}`);
+
+                    current = reference;
+                    i = 1;
+                }
+                else {
+                    if (zonDebug && firstPart === `this`) {
+                        if (Variable.Dependent.debuggExtractVariables) console.warn(`'this' context is not defined, cannot resolve path: ${match}`);
+                    }
+
                     continue;
                 }
-
-                current = thisContext;
-                i = 1;
             }
 
             for (; i < parts.length - 1; i++) {
@@ -468,6 +495,12 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
     }
 }
 
+Variable.DependentFunction = class DependentFunction {
+    constructor(getValue, references = {}) {
+        this.getValue = getValue;
+        this.references = references;
+    }
+}
 Variable.EquationVar = class EquationVariable extends Variable.Base {
     constructor(equationClass, variables, equationString, name) {
         throw new Error(`EquationVar isn't finished.`);
@@ -535,4 +568,76 @@ Variable.EquationVar_B = class EquationVariable_B extends Variable.EquationVar {
     constructor(equationString, name, variables = []) {
         super(Zon.Equation.BoolOperationSet, variables, equationString, name);
     }
+}
+
+Array.prototype.convertToVariable = function(name) {
+    if (this._isVariable)
+        return this;
+
+    this.name = name;
+
+    this.onChangedAction = new Actions.Action();
+
+    this.onChanged = () => {
+        if (Variable.Base.paused) {
+            for (const callback of this.onChangedAction.callbacks) {
+                Variable.Base.pausedCallbacks.add(callback);
+            }
+
+            return;
+        }
+
+        this.onChangedAction.call();
+    }
+
+    const mutatingMethods = [
+        'push',
+        'pop',
+        'shift',
+        'unshift',
+        'splice',
+        'sort',
+        'reverse',
+        'fill',
+        'copyWithin'
+    ];
+
+    const self = this;
+    mutatingMethods.forEach(methodName => {
+        const originalMethod = Array.prototype[methodName];
+        self[methodName] = function(...args) {
+            const result = originalMethod.apply(self, args);
+            self.onChanged();
+            return result;
+        };
+    });
+
+    self.clear = function() {
+        if (self.length === 0)
+            return;
+
+        self.length = 0;
+        self.onChanged();
+    }
+
+    self.replaceAll = function(newArray) {
+        if (!Array.isArray(newArray)) {
+            throw new Error(`replaceAll expects an array, got: ${newArray}`);
+        }
+
+        if (self.length === newArray.length && self.every((v, i) => v === newArray[i])) {
+            return;
+        }
+
+        self.length = 0;
+        self.push(...newArray);
+        self.onChanged();
+    }
+
+    this._isVariable = true;
+    return this;
+}
+
+Variable.createArray = function(name) {
+    return [].convertToVariable(name);
 }
