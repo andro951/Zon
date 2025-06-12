@@ -122,6 +122,17 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
     }
     postConstructor() {
         super.postConstructor();
+
+        this.canvas.addEventListener('pointerdown', (event) => {
+            if (Zon.mouseManager.mouseIsDown.value)
+                return;
+
+            const rect = this.canvas.getBoundingClientRect();
+            const clickPos = new Vectors.Vector(event.clientX - rect.left, event.clientY - rect.top);
+            Zon.abilityController.onClickCombatArea(clickPos, event.button);
+        });
+
+
     }
     setup = () => {
         this.replaceLeft(() => 0);

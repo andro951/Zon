@@ -225,6 +225,175 @@ Zon.BlocksManager = class {
     onWeakPointKilled = () => {
         this.resetWeakPointBlock();
     }
+    getBlocksCircle(position, radius) {
+        const x0 = position.x - radius;
+        const y0 = position.y - radius;
+        const x1 = position.x + radius;
+        const y1 = position.y + radius;
+        const xCPixel = Math.ceil((position.x - this.blockArea.left) / this._blockSize.x);
+        const yCPixel = Math.ceil((position.y - this.blockArea.top) / this._blockSize.y);
+        const x0Pixel = Math.ceil((x0 - this.blockArea.left) / this._blockSize.x);
+        const y0Pixel = Math.ceil((y0 - this.blockArea.top) / this._blockSize.y);
+        const x1Pixel = Math.floor((x1 - this.blockArea.left) / this._blockSize.x);
+        const y1Pixel = Math.floor((y1 - this.blockArea.top) / this._blockSize.y);
+        const blocks = [];
+
+        //Center
+        const centerXInRange = xCPixel >= 0 && xCPixel < this._imagePixelsWidth;
+        const centerYInRange = yCPixel >= 0 && yCPixel < this._imagePixelsHeight;
+        if (centerXInRange && centerYInRange) {
+            const centerBlock = this.getBlock(xCPixel, yCPixel);
+            if (centerBlock)
+                blocks.push(centerBlock);
+        }
+        
+        //Left center
+        const leftOfCenterInRange = xCPixel - 1 >= 0;
+        if (leftOfCenterInRange && centerYInRange) {
+            for (let xPixel = x0Pixel; xPixel < xCPixel; xPixel++) {
+                const block = this.getBlock(xPixel, yCPixel);
+                if (block) {
+                    blocks.push(block);
+                }
+            }
+        }
+
+        //Right center
+        const rightOfCenterInRange = xCPixel + 1 < this._imagePixelsWidth;
+        if (rightOfCenterInRange && centerYInRange) {
+            for (let xPixel = xCPixel + 1; xPixel <= x1Pixel; xPixel++) {
+                const block = this.getBlock(xPixel, yCPixel);
+                if (block) {
+                    blocks.push(block);
+                }
+            }
+        }
+
+        //Top center
+        const topOfCenterInRange = yCPixel - 1 >= 0;
+        if (topOfCenterInRange && centerXInRange) {
+            for (let yPixel = y0Pixel; yPixel < yCPixel; yPixel++) {
+                const block = this.getBlock(xCPixel, yPixel);
+                if (block) {
+                    blocks.push(block);
+                }
+            }
+        }
+
+        //Bottom center
+        const bottomOfCenterInRange = yCPixel + 1 < this._imagePixelsHeight;
+        if (bottomOfCenterInRange && centerXInRange) {
+            for (let yPixel = yCPixel + 1; yPixel <= y1Pixel; yPixel++) {
+                const block = this.getBlock(xCPixel, yPixel);
+                if (block) {
+                    blocks.push(block);
+                }
+            }
+        }
+
+        //TODO: left up block, right up block, left down block, right down block
+
+        //Left up block
+        const blockPos = new Vectors.Vector(0, 0);
+        if (leftOfCenterInRange && topOfCenterInRange) {
+            let xPixelEnd = x0Pixel;
+            for (let yPixel = yCPixel - 1; yPixel >= y0Pixel; yPixel--) {
+                for (let xPixel = xCPixel - 1; xPixel >= xPixelEnd; xPixel--) {
+                    const block = this.getBlock(xPixel, yPixel);
+                    if (!block)
+                        continue;
+                    
+                    blockPos.x = (xPixel + 1) * this._blockSize.x + this.blockArea.left;
+                    blockPos.y = (yPixel + 1) * this._blockSize.y + this.blockArea.top;
+                    const distance = position.distance(blockPos);
+                    if (distance <= radius) {
+                        blocks.push(block);
+                    }
+                    else {
+                        xPixelEnd = xPixel + 1;
+                        break;
+                    }
+                }
+            }
+        }
+
+        /*
+        const blockPos = new Vectors.Vector(0, 0);
+
+// Left up block (you already have this)
+// ... your existing code ...
+
+// Right up block
+if (rightOfCenterInRange && topOfCenterInRange) {
+    let xPixelEnd = x1Pixel;
+    for (let yPixel = yCPixel - 1; yPixel >= y0Pixel; yPixel--) {
+        for (let xPixel = xCPixel + 1; xPixel <= xPixelEnd; xPixel++) {
+            const block = this.getBlock(xPixel, yPixel);
+            if (!block)
+                continue;
+
+            blockPos.x = xPixel * this._blockSize.x + this.blockArea.left;
+            blockPos.y = (yPixel + 1) * this._blockSize.y + this.blockArea.top;
+            const distance = position.distance(blockPos);
+            if (distance <= radius) {
+                blocks.push(block);
+            } else {
+                // Shrink right boundary for next rows
+                xPixelEnd = xPixel - 1;
+                break;
+            }
+        }
+    }
+}
+
+// Left down block
+if (leftOfCenterInRange && bottomOfCenterInRange) {
+    let xPixelEnd = x0Pixel;
+    for (let yPixel = yCPixel + 1; yPixel <= y1Pixel; yPixel++) {
+        for (let xPixel = xCPixel - 1; xPixel >= xPixelEnd; xPixel--) {
+            const block = this.getBlock(xPixel, yPixel);
+            if (!block)
+                continue;
+
+            blockPos.x = (xPixel + 1) * this._blockSize.x + this.blockArea.left;
+            blockPos.y = yPixel * this._blockSize.y + this.blockArea.top;
+            const distance = position.distance(blockPos);
+            if (distance <= radius) {
+                blocks.push(block);
+            } else {
+                // Shrink left boundary for next rows
+                xPixelEnd = xPixel + 1;
+                break;
+            }
+        }
+    }
+}
+
+// Right down block
+if (rightOfCenterInRange && bottomOfCenterInRange) {
+    let xPixelEnd = x1Pixel;
+    for (let yPixel = yCPixel + 1; yPixel <= y1Pixel; yPixel++) {
+        for (let xPixel = xCPixel + 1; xPixel <= xPixelEnd; xPixel++) {
+            const block = this.getBlock(xPixel, yPixel);
+            if (!block)
+                continue;
+
+            blockPos.x = xPixel * this._blockSize.x + this.blockArea.left;
+            blockPos.y = yPixel * this._blockSize.y + this.blockArea.top;
+            const distance = position.distance(blockPos);
+            if (distance <= radius) {
+                blocks.push(block);
+            } else {
+                // Shrink right boundary for next rows
+                xPixelEnd = xPixel - 1;
+                break;
+            }
+        }
+    }
+}
+
+        */
+    }
 }
 
 Zon.blocksManager = new Zon.BlocksManager();

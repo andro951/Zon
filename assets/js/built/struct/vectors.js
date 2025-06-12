@@ -67,6 +67,12 @@ Vectors.Vector = class Vector {
         this.y *= scale;
     }
 
+    distance(other) {
+        const dx = this.x - other.x;
+        const dy = this.y - other.y;
+        return Math.sqrt(dx * dx + dy * dy);
+    }
+
     dot(vect) {
         return this.x * vect.x + this.y * vect.y;
     }

@@ -40,9 +40,6 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             this.fileInput = document.createElement('input');
             this.fileInput.type = 'file';
             this.fileInput.accept = 'audio/*';
-            // this.fileInput.style.width = '100%';
-            // this.fileInput.style.height = '100%';
-            // this.fileInput.style.display = 'block';
             this.fileInput.style.width = 'auto';
             this.fileInput.style.height = 'auto';
 
@@ -101,7 +98,7 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             this.buttons = [];
             this.lastSongButton = undefined;
         }
-        _makeButton(songName) {//Making buttons when a song is added doesn't work.  They don't get shown.
+        _makeButton(songName) {
             const padding = 4;
             const lastSongButton = this.lastSongButton;
             const topFunct = lastSongButton ? new Variable.DependentFunction(() => lastSongButton.bottom + padding, { lastSongButton }) : () => padding;
@@ -129,12 +126,6 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             for (const songName of songNames) {
                 this._makeButton(songName);
             }
-            // const zeroButton = Zon.UI.SimpleTextButton.create('zeroButton', () => Zon.musicManager.playSongByName(`REZZ & X1-Y2 - ZERO (Audio).mp3`), 'Play Zero', this,
-            //     () => Zon.UI.musicUIState.width * 0.1,
-            //     () => Zon.UI.musicUIState.fileInput.bottom + 4,
-            //     () => Zon.UI.musicUIState.width * 0.8,
-            //     () => Zon.UI.musicUIState.height * 0.1
-            // );
         }
     }
 
