@@ -9,7 +9,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
         super.postConstructor();
 
         // const button = document.createElement('button');
-        // button.innerText = 'Shrink Me';
+        // button.textContent = 'Shrink Me';
         // button.style.position = 'absolute';
         // button.style.left = '100px';
         // button.style.top = '100px';
@@ -59,7 +59,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             button.style.fontFamily = 'sans-serif';
 
             const span = document.createElement('span');
-            span.innerText = textContent;
+            span.textContent = textContent;
             span.style.whiteSpace = 'nowrap';
             span.style.textAlign = 'center';
             span.style.display = 'inline-block';

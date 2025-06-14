@@ -18,7 +18,7 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
         this.element.style.border = border;
         this.element.style.borderRadius = `${borderRadius}px`;
         this.element.style.fontWeight = fontWeight;
-        this.element.innerText = buttonText;
+        this.element.textContent = buttonText;
         this.rectFunctions = {
             left: leftFunct,
             top: topFunct,
@@ -38,18 +38,18 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
         // //this.textElement.style.pointerEvents = 'none';
         // this.element.style.transition = 'background-color 0.15s';
         // this.textElement = document.createElement('div');
-        // this.textElement.innerText = this.buttonText;
+        // this.textElement.textContent = this.buttonText;
         // this.textElement.style.textAlign = 'center';
         // this.textElement.style.position = "relative";
         // this.textElement.style.whiteSpace = 'nowrap';
         // this.element.appendChild(this.textElement);
 
-        //this.element.innerText = this.buttonText;
+        //this.element.textContent = this.buttonText;
         //this.element.style.textAlign = 'center';
         //this.element.style.position = "relative";
         this.element.style.whiteSpace = 'nowrap';
 
-        //this.element.innerText = this.buttonText;
+        //this.element.textContent = this.buttonText;
         this.element.style.verticalAlign = 'middle';
         //this.element.style.textAlign = 'center';
         this.element.style.display = 'flex';

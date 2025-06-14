@@ -35,7 +35,7 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.textElement.id = `playerLevelText`;
         //this.textElement.style.position = "relative";
         this.textElement.style.zIndex = "1";
-        //this.textElement.innerText = "Level 1";
+        //this.textElement.textContent = "Level 1";
         this.textElement.style.whiteSpace = 'nowrap';
         this.textElement.style.display = 'flex';
         this.element.appendChild(this.textElement);
@@ -43,7 +43,7 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
 
         // this.element.style.whiteSpace = 'nowrap';
 
-        // //this.element.innerText = this.buttonText;
+        // //this.element.textContent = this.buttonText;
         // this.element.style.verticalAlign = 'middle';
         // //this.element.style.textAlign = 'center';
         // //this.element.style.whiteSpace = 'nowrap';
@@ -62,7 +62,7 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
     }
     _updateText = () => {
         this.text.value = `Level ${Zon.playerLevel.level.value}`;
-        //this.textElement.innerText = `Level ${Zon.playerLevel.level.value}`;
+        //this.textElement.textContent = `Level ${Zon.playerLevel.level.value}`;
     }
 
     _updateFill = () => {

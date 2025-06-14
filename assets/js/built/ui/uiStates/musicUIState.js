@@ -59,7 +59,7 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             super.postConstructor();
             
             // const button = document.createElement('div');
-            // button.innerText = 'Shrink Me';
+            // button.textContent = 'Shrink Me';
             // //button.style.position = 'absolute';
             // //button.style.left = '100px';
             // //button.style.top = '100px';

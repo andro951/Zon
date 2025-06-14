@@ -18,7 +18,7 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         this.label = document.createElement("div");
         this.label.style.position = "relative";
         this.label.style.zIndex = "1";
-        this.label.innerText = "0";
+        this.label.textContent = "0";
         this.element.appendChild(this.label);
     }
     postConstructor() {
@@ -27,7 +27,7 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         Zon.playerInventory.aether.addOnChangedDrawAction(this._updateText);
     }
     _updateText = () => {
-        this.label.innerText = `${Zon.playerInventory.aether.value.toString()}`;
+        this.label.textContent = `${Zon.playerInventory.aether.value.toString()}`;
     }
 
     setup() {

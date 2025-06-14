@@ -420,7 +420,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         this._tryCreateTextComponent();
     }
     _tryCreateTextComponent() {
-        if (this.element.innerText || this.element.fontSize || this.element.style.color || this.element.style.fontWeight) {
+        if (this.element.textContent || this.element.fontSize || this.element.style.color || this.element.style.fontWeight) {
             this.createTextComponent();
         }
     }
@@ -430,7 +430,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             return;
         }
 
-        this.text = new Variable.Value(this.innerText, `${this.element.id}Text`);
+        this.text = new Variable.Value(this.textContent, `${this.element.id}Text`);
 
         const fontSizeName = `${this.element.id}FontSize`;
         if (this.element.style.fontSize) {
@@ -442,7 +442,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             });
 
             this.text.onChangedAction.add(() => {
-                (this.textElement ?? this.element).innerText = this.text.value;
+                (this.textElement ?? this.element).textContent = this.text.value;
             });
         }
         else {
@@ -451,7 +451,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             this.fontSize.onChangedAction.add(this._fitText);
 
             this.text.onChangedAction.add(() => {
-                (this.textElement ?? this.element).innerText = this.text.value;
+                (this.textElement ?? this.element).textContent = this.text.value;
                 this._fitText();
             });
 
@@ -479,19 +479,25 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         console.log(`UIElementDiv postSetup: ${this.element.id}`);
     }
 
-    static _getTextMeasuringSpan(element) {
-        if (!this._textMeasuringSpan) {
-            this._textMeasuringSpan = document.createElement("span");
-            this._textMeasuringSpan.id = "textMeasuringSpan";
-            this._textMeasuringSpan.style.position = "absolute";
-            this._textMeasuringSpan.style.visibility = "hidden";
-            this._textMeasuringSpan.style.pointerEvents = "none";
-            this._textMeasuringSpan.style.userSelect = "none";
-            document.body.appendChild(this._textMeasuringSpan);
+    _getTextWidth(element, elementStyle) {
+        if (!element.textContent)
+            return 0;
+
+        const div = Zon.UI.UIElementDiv;
+        if (!div._textMeasuringSpan) {
+            div._textMeasuringSpan = document.createElement("span");
+            const textMeasuringSpan = div._textMeasuringSpan;
+            textMeasuringSpan.id = "textMeasuringSpan";
+            const style = textMeasuringSpan.style;
+            style.position = "absolute";
+            style.visibility = "hidden";
+            style.pointerEvents = "none";
+            style.userSelect = "none";
+            style.whiteSpace = "nowrap";
+            document.body.appendChild(textMeasuringSpan);
         }
 
-        const spanStyle = this._textMeasuringSpan.style;
-        const elementStyle = element.style;
+        const spanStyle = div._textMeasuringSpan.style;
 
         spanStyle.fontFamily = elementStyle.fontFamily;
         spanStyle.fontStyle = elementStyle.fontStyle;
@@ -500,64 +506,74 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         spanStyle.letterSpacing = elementStyle.letterSpacing;
         spanStyle.textTransform = elementStyle.textTransform;
         spanStyle.textIndent = elementStyle.textIndent;
-        spanStyle.whiteSpace = elementStyle.whiteSpace;
+        div._textMeasuringSpan.textContent = element.textContent;
 
-        return this._textMeasuringSpan;
+        return div._textMeasuringSpan.offsetWidth;
     }
 
     _fitText() {
-        //this._updateAllValues();
-        let fontSize = this.fontSize.value;
-        const textElement = this.textElement ?? this.element;
-        textElement.style.fontSize = `${this.fontSize.value}px`;
-        if (!textElement.id)
-            throw new Error(`Text element does not have an id: ${textElement}`);
-
-        console.log(`Fitting text: ${textElement.id} - ${textElement.scrollWidth} - ${textElement.clientWidth} - ${this.element.getBoundingClientRect().width} - ${textElement.getBoundingClientRect().width}, shown: ${this.shown.value}, text: ${this.text.value}, fontSize: ${this.fontSize.value}, height: ${this.height}`);
-        if (!this.text.value)
+        const elementStyle = window.getComputedStyle(this.element);
+        const textWidth = this._getTextWidth(this.element, elementStyle);
+        if (textWidth <= 0)
             return;
 
-        //let lastScrollWidth = textElement.scrollWidth;
-        // if (lastScrollWidth <= textElement.clientWidth)
+        const maxWidth = this.width * 0.9;
+        const scale = Math.min(1, maxWidth / textWidth);//Only shrink, don't grow
+        this.element.style.fontSize = `${this.fontSize.value * scale}px`;//fontSize variable sets this.element.style.fontSize in px.
+
+
+        // //this._updateAllValues();
+        // let fontSize = this.fontSize.value;
+        // const textElement = this.textElement ?? this.element;
+        // textElement.style.fontSize = `${this.fontSize.value}px`;
+        // if (!textElement.id)
+        //     throw new Error(`Text element does not have an id: ${textElement}`);
+
+        // console.log(`Fitting text: ${textElement.id} - ${textElement.scrollWidth} - ${textElement.clientWidth} - ${this.element.getBoundingClientRect().width} - ${textElement.getBoundingClientRect().width}, shown: ${this.shown.value}, text: ${this.text.value}, fontSize: ${this.fontSize.value}, height: ${this.height}`);
+        // if (!this.text.value)
         //     return;
 
-        let lastScrollWidth = this.element.scrollWidth;
-        if (lastScrollWidth <= this.element.clientWidth)
-            return;
+        // //let lastScrollWidth = textElement.scrollWidth;
+        // // if (lastScrollWidth <= textElement.clientWidth)
+        // //     return;
 
-        // let lastScrollWidth = this.element.getBoundingClientRect().width;
+        // let lastScrollWidth = this.element.scrollWidth;
         // if (lastScrollWidth <= this.element.clientWidth)
         //     return;
 
-        while (lastScrollWidth > textElement.clientWidth) {
-        //while (lastScrollWidth > this.element.clientWidth) {
-            if (fontSize > 1) {
-                fontSize -= 1;
-            }
-            else {
-                fontSize *= 0.9;
-            }
+        // // let lastScrollWidth = this.element.getBoundingClientRect().width;
+        // // if (lastScrollWidth <= this.element.clientWidth)
+        // //     return;
+
+        // while (lastScrollWidth > textElement.clientWidth) {
+        // //while (lastScrollWidth > this.element.clientWidth) {
+        //     if (fontSize > 1) {
+        //         fontSize -= 1;
+        //     }
+        //     else {
+        //         fontSize *= 0.9;
+        //     }
             
-            textElement.style.fontSize = `${fontSize}px`;
-            //if (this.element.getBoundingClientRect().width === lastScrollWidth) {
-            if (this.element.scrollWidth === lastScrollWidth) { 
-            //if (textElement.scrollWidth === lastScrollWidth) {
-                console.warn(`Text node scroll width did not change: ${textElement.id} - ${textElement.scrollWidth}`);
-                textElement.style.fontSize = `${this.fontSize.value}px`;
-                return;
-            }
+        //     textElement.style.fontSize = `${fontSize}px`;
+        //     //if (this.element.getBoundingClientRect().width === lastScrollWidth) {
+        //     if (this.element.scrollWidth === lastScrollWidth) { 
+        //     //if (textElement.scrollWidth === lastScrollWidth) {
+        //         console.warn(`Text node scroll width did not change: ${textElement.id} - ${textElement.scrollWidth}`);
+        //         textElement.style.fontSize = `${this.fontSize.value}px`;
+        //         return;
+        //     }
 
-            //lastScrollWidth = this.element.getBoundingClientRect().width;
-            lastScrollWidth = this.element.scrollWidth;
-            //lastScrollWidth = textElement.scrollWidth;
-        }
+        //     //lastScrollWidth = this.element.getBoundingClientRect().width;
+        //     lastScrollWidth = this.element.scrollWidth;
+        //     //lastScrollWidth = textElement.scrollWidth;
+        // }
 
-        this.fontSize._value = fontSize * 0.9;
-        textElement.style.fontSize = `${this.fontSize.value}px`;
-        console.log(textElement.getBoundingClientRect());
-        console.log(this.element.getBoundingClientRect());
+        // this.fontSize._value = fontSize * 0.9;
+        // textElement.style.fontSize = `${this.fontSize.value}px`;
+        // console.log(textElement.getBoundingClientRect());
+        // console.log(this.element.getBoundingClientRect());
 
-        console.log(`Fitted text: ${textElement.id} - ${this.fontSize.value};  lineHeight: ${textElement.style.lineHeight};  height: ${textElement.style.height} heightVar: ${this.height}, padding: ${textElement.style.padding}`);
+        // console.log(`Fitted text: ${textElement.id} - ${this.fontSize.value};  lineHeight: ${textElement.style.lineHeight};  height: ${textElement.style.height} heightVar: ${this.height}, padding: ${textElement.style.padding}`);
     }
 }
 
