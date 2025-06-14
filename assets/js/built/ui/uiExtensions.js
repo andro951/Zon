@@ -25,6 +25,11 @@ HTMLDivElement.prototype.setScrollableColumnStyle = function() {
     this.style.display = 'flex';
     this.style.flexDirection = 'column';
 }
+HTMLDivElement.prototype.setScrollableRowStyle = function() {
+    this.style.overflowX = 'auto';
+    this.style.display = 'flex';
+    this.style.flexDirection = 'row';
+}
 
 Zon.UI.UIElementDiv.prototype.addEmptyIcon = function() {
     const icon = document.createElement('div');

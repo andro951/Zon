@@ -404,6 +404,13 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.children = Variable.createArray();
         this.isColumn = true;//!isColumn means isRow.
     }
+    makeScrollableRow() {
+        this.element.setScrollableRowStyle();
+
+        this.childrenPadding = new Variable.Value(4, `${this.element.id}ChildrenPadding`);
+        this.children = Variable.createArray();
+        this.isColumn = false;//!isColumn means isRow.
+    }
     addIconButton(buttonName, onClick, iconName, options = {}) {
         if (!this.children)
             this.makeScrollableColumn();
@@ -434,7 +441,7 @@ Zon.UI.UIElementBase = class UIElementBase {
         else {
             options.leftFunc ??= lastChild ? new Variable.DependentFunction(() => lastChild.right + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
         }
-        
+
         const button = Zon.UI.SimpleTextButton.create(buttonName, onClick, buttonText, this, options);
         this.children.push(button);
         return button;
