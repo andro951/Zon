@@ -6,17 +6,10 @@ Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
     }
     static heightScale = 0.2;
-    static create(...args) {
-        const closeButtonUIState = new this(...args);
-        closeButtonUIState.bindAll();
-        closeButtonUIState.postConstructor();
-        return closeButtonUIState;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
 
     setup() {
+        super.setup();
+        
         this.replaceLeft(() => 0);
         this.replaceTop(() => Zon.device.height * (1 - Zon.UI.CloseButtonUIState.heightScale));
         this.replaceWidth(() => Zon.device.width);
@@ -25,8 +18,6 @@ Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
         this.element.addOnClick(this.hide);
         this.addEmptyIcon();
         this.icon.setBackgroundImage(Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, 'CloseIcon'));
-
-        super.setup();
     }
 
     hide() {

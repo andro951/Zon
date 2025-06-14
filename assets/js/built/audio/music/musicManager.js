@@ -111,7 +111,7 @@ Zon.MusicManager = class MusicManager {
     }
 
     _updateSongOrder = () => {
-        console.log(`Updating song order.  SongNames:`, this.songNames);
+        console.log(`Updating song order.  SongNames:`, this.songNames);//TODO: this is being called twice at the start.
         const playOrderLength = this.songPlayOrder.length;
         const songNamesLength = this.songNames.length;
         if (playOrderLength === songNamesLength)

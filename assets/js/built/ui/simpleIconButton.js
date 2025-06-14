@@ -18,17 +18,14 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
             height: heightFunct
         }
     }
-    static create(...args) {
-        const simpleIconButton = new this(...args);
-        simpleIconButton.bindAll();
-        simpleIconButton.postConstructor();
-        return simpleIconButton;
-    }
     postConstructor() {
         super.postConstructor();
+
         this.element.addOnClick(this.onClick);
     }
     setup() {
+        super.setup();
+        
         this.replaceLeft(this.rectFunctions.left);
         this.replaceTop(this.rectFunctions.top);
         this.replaceWidth(this.rectFunctions.width);
@@ -39,7 +36,5 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
 
         this.element.setBackgroundImage(this.backgroundPath);
         this.icon.setBackgroundImage(this.iconPath);
-
-        super.setup();
     }
 }

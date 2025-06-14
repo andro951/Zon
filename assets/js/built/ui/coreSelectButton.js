@@ -1,20 +1,19 @@
 "use strict";
 
-Zon.CoreSelectButton = class {
+Zon.CoreSelectButton = class extends Zon.UI.UIElementDiv {
     constructor() {
-        
-    }
-    static create(...args) {
-        const coreSelectButton = new this(...args);
-        coreSelectButton.bindAll();
-        coreSelectButton.postConstructor();
-        return coreSelectButton;
-    }
-    postConstructor() {
-        //super.postConstructor();
+        super();
     }
     postLoadSetup() {
         
+    }
+    setup() {
+        super.setup();
+
+        this.replaceLeft(() => 0);
+        this.replaceTop(() => 0);
+        this.replaceWidth(() => 0);
+        this.replaceHeight(() => 0);
     }
 }
 

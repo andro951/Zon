@@ -469,11 +469,19 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
                 this.needsRecalculate = false;
             }
             else if (zonDebug) {
-                console.warn(`DependentVariable get value() when _dependentActionsLinked is false.  This shouldn't happen frequently.  name: ${this._thisObj ? this._thisObj.constructor.name : 'undefined'}, this.getValue: ${this.getValue}, this._value: ${this._value}`);
+                if (Variable.Dependent._pausedGetWhenNotLinkedWarning.size === 0 && Zon.Setup.postLinkAndFinalizeUiSetupActions === null)//Indicates UIs are finished setting up.
+                    console.warn(`DependentVariable get value() when _dependentActionsLinked is false.  This shouldn't happen frequently.  name: ${this._thisObj ? this._thisObj.constructor.name : 'undefined'}, this.getValue: ${this.getValue}, this._value: ${this._value}`);
             }
         }
 
         return this._value;
+    }
+    static _pausedGetWhenNotLinkedWarning = new Set();
+    static pauseGetWhenNotLinkedWarning(obj) {
+        Variable.Dependent._pausedGetWhenNotLinkedWarning.add(obj);
+    }
+    static resumeGetWhenNotLinkedWarning(obj) {
+        Variable.Dependent._pausedGetWhenNotLinkedWarning.delete(obj);
     }
     onChanged = () => {
         this.needsRecalculate = true;

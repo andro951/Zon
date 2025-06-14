@@ -11,60 +11,67 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
     } = {}) {
         super(buttonName, Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
-        this.buttonText = buttonText;
         this.onClick = onClick;
-        this.textColor.uint = textColor;
-        this.backgroundColor.uint = backgroundColorUint;
+        this.element.style.color = Struct.Color.fromUInt(textColor).cssString;
+        this.element.style.backgroundColor = Struct.Color.fromUInt(backgroundColorUint).cssString;
         this.setHoverColor(hoverColorUint);
-        this.border.value = border;
-        this.borderRadius.value = borderRadius;
-        this.fontWeight.value = fontWeight;
+        this.element.style.border = border;
+        this.element.style.borderRadius = `${borderRadius}px`;
+        this.element.style.fontWeight = fontWeight;
+        this.element.innerText = buttonText;
         this.rectFunctions = {
             left: leftFunct,
             top: topFunct,
             width: widthFunct,
             height: heightFunct
         }
-    }
 
-    static create(...args) {
-        const button = new this(...args);
-        button.bindAll();
-        button.postConstructor();
-        return button;
-    }
+        // // Add text node
+        // //this.element.style.overflow = 'hidden';
+        // //this.textElement.style.verticalAlign = 'middle';
+        // //this.textElement.style.display = 'inline-block';
+        //this.textElement.style.justifyContent = 'center';
+        //this.textElement.style.alignItems = 'center';
+        // //this.textElement.style.width = 'auto';
+        // //this.textElement.style.height = '100%';
+        // //this.element.style.userSelect = 'none';
+        // //this.textElement.style.pointerEvents = 'none';
+        // this.element.style.transition = 'background-color 0.15s';
+        // this.textElement = document.createElement('div');
+        // this.textElement.innerText = this.buttonText;
+        // this.textElement.style.textAlign = 'center';
+        // this.textElement.style.position = "relative";
+        // this.textElement.style.whiteSpace = 'nowrap';
+        // this.element.appendChild(this.textElement);
 
-    postConstructor() {
-        super.postConstructor();
+        //this.element.innerText = this.buttonText;
+        //this.element.style.textAlign = 'center';
+        //this.element.style.position = "relative";
+        this.element.style.whiteSpace = 'nowrap';
 
-        // Add text node
-        this.textNode = document.createElement('div');
-        this.textNode.innerText = this.buttonText;
-        this.textNode.style.textAlign = 'center';
-        this.textNode.style.verticalAlign = 'middle';
-        this.textNode.style.display = 'flex';
-        this.textNode.style.justifyContent = 'center';
-        this.textNode.style.alignItems = 'center';
-        this.textNode.style.width = '100%';
-        this.textNode.style.height = '100%';
-        this.element.style.userSelect = 'none';
-        this.textNode.style.pointerEvents = 'none';
-        this.element.style.transition = 'background-color 0.15s';
-        this.element.appendChild(this.textNode);
-
+        //this.element.innerText = this.buttonText;
+        this.element.style.verticalAlign = 'middle';
+        //this.element.style.textAlign = 'center';
+        this.element.style.display = 'flex';
+        //this.element.style.whiteSpace = 'nowrap';
+        this.element.style.justifyContent = 'center';
+        this.element.style.alignItems = 'center';
+        //this.element.style.padding = `0`;
+        this.element.style.overflow = 'hidden';
+        //this.element.style.lineHeight = '1';
         this.element.addOnClick(this.onClick);
-
-        
     }
 
     setup() {
+        super.setup();
+        
         this.replaceLeft(this.rectFunctions.left);
         this.replaceTop(this.rectFunctions.top);
         this.replaceWidth(this.rectFunctions.width);
         this.replaceHeight(this.rectFunctions.height);
-        this.rectFunctions = undefined;
 
+        this.rectFunctions = undefined;
         this.element.setBackgroundImage(this.backgroundPath);
-        super.setup();
+        this.backgroundPath = undefined;
     }
 };

@@ -4,15 +4,6 @@ Zon.GameUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }
-    static create(...args) {
-        const gameUIState = new this(...args);
-        gameUIState.bindAll();
-        gameUIState.postConstructor();
-        return gameUIState;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
     show = () => {
         Zon.showCombatUI();//TODO
     }
@@ -28,9 +19,13 @@ Zon.GameUIState = class extends Zon.UI.UIElementDiv {
     onResume = () => {
         
     }
+    setup() {
+        super.setup();
 
-    setup = () => {
-        //super.setup();
+        this.replaceLeft(() => 0);
+        this.replaceTop(() => 0);
+        this.replaceWidth(() => 0);
+        this.replaceHeight(() => 0);
     }
 }
 

@@ -39,6 +39,9 @@ if (zonDebug) {
 
     Zon.DevCheats.registerKeybindings = () => {
         Zon.Keybindings.registerKeyPress(`1`, Zon.DevCheats.killAllBlocks);
+        Zon.Keybindings.registerKeyPress(`2`, () => {
+            Zon.topUI.levelBar._fitText();
+        });
     }
 
     Zon.DevCheats.killAllBlocks = () => {
@@ -56,6 +59,7 @@ if (zonDebug) {
         //BigNumberTests.Test_BigNumberConversions();
         //NumberTests.Test_CalculateSignificandExponent();
         //Struct.EquationTests.runTests();
+        //Zon.DevCheats.runCircleGetBlockTests();
     }
 
     Zon.DevCheats.simpleBigNumberConversionTest = () => {
@@ -79,5 +83,29 @@ if (zonDebug) {
         Zon.IOManager.saveSettingsAsync(0);
         Zon.IOManager.saveSettingsAsync(1);
         Zon.IOManager.saveSettingsImmediate(1);
+    }
+
+    Zon.DevCheats.runCircleGetBlockTests = () => {
+        const tests = [
+            { x: 0, y: 0, radius: 100 },                          // Origin, normal radius
+            { x: 256.34, y: 684.23, radius: 86.7 },               // Random float values
+            { x: -50, y: -50, radius: 30 },                       // Negative coordinates
+            { x: 9999, y: 9999, radius: 150 },                    // Very large coordinates
+            { x: 320.5, y: 240.5, radius: 0 },                    // Zero radius
+            { x: 320.5, y: 240.5, radius: 0.001 },                // Tiny radius
+            { x: 500, y: 500, radius: 99999 },                    // Huge radius
+            { x: 100, y: 100, radius: -50 },                      // Negative radius
+            { x: 1e6, y: 1e6, radius: 500 },                      // Scientific notation
+            { x: 128.5, y: 64.25, radius: 32.75 },                // Mid-range decimal values
+            { x: 0, y: 0, radius: Infinity },                     // Infinite radius
+            { x: 128, y: 128, radius: Number.EPSILON },           // Smallest float difference
+            { x: 0.1, y: 0.1, radius: 1 },                        // Small positive values
+        ];
+
+        for (const test of tests) {
+            const { x, y, radius } = test;
+            const blocks = Zon.blocksManager.getBlocksCircle(test, radius);
+            console.log(`Blocks in circle at (${x}, ${y}) with radius ${radius}:`, blocks);
+        }
     }
 }

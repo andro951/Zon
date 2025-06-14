@@ -94,4 +94,71 @@ Struct.Color = class Color extends Struct.ColorBase {
     set uint(value) {
         this._uint32Array[0] = value;
     }
+
+    static parseUInt(colorString) {
+        if (colorString.startsWith('#')) {
+            const hex = colorString.slice(1);
+
+            if (hex.length === 8) {
+                return parseInt(hex, 16) >>> 0;
+            }
+
+            if (hex.length === 6) {
+                return parseInt(hex + 'FF', 16) >>> 0;
+            }
+        }
+
+        const match = colorString.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d*\.?\d+))?\)$/i);
+        if (match) {
+            const r = parseInt(match[1], 10);
+            const g = parseInt(match[2], 10);
+            const b = parseInt(match[3], 10);
+            const a = match[4] !== undefined ? Math.round(parseFloat(match[4]) * 255) : 255;
+            return (
+                ((r & 0xFF) << 24) |
+                ((g & 0xFF) << 16) |
+                ((b & 0xFF) << 8)  |
+                ((a & 0xFF) << 0)
+            ) >>> 0;
+        }
+
+        return null;
+    }
+
+
+    static parse(colorString) {
+        // Match rgba(r, g, b, a) or rgb(r, g, b)
+        let match = colorString.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d*\.?\d+))?\)$/i);
+        if (match) {
+            const r = parseInt(match[1], 10);
+            const g = parseInt(match[2], 10);
+            const b = parseInt(match[3], 10);
+            const a = match[4] !== undefined ? Math.round(parseFloat(match[4]) * 255) : 255;
+            return Struct.Color.fromRGBA(r, g, b, a);
+        }
+
+        // Match #RRGGBBAA
+        match = colorString.match(/^#([0-9a-fA-F]{8})$/);
+        if (match) {
+            const hex = match[1];
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            const a = parseInt(hex.slice(6, 8), 16);
+            return Struct.Color.fromRGBA(r, g, b, a);
+        }
+
+        // Match #RRGGBB (no alpha)
+        match = colorString.match(/^#([0-9a-fA-F]{6})$/);
+        if (match) {
+            const hex = match[1];
+            const r = parseInt(hex.slice(0, 2), 16);
+            const g = parseInt(hex.slice(2, 4), 16);
+            const b = parseInt(hex.slice(4, 6), 16);
+            const a = 255;
+            return Struct.Color.fromRGBA(r, g, b, a);
+        }
+
+        return null;
+    }
 }

@@ -4,17 +4,16 @@ Zon.StaminaBar = class extends Zon.ResourceBar {
     constructor() {
         super();
     }
-    static create(...args) {
-        const staminaBar = new this(...args);
-        staminaBar.bindAll();
-        staminaBar.postConstructor();
-        return staminaBar;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
     postLoadSetup() {
         
+    }
+    setup() {
+        super.setup();
+
+        this.replaceLeft(() => 0);
+        this.replaceTop(() => 0);
+        this.replaceWidth(() => 0);
+        this.replaceHeight(() => 0);
     }
 }
 

@@ -4,21 +4,16 @@ Zon.CoreUIState = class extends Zon.MainDisplayUIState {
     constructor() {
         super();
     }
-    static create(...args) {
-        const coreUIState = new this(...args);
-        coreUIState.bindAll();
-        coreUIState.postConstructor();
-        return coreUIState;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
     postLoadSetup() {
         
     }
+    setup() {
+        super.setup();
 
-    setup = () => {
-        //super.setup();
+        this.replaceLeft(() => 0);
+        this.replaceTop(() => 0);
+        this.replaceWidth(() => 0);
+        this.replaceHeight(() => 0);
     }
 }
 

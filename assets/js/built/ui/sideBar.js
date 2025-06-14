@@ -4,23 +4,6 @@ Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
     constructor(parent) {
         super('sideBarButton', Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
-    }
-    static create(...args) {
-        const sideBarButton = new this(...args);
-        sideBarButton.bindAll();
-        sideBarButton.postConstructor();
-        return sideBarButton;
-    }
-    postConstructor() {
-        super.postConstructor();
-        this.element.addOnClick(this.onClick);
-        Zon.UI.sideBar.shown.onChangedAction.add(this.updateIcon);
-    }
-    setup = () => {
-        this.replaceLeft(() => Zon.topUI.width - this.width - 4, this);
-        this.replaceTop(() => 5);
-        this.replaceWidth(() => Zon.device.width * 0.1);
-        this.replaceHeight(() => Zon.topUI.height * 0.25);
 
         const icon = document.createElement('div');
         this.icon = icon;
@@ -33,13 +16,25 @@ Zon.UI.SideBarButton = class SideBarButton extends Zon.UI.UIElementDiv {
         icon.style.pointerEvents = 'none';
 
         this.element.appendChild(icon);
+    }
+    postConstructor() {
+        super.postConstructor();
+
+        this.element.addOnClick(this.onClick);
+        Zon.UI.sideBar.shown.onChangedAction.add(this.updateIcon);
+    }
+    setup() {
+        super.setup();
+
+        this.replaceLeft(() => Zon.topUI.width - this.width - 4, this);
+        this.replaceTop(() => 5);
+        this.replaceWidth(() => Zon.device.width * 0.1);
+        this.replaceHeight(() => Zon.topUI.height * 0.25);
 
         this.element.setBackgroundImage(Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.UI_PANELS, 'buttonSquare_grey_pressed_NoRips'));
         this.showIconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, 'SideBarShowIcon');
         this.hideIconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, 'SideBarHideIcon');
         this.updateIcon();
-        
-        super.setup();
     }
 
     updateIcon = () => {
@@ -56,18 +51,11 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         super('sideBar', Zon.UI.UIElementZID.SIDE_BAR);
         this.animation = new Zon.UI.SlideAnimationHorizontal(this, false);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
-        this.element.makeScrollableColumn();
-    }
-    static create(...args) {
-        const sideBar = new this(...args);
-        sideBar.bindAll();
-        sideBar.postConstructor();
-        return sideBar;
-    }
-    postConstructor() {
-        super.postConstructor();
+        this.element.makeScrollableColumn(this);
     }
     setup() {
+        super.setup();
+
         this.replaceLeft(() => Zon.device.width - this.width);
         this.replaceTop(() => Zon.topUI.sideBarButton.height + 10);
         this.replaceWidth(() => Zon.device.width * 0.12);
@@ -95,8 +83,6 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
 
         //Delete All Music Button
         this._addIconButton('deleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
-
-        super.setup();
     }
 
     _addIconButton(buttonName, onClick, iconName) {

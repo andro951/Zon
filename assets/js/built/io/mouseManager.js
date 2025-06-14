@@ -3,9 +3,9 @@
 Zon.MouseManager = class MouseManager {
     constructor() {
         this.mouseIsDown = new Variable.Value(false, `MouseDown`);
-        this.canvas.addEventListener('pointerdown', () => this.mouseIsDown.value = true);
-        this.canvas.addEventListener('pointerup', () => this.mouseIsDown.value = false);
-        this.canvas.addEventListener('pointercancel', () => this.mouseIsDown.value = false);
+        window.addEventListener('pointerdown', () => this.mouseIsDown.value = true);
+        window.addEventListener('pointerup', () => this.mouseIsDown.value = false);
+        window.addEventListener('pointercancel', () => this.mouseIsDown.value = false);
     }
 }
 

@@ -11,7 +11,7 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.element.style.fontFamily = "Bruno Ace SC";
         this.element.style.textAlign = "center";
         this.element.style.lineHeight = "100%";
-        this._display = "flex";
+        this.element.style.display = "flex";
         this.element.style.alignItems = "center";
         this.element.style.justifyContent = "center";
         this.element.setBorder(1, "black");
@@ -28,25 +28,41 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.element.appendChild(this.fill);
 
         // Text overlay
-        this.label = document.createElement("div");
-        this.label.style.position = "relative";
-        this.label.style.zIndex = "1";
-        this.label.innerText = "Level 1";
-        this.element.appendChild(this.label);
-    }
-    static create(...args) {
-        const playerLevelBar = new this(...args);
-        playerLevelBar.bindAll();
-        playerLevelBar.postConstructor();
-        return playerLevelBar;
+        //this.element.style.whiteSpace = 'nowrap';
+
+
+        this.textElement = document.createElement("div");
+        this.textElement.id = `playerLevelText`;
+        //this.textElement.style.position = "relative";
+        this.textElement.style.zIndex = "1";
+        //this.textElement.innerText = "Level 1";
+        this.textElement.style.whiteSpace = 'nowrap';
+        this.textElement.style.display = 'flex';
+        this.element.appendChild(this.textElement);
+
+
+        // this.element.style.whiteSpace = 'nowrap';
+
+        // //this.element.innerText = this.buttonText;
+        // this.element.style.verticalAlign = 'middle';
+        // //this.element.style.textAlign = 'center';
+        // //this.element.style.whiteSpace = 'nowrap';
+        // this.element.style.justifyContent = 'center';
+        // this.element.style.alignItems = 'center';
+        // //this.element.style.padding = `0`;
+        // this.element.style.overflow = 'hidden';
+        // //this.element.style.lineHeight = '1';
+        // this.element.addOnClick(this.onClick);
     }
     postConstructor() {
         super.postConstructor();
+
         Zon.playerLevel.level.addOnChangedDrawAction(this._updateText);
         Zon.playerLevel.progressToNextLevel.addOnChangedDrawAction(this._updateFill);
     }
     _updateText = () => {
-        this.label.innerText = `Level ${Zon.playerLevel.level.value}`;
+        this.text.value = `Level ${Zon.playerLevel.level.value}`;
+        //this.textElement.innerText = `Level ${Zon.playerLevel.level.value}`;
     }
 
     _updateFill = () => {
@@ -54,15 +70,20 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.fill.style.width = `${pct * 100}%`;
     }
 
-    setup = () => {
+    setup() {
+        super.setup();
+        
         const widthPercent = 0.3;
         this.replaceLeft(() => Zon.topUI.width * (1 - widthPercent) * 0.5);
         this.replaceTop(() => 5);
         this.replaceWidth(() => Zon.topUI.width * widthPercent);
         this.replaceHeight(() => Zon.topUI.height * 0.2);
+        
+        this.text.value = "Level 1";
 
         this._updateText();
         this._updateFill();
-        super.setup();
     }
 }
+
+//Exists on Zon.TopUI

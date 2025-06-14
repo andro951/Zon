@@ -4,17 +4,13 @@ Zon.MainButtonsUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
         super();
     }
-    static create(...args) {
-        const mainButtonsUIState = new this(...args);
-        mainButtonsUIState.bindAll();
-        mainButtonsUIState.postConstructor();
-        return mainButtonsUIState;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
-    setup = () => {
-        //super.setup();
+    setup() {
+        super.setup();
+
+        this.replaceLeft(() => 0);
+        this.replaceTop(() => 0);
+        this.replaceWidth(() => 0);
+        this.replaceHeight(() => 0);
     }
 
     _updateShown = () => {

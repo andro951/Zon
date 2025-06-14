@@ -27,20 +27,17 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         super('topUI', Zon.UI.UIElementZID.MAIN_UI);
         this.topUIPercentOfHeight = 0.2;
         this.topUIAspectRatio = 3;
+    }
+    postConstructor() {
+        super.postConstructor();
+
         this.levelBar = Zon.UI.PlayerLevelBar.create(this);
         this.aetherUI = Zon.UI.AetherUI.create(this);
         this.sideBarButton = Zon.UI.SideBarButton.create(this);
     }
-    static create(...args) {
-        const topUI = new this(...args);
-        topUI.bindAll();
-        topUI.postConstructor();
-        return topUI;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
-    setup = () => {
+    setup() {
+        super.setup();
+        
         this.backgroundColor.uint = 0x060606FF;
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
@@ -86,10 +83,6 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
     //     this.ctx.fillText(text, 24, 24);
     // };
 
-    clearCanvas = () => {
-        this.ctx.clearRect(0, 0, this.element.width, this.element.height);
-    }
-
     updateCombatLayout = (newLayout) => {
         switch (newLayout) {
             case Zon.Settings.CombatUILayoutID.DEFAULT:
@@ -114,27 +107,30 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
         this.combatAreaPercentOfHeight = 0.6;
         this.combatUIAspectRatio = 9 / 9;
     }
-    static create(...args) {
-        const combatUI = new this(...args);
-        combatUI.bindAll();
-        combatUI.postConstructor();
-        return combatUI;
-    }
     postConstructor() {
         super.postConstructor();
 
-        this.canvas.addEventListener('pointerdown', (event) => {
+        this.element.addEventListener('pointerdown', (event) => {
             if (Zon.mouseManager.mouseIsDown.value)
                 return;
 
-            const rect = this.canvas.getBoundingClientRect();
-            const clickPos = new Vectors.Vector(event.clientX - rect.left, event.clientY - rect.top);
+            const rect = this.element.getBoundingClientRect();
+            //const clickPos = new Vectors.Vector(event.clientX - rect.left, event.clientY - rect.top);
+            const scaleX = this.element.width / rect.width;
+            const scaleY = this.element.height / rect.height;
+            const clickPos = new Vectors.Vector(
+                (event.clientX - rect.left) * scaleX,
+                (event.clientY - rect.top) * scaleY
+            );
+            console.log(`CombatUI clicked at: ${clickPos.x}, ${clickPos.y}`);
             Zon.abilityController.onClickCombatArea(clickPos, event.button);
         });
 
 
     }
-    setup = () => {
+    setup() {
+        super.setup();
+
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Zon.device.width / Zon.combatUI.combatUIAspectRatio);
@@ -161,17 +157,7 @@ Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
         this.bottomUIPercentOfHeight = 0.2;
         this.bottomUIAspectRatio = 3;
     }
-    static create(...args) {
-        const bottomUI = new this(...args);
-        bottomUI.bindAll();
-        bottomUI.postConstructor();
-        return bottomUI;
-    }
-    postConstructor() {
-        super.postConstructor();
-    }
-
-    setup = () => {
+    setup() {
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Math.min(Zon.device.height * this.bottomUIPercentOfHeight, Zon.device.width / this.bottomUIAspectRatio));

@@ -10,26 +10,19 @@ Zon.Device = class extends Zon.UI.UIElementDiv {
         this.DEFAULT_WIDTH_RATIO = 9;
         this.heightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.widthRatio = this.DEFAULT_WIDTH_RATIO;
-        this.usedHeightRatio = this.DEFAULT_HEIGHT_RATIO;
-        this.usedWidthRatio = this.DEFAULT_WIDTH_RATIO;
         this.rect = Struct.DynamicRectangle.empty(`Device`);
-        window.addEventListener("load", this.resize);
-        window.addEventListener("resize", this.resize);
         this.onResize = new Actions.Action();
-        this.resize();
-        this.show();
-        this._updateShown();
-    }
-    static create(...args) {
-        const device = new this(...args);
-        device.bindAll();
-        device.postConstructor();
-        return device;
     }
     postConstructor() {
         super.postConstructor();
+        
+        window.addEventListener("load", this.resize);
+        window.addEventListener("resize", this.resize);
+        
+        this.resize();
+        this.show();
     }
-    resize = () => {
+    resize() {
         const screenWidth = window.innerWidth;// window.visualViewport?.width ?? window.innerWidth;
         const screenHeight = window.innerHeight;// window.visualViewport?.height ?? window.innerHeight;
         Variable.Base.pause();
