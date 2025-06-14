@@ -66,8 +66,6 @@ Zon.UI.UIElementBase = class UIElementBase {
         }
         else {
             this.setup();
-            if (this.shown.value)
-                this._updateShown();//TODO: try to remove this
         }
 
         //postSetup
@@ -76,6 +74,8 @@ Zon.UI.UIElementBase = class UIElementBase {
         }
         else {
             this.postSetup();
+            if (this.shown.value)
+                this._updateShown();
         }
 
         if (zonDebug) {
@@ -116,7 +116,9 @@ Zon.UI.UIElementBase = class UIElementBase {
             this.shown = new Variable.Value(false, shownName);
         }
         this.shown.onChangedAction.add(this._updateShown);
-        this.shown.onChangedAction.add(() => console.log(`UIElementBase shown changed: ${this.element.id} - ${this.shown.value}`));
+        if (zonDebug) {
+            //this.shown.onChangedAction.add(() => console.log(`UIElementBase shown changed: ${this.element.id} - ${this.shown.value}`));
+        }
 
         this.position = new Variable.Value(this.element.style.position, `${this.element.id}Position`);
         this.position.onChangedAction.add(() => this.element.style.position = this.position.value);
@@ -251,7 +253,9 @@ Zon.UI.UIElementBase = class UIElementBase {
         this._updateHeight();
         this._updateLeft();
         this._updateTop();
-        console.log(`UIElementBase _updateAllValues: ${this.element.id} - left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height}`);
+        if (zonDebug) {
+            //console.log(`UIElementBase _updateAllValues: ${this.element.id} - left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height}`);
+        }
     }
     replaceTop(func) {
         this._topEquationVar.replaceEquation(func);
@@ -314,13 +318,19 @@ Zon.UI.UIElementBase = class UIElementBase {
 
             Variable.Base.resume();
             
-            console.log(`UIElementBase _updateShown s: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            if (zonDebug) {
+                //console.log(`UIElementBase _updateShown s: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            }
+            
             if (this.element.style.display !== "none")
                 throw new Error(`UIElementBase _updateShown: this.element.style.display is not "none".  Set this._display instead.`);
                 
             this.element.style.display = this._display;
 
-            console.log(`-UIElementBase _updateShown s: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            if (zonDebug) {
+                //console.log(`-UIElementBase _updateShown s: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            }
+
             this._updateAllValues();
             this.onShowActions.call();
             this.updateUIContent();
@@ -329,12 +339,18 @@ Zon.UI.UIElementBase = class UIElementBase {
                 dependentVariable.unlinkDependentActions();
             }
 
-            console.log(`UIElementBase _updateShown h: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            if (zonDebug) {
+                //console.log(`UIElementBase _updateShown h: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            }
+            
             if (this.element.style.display && this.element.style.display !== "none")
                 this._display = this.element.style.display;
 
             this.element.style.display = "none";
-            console.log(`-UIElementBase _updateShown h: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            if (zonDebug) {
+                //console.log(`-UIElementBase _updateShown h: ${this.element.id}, display: ${this.element.style.display}, _display: ${this._display}`);
+            }
+
             this.onHideActions.call();
         }
     }
@@ -381,6 +397,58 @@ Zon.UI.UIElementBase = class UIElementBase {
             }
         });
     }
+    makeScrollableColumn() {
+        this.element.setScrollableColumnStyle();
+        
+        this.childrenPadding = new Variable.Value(4, `${this.element.id}ChildrenPadding`);
+        this.children = Variable.createArray();
+        this.isColumn = true;//!isColumn means isRow.
+    }
+    addIconButton(buttonName, onClick, iconName, options = {}) {
+        if (!this.children)
+            this.makeScrollableColumn();
+
+        const lastChild = this.children.at(-1);
+        const iconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, iconName);
+        if (this.isColumn) {
+            //Column
+            options.topFunc ??= lastChild ? new Variable.DependentFunction(() => lastChild.bottom + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
+        }
+        else {
+            //Row
+            options.leftFunc ??= lastChild ? new Variable.DependentFunction(() => lastChild.right + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
+        }
+        
+        const button = Zon.UI.SimpleIconButton.create(buttonName, onClick, iconPath, this, options);
+        this.children.push(button);
+        return button;
+    }
+    addTextButton(buttonName, onClick, buttonText, options = {}) {
+        if (!this.children)
+            this.makeScrollableColumn();
+
+        const lastChild = this.children.at(-1);
+        if (this.isColumn) {
+            options.topFunc ??= lastChild ? new Variable.DependentFunction(() => lastChild.bottom + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
+        }
+        else {
+            options.leftFunc ??= lastChild ? new Variable.DependentFunction(() => lastChild.right + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
+        }
+        
+        const button = Zon.UI.SimpleTextButton.create(buttonName, onClick, buttonText, this, options);
+        this.children.push(button);
+        return button;
+    }
+    removeAllChildren() {
+        if (!this.children)
+            throw new Error(`UIElementBase.clearAllChildren: this.children is undefined.  Call makeScrollableColumn() first.`);
+
+        for (const child of this.children) {
+            this.element.removeChild(child.element);
+        }
+
+        this.children.clear();
+    }
 
     //#endregion Other
 }
@@ -425,10 +493,8 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         }
     }
     createTextComponent() {
-        if (this.text !== undefined) {
-            console.warn(`UIElementDiv.createTextComponent: Text component already exists for ${this.element.id}.`);
-            return;
-        }
+        if (this.text !== undefined)
+            return;//Already created
 
         this.text = new Variable.Value(this.textContent, `${this.element.id}Text`);
 
@@ -447,17 +513,17 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         }
         else {
             //Use this.fontSize.replaceEuquation() with Variable.DependentFunction
-            this.fontSize = new Variable.Dependent(() => this.height * 0.8, fontSizeName, this);
+            this.textHeightPadding = new Variable.Value(0.1, `${this.element.id}TextHeightPadding`);
+            this.textWidthPadding = new Variable.Value(0.05, `${this.element.id}TextWidthPadding`);
+
+            this.fontSize = new Variable.Dependent(() => this.height * (1 - this.textHeightPadding.value * 2), fontSizeName, this);
             this.fontSize.onChangedAction.add(this._fitText);
+            this._width.onChangedAction.add(this._fitText);
 
             this.text.onChangedAction.add(() => {
                 (this.textElement ?? this.element).textContent = this.text.value;
                 this._fitText();
             });
-
-            
-            this.parent?.shown?.onChangedAction.add(this._fitText);//TODO: remove this?
-            this.shown?.onChangedAction.add(this._fitText);
         }
 
         this.textColor = new Variable.ColorVar(`${this.element.id}TextColor`, this._computedStyle.color);
@@ -467,16 +533,6 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
 
         this.fontWeight = new Variable.Value(this.element.style.fontWeight, `${this.element.id}FontWeight`);
         this.fontWeight.onChangedAction.add(() => this.element.style.fontWeight = this.fontWeight.value);
-    }
-    postSetup() {
-        super.postSetup();
-
-        this.fontSize?.onChangedAction.call();
-        
-        if (this.text?.value)
-            this.text.onChangedAction.call();
-        
-        console.log(`UIElementDiv postSetup: ${this.element.id}`);
     }
 
     _getTextWidth(element, elementStyle) {
@@ -511,69 +567,22 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         return div._textMeasuringSpan.offsetWidth;
     }
 
-    _fitText() {
-        const elementStyle = window.getComputedStyle(this.element);
-        const textWidth = this._getTextWidth(this.element, elementStyle);
+    async _fitText() {
+        await document.fonts.ready;
+        const textElement = this.textElement ?? this.element;
+        textElement.style.fontSize = `${this.fontSize.value}px`;
+        const elementStyle = window.getComputedStyle(textElement);
+        const textWidth = this._getTextWidth(textElement, elementStyle);
+        if (zonDebug) {
+            //console.log(`Fitting text: ${textElement.id} - ${textWidth} - ${textElement.scrollWidth} - ${textElement.clientWidth} - ${textElement.getBoundingClientRect().width}, shown: ${this.shown.value}, text: ${this.text.value}, fontSize: ${this.fontSize.value}, width: ${this.width}, height: ${this.height}`);
+        }
+        
         if (textWidth <= 0)
             return;
 
-        const maxWidth = this.width * 0.9;
-        const scale = Math.min(1, maxWidth / textWidth);//Only shrink, don't grow
-        this.element.style.fontSize = `${this.fontSize.value * scale}px`;//fontSize variable sets this.element.style.fontSize in px.
-
-
-        // //this._updateAllValues();
-        // let fontSize = this.fontSize.value;
-        // const textElement = this.textElement ?? this.element;
-        // textElement.style.fontSize = `${this.fontSize.value}px`;
-        // if (!textElement.id)
-        //     throw new Error(`Text element does not have an id: ${textElement}`);
-
-        // console.log(`Fitting text: ${textElement.id} - ${textElement.scrollWidth} - ${textElement.clientWidth} - ${this.element.getBoundingClientRect().width} - ${textElement.getBoundingClientRect().width}, shown: ${this.shown.value}, text: ${this.text.value}, fontSize: ${this.fontSize.value}, height: ${this.height}`);
-        // if (!this.text.value)
-        //     return;
-
-        // //let lastScrollWidth = textElement.scrollWidth;
-        // // if (lastScrollWidth <= textElement.clientWidth)
-        // //     return;
-
-        // let lastScrollWidth = this.element.scrollWidth;
-        // if (lastScrollWidth <= this.element.clientWidth)
-        //     return;
-
-        // // let lastScrollWidth = this.element.getBoundingClientRect().width;
-        // // if (lastScrollWidth <= this.element.clientWidth)
-        // //     return;
-
-        // while (lastScrollWidth > textElement.clientWidth) {
-        // //while (lastScrollWidth > this.element.clientWidth) {
-        //     if (fontSize > 1) {
-        //         fontSize -= 1;
-        //     }
-        //     else {
-        //         fontSize *= 0.9;
-        //     }
-            
-        //     textElement.style.fontSize = `${fontSize}px`;
-        //     //if (this.element.getBoundingClientRect().width === lastScrollWidth) {
-        //     if (this.element.scrollWidth === lastScrollWidth) { 
-        //     //if (textElement.scrollWidth === lastScrollWidth) {
-        //         console.warn(`Text node scroll width did not change: ${textElement.id} - ${textElement.scrollWidth}`);
-        //         textElement.style.fontSize = `${this.fontSize.value}px`;
-        //         return;
-        //     }
-
-        //     //lastScrollWidth = this.element.getBoundingClientRect().width;
-        //     lastScrollWidth = this.element.scrollWidth;
-        //     //lastScrollWidth = textElement.scrollWidth;
-        // }
-
-        // this.fontSize._value = fontSize * 0.9;
-        // textElement.style.fontSize = `${this.fontSize.value}px`;
-        // console.log(textElement.getBoundingClientRect());
-        // console.log(this.element.getBoundingClientRect());
-
-        // console.log(`Fitted text: ${textElement.id} - ${this.fontSize.value};  lineHeight: ${textElement.style.lineHeight};  height: ${textElement.style.height} heightVar: ${this.height}, padding: ${textElement.style.padding}`);
+        const maxWidth = this.width * (1 - this.textWidthPadding.value * 2);
+        const scale = Math.min(1, maxWidth / textWidth);
+        textElement.style.fontSize = `${this.fontSize.value * scale}px`;
     }
 }
 

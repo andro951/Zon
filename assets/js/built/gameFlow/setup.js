@@ -12,6 +12,9 @@ Zon.Util = {};
 
 Zon.name = "Zon";
 
+document.body.style.overflowX = 'hidden';
+document.body.style.overflowY = 'hidden';
+
 if (zonDebug) {
     console.log("Zon Debugging Enabled");
 }

@@ -20,13 +20,10 @@ HTMLDivElement.prototype.addOnClick = function(onClick) {
     this.addEventListener('click', onClick);
 }
 
-HTMLDivElement.prototype.makeScrollableColumn = function() {
+HTMLDivElement.prototype.setScrollableColumnStyle = function() {
     this.style.overflowY = 'auto';
-    //this.style.overflowX = 'hidden';
     this.style.display = 'flex';
     this.style.flexDirection = 'column';
-    //this.style.alignItems = "center";
-    //this.style.justifyContent = "center";
 }
 
 Zon.UI.UIElementDiv.prototype.addEmptyIcon = function() {

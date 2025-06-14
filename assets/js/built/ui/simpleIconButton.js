@@ -1,40 +1,42 @@
 "use strict";
 
 Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
-    constructor(buttonName, onClick, iconPath, parent, leftFunct, topFunct, { 
-        backgroundPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.UI_PANELS, 'buttonSquare_grey_pressed_NoRips'),
-        widthFunct = () => Zon.device.width * 0.1,
-        heightFunct = () => Zon.topUI.height * 0.25
-    } = {}) {
+    constructor(buttonName, onClick, iconPath, parent, {
+            leftFunc,
+            topFunc,
+            widthFunc = () => Zon.device.width * 0.1,
+            heightFunc = () => Zon.topUI.height * 0.25,
+            backgroundPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.UI_PANELS, 'buttonSquare_grey_pressed_NoRips'),
+        } = {}) {
         super(buttonName, Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
-        this.iconPath = iconPath;
-        this.backgroundPath = backgroundPath;
-        this.onClick = onClick;
-        this.rectFunctions = {
-            left: leftFunct,
-            top: topFunct,
-            width: widthFunct,
-            height: heightFunct
-        }
+        this._options = {
+            iconPath,
+            leftFunc,
+            topFunc,
+            widthFunc,
+            heightFunc,
+            backgroundPath
+        };
+
+        this.element.addOnClick(onClick);
     }
     postConstructor() {
         super.postConstructor();
-
-        this.element.addOnClick(this.onClick);
     }
     setup() {
         super.setup();
-        
-        this.replaceLeft(this.rectFunctions.left);
-        this.replaceTop(this.rectFunctions.top);
-        this.replaceWidth(this.rectFunctions.width);
-        this.replaceHeight(this.rectFunctions.height);
-        this.rectFunctions = undefined;
+
+        this.replaceLeft(this._options.leftFunc);
+        this.replaceTop(this._options.topFunc);
+        this.replaceWidth(this._options.widthFunc);
+        this.replaceHeight(this._options.heightFunc);
 
         this.addEmptyIcon();
 
-        this.element.setBackgroundImage(this.backgroundPath);
-        this.icon.setBackgroundImage(this.iconPath);
+        this.element.setBackgroundImage(this._options.backgroundPath);
+        this.icon.setBackgroundImage(this._options.iconPath);
+        
+        this._options = undefined;
     }
 }

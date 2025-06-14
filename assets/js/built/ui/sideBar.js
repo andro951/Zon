@@ -51,7 +51,7 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         super('sideBar', Zon.UI.UIElementZID.SIDE_BAR);
         this.animation = new Zon.UI.SlideAnimationHorizontal(this, false);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
-        this.element.makeScrollableColumn(this);
+        this.makeScrollableColumn();
     }
     setup() {
         super.setup();
@@ -62,15 +62,16 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         this.replaceHeight(() => Zon.bottomUI.top - this.top - 10);
 
         //Stage Select Button
-        this._addIconButton('stageSelectButton', Zon.UI.stageUIState.show, 'StageIcon');
+        this._addButton('stageSelectButton', Zon.UI.stageUIState.show, 'StageIcon');
 
         //Music Button
-        const musicButton = this._addIconButton('musicButton', Zon.UI.musicUIState.show, 'MusicIcon');
-        musicButton.rectFunctions.left = () => Zon.device.width * 0.01 - 5 * Zon.musicManager.currentSongSmoothedAmplitude.value;
-        musicButton.rectFunctions.width = () => Zon.device.width * 0.1 + 10 * Zon.musicManager.currentSongSmoothedAmplitude.value;
+        this._addButton('musicButton', Zon.UI.musicUIState.show, 'MusicIcon', {
+            leftFunc: () => Zon.device.width * 0.01 - 5 * Zon.musicManager.currentSongSmoothedAmplitude.value,
+            widthFunc: () => Zon.device.width * 0.1 + 10 * Zon.musicManager.currentSongSmoothedAmplitude.value
+        });
 
         //Pause Button
-        const pauseButton = this._addIconButton('pauseButton', Zon.musicManager.playButtonPressed, 'PlayIcon');
+        const pauseButton = this._addButton('pauseButton', Zon.musicManager.playButtonPressed, 'PlayIcon');
         pauseButton.pauseIconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, `PauseIcon`);
         Zon.musicManager._paused.onChangedAction.add(() => {
             if (Zon.musicManager._paused.value) {
@@ -82,20 +83,11 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         });
 
         //Delete All Music Button
-        this._addIconButton('deleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
+        this._addButton('deleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
     }
-
-    _addIconButton(buttonName, onClick, iconName) {
-        const iconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, iconName);
-        return this._addButton(buttonName, onClick, iconPath);
-    }
-    _addButton(buttonName, onClick, iconPath) {
-        const padding = 4;
-        const lastChild = this.lastChild;
-        const topFunct = lastChild ? new Variable.DependentFunction(() => lastChild.bottom + padding, { lastChild }) : () => padding;
-        const button = Zon.UI.SimpleIconButton.create(buttonName, onClick, iconPath, this, () => Zon.device.width * 0.01, topFunct);
-        this.lastChild = button;
-        return button;
+    _addButton(name, onClick, iconName, options = {}) {
+        options.leftFunc ??= () => Zon.device.width * 0.01; 
+        return this.addIconButton(name, onClick, iconName, options);
     }
 }
 

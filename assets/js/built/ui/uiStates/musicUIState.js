@@ -16,7 +16,7 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     }
     static MusicFileInput = class MusicFileInput extends Zon.UI.UIElementDiv {
         constructor(parent) {
-            super('musicFileInput', Zon.UI.UIElementZID.SIDE_BAR, parent);
+            super('musicFileInput', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, parent);
             this.element.style.backgroundColor = Struct.Color.fromUInt(0x404040FF).cssString;
 
             this.element.style.justifyContent = 'center';
@@ -53,45 +53,8 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             this.buttons = [];
             this.element.style.backgroundColor = Struct.Color.fromUInt(0xFF0000FF).cssString;
             
-            this.element.makeScrollableColumn(this);
-        }
-        postConstructor() {
-            super.postConstructor();
-            
-            // const button = document.createElement('div');
-            // button.textContent = 'Shrink Me';
-            // //button.style.position = 'absolute';
-            // //button.style.left = '100px';
-            // //button.style.top = '100px';
-            // button.style.width = '40px'; // Small width
-            // button.style.height = '40px';
-            // button.style.whiteSpace = 'nowrap';
-            // //button.style.overflow = 'hidden';
-            // //button.style.padding = '5px';
-            // //button.style.border = '1px solid black';
-            // button.style.fontSize = '20px'; // Start large
-            // button.style.lineHeight = '1';
-            // //button.style.fontFamily = 'sans-serif';
-            // //button.style.boxSizing = 'border-box';
-
-            // this.element.appendChild(button);
-
-            // // Shrink to fit logic with layout delay
-            // function shrinkToFit(btn) {
-            //     //requestAnimationFrame(() => {
-            //         let fontSize = parseFloat(btn.style.fontSize);
-            //         const minFontSize = 5;
-
-            //         while (btn.scrollWidth > btn.clientWidth && fontSize > minFontSize) {
-            //             fontSize -= 1;
-            //             btn.style.fontSize = fontSize + 'px';
-            //         }
-            //     //});
-            // }
-
-            // shrinkToFit(button);
-
-            // this.shown.onChangedAction.add(() => shrinkToFit(button));
+            this.makeScrollableColumn();
+            this.childrenPadding.value = 6;
         }
         setup() {
             super.setup();
@@ -99,42 +62,27 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             this.replaceLeft(() => 0);
             this.replaceTop(() => Zon.UI.musicUIState.fileInput.bottom + 4);
             this.replaceWidth(() => Zon.UI.musicUIState.width);
-            this.replaceHeight(() => Zon.UI.musicUIState.height * 0.8);
+            this.replaceHeight(() => Zon.UI.musicUIState.height - this.top);
             // console.log(`Zon.UI.musicUIState.fileInput.bottom: ${Zon.UI.musicUIState.fileInput.bottom}`);
             // console.log(`top: ${this.top}`);
 
             Zon.musicManager.songNames.onChangedAction.add(this.addAllButtons);
             this.addAllButtons();
         }
-        removeAllButtons() {
-            this.buttons.forEach(button => this.element.removeChild(button.element));
-            this.buttons = [];
-            this.lastSongButton = undefined;
-        }
         _makeButton(songName) {
-            const padding = 6;
-            const lastSongButton = this.lastSongButton;
-            const topFunct = lastSongButton ? new Variable.DependentFunction(() => lastSongButton.bottom + padding, { lastSongButton }) : () => padding;
             // console.log(`Zon.UI.musicUIState.fileInput.bottom: ${Zon.UI.musicUIState.fileInput.bottom}`);
             // console.log(`top: ${(topFunct instanceof Variable.DependentFunction) ? topFunct.getValue() : topFunct()}`);
             // console.log(`lastSongButton.height: ${lastSongButton?.height}`);
-            const button = Zon.UI.SimpleTextButton.create(
-                `songButton_${songName}`,
-                () => Zon.musicManager.playSongByName(songName),
-                songName,
-                this,
-                () => Zon.UI.musicUIState.width * 0.1,
-                topFunct,
-                () => Zon.UI.musicUIState.width * 0.8,
-                () => Zon.UI.musicUIState.height * 0.1
-            );
-            this.lastSongButton = button;
-            this.buttons.push(button);
-            return button;
+
+            return this.addTextButton(`songButton_${songName}`, () => Zon.musicManager.playSongByName(songName), songName, {
+                leftFunc: () => Zon.UI.musicUIState.width * 0.1,
+                widthFunc: () => Zon.UI.musicUIState.width * 0.8,
+                heightFunc: () => Zon.UI.musicUIState.height * 0.1,
+            });
         }
         addAllButtons() {
             console.log(`Adding all song buttons:`, Zon.musicManager.songNames.length);
-            this.removeAllButtons();
+            this.removeAllChildren();
             const songNames = Zon.musicManager.songNames;
             for (const songName of songNames) {
                 this._makeButton(songName);

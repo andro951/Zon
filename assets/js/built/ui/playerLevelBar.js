@@ -28,31 +28,13 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.element.appendChild(this.fill);
 
         // Text overlay
-        //this.element.style.whiteSpace = 'nowrap';
-
-
         this.textElement = document.createElement("div");
         this.textElement.id = `playerLevelText`;
-        //this.textElement.style.position = "relative";
         this.textElement.style.zIndex = "1";
-        //this.textElement.textContent = "Level 1";
+        this.textElement.textContent = "Level 1";
         this.textElement.style.whiteSpace = 'nowrap';
         this.textElement.style.display = 'flex';
         this.element.appendChild(this.textElement);
-
-
-        // this.element.style.whiteSpace = 'nowrap';
-
-        // //this.element.textContent = this.buttonText;
-        // this.element.style.verticalAlign = 'middle';
-        // //this.element.style.textAlign = 'center';
-        // //this.element.style.whiteSpace = 'nowrap';
-        // this.element.style.justifyContent = 'center';
-        // this.element.style.alignItems = 'center';
-        // //this.element.style.padding = `0`;
-        // this.element.style.overflow = 'hidden';
-        // //this.element.style.lineHeight = '1';
-        // this.element.addOnClick(this.onClick);
     }
     postConstructor() {
         super.postConstructor();
@@ -62,7 +44,6 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
     }
     _updateText = () => {
         this.text.value = `Level ${Zon.playerLevel.level.value}`;
-        //this.textElement.textContent = `Level ${Zon.playerLevel.level.value}`;
     }
 
     _updateFill = () => {
@@ -78,11 +59,6 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.replaceTop(() => 5);
         this.replaceWidth(() => Zon.topUI.width * widthPercent);
         this.replaceHeight(() => Zon.topUI.height * 0.2);
-        
-        this.text.value = "Level 1";
-
-        this._updateText();
-        this._updateFill();
     }
 }
 

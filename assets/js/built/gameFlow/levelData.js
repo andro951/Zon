@@ -16,7 +16,7 @@ Zon.StageIDNames = [];
 Enum.createEnum(Zon.StageID, Zon.StageIDNames);
 
 Zon.LevelData = class LevelData {
-    static maxStage = Zon.StageID.COUNT;
+    static maxStage = Zon.StageID.COUNT - 1;
     static maxStageNum = 10;
     static startingStage = Zon.StageID.MONSTERS_WILD_CREATURES;
     static startingStageNum = 1;
