@@ -633,7 +633,6 @@ Array.prototype.convertToVariable = function(name) {
 
         self.length = 0;
         self.push(...newArray);
-        self.onChanged();
     }
 
     this._isVariable = true;

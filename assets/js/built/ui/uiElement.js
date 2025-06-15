@@ -413,7 +413,7 @@ Zon.UI.UIElementBase = class UIElementBase {
     }
     addIconButton(buttonName, onClick, iconName, options = {}) {
         if (!this.children)
-            this.makeScrollableColumn();
+            throw new Error(`UIElementBase.addIconButton: this.children is undefined.  Call makeScrollableColumn() or makeScrollableRow() first.`);
 
         const lastChild = this.children.at(-1);
         const iconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, iconName);
@@ -432,7 +432,7 @@ Zon.UI.UIElementBase = class UIElementBase {
     }
     addTextButton(buttonName, onClick, buttonText, options = {}) {
         if (!this.children)
-            this.makeScrollableColumn();
+            throw new Error(`UIElementBase.addTextButton: this.children is undefined.  Call makeScrollableColumn() or makeScrollableRow() first.`);
 
         const lastChild = this.children.at(-1);
         if (this.isColumn) {

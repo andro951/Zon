@@ -4,12 +4,15 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
     constructor(buttonName, onClick, iconPath, parent, {
             leftFunc,
             topFunc,
-            widthFunc = () => Zon.device.width * 0.1,
-            heightFunc = () => Zon.topUI.height * 0.25,
+            widthFunc,
+            heightFunc,
             backgroundPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.UI_PANELS, 'buttonSquare_grey_pressed_NoRips'),
         } = {}) {
         super(buttonName, Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
+        if (!leftFunc || !topFunc || !widthFunc || !heightFunc)
+            throw new Error("All position and size functions must be provided.");
+        
         this._options = {
             iconPath,
             leftFunc,

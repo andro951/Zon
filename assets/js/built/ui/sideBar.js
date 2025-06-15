@@ -71,22 +71,16 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         });
 
         //Pause Button
-        const pauseButton = this._addButton('pauseButton', Zon.musicManager.playButtonPressed, 'PlayIcon');
-        pauseButton.pauseIconPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, `PauseIcon`);
-        Zon.musicManager._paused.onChangedAction.add(() => {
-            if (Zon.musicManager._paused.value) {
-                pauseButton.icon.setBackgroundImage(pauseButton.iconPath);//TODO: also needs to change based on a song playing or not.
-            }
-            else {
-                pauseButton.icon.setBackgroundImage(pauseButton.pauseIconPath);
-            }
-        });
+        const pauseButton = this._addButton('sideBarPauseButton', Zon.musicManager.playButtonPressed, Zon.UI.MusicUIState.MusicControls.pauseButtonDefaultIcon);
+        Zon.musicManager.linkPauseButton(pauseButton);
 
         //Delete All Music Button
-        this._addButton('deleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
+        this._addButton('sideBarDeleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
     }
     _addButton(name, onClick, iconName, options = {}) {
-        options.leftFunc ??= () => Zon.device.width * 0.01; 
+        options.leftFunc ??= () => Zon.device.width * 0.01;
+        options.widthFunc ??= () => Zon.device.width * 0.1;
+        options.heightFunc ??= () => Zon.topUI.height * 0.25;
         return this.addIconButton(name, onClick, iconName, options);
     }
 }
