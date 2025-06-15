@@ -7,21 +7,23 @@ Zon.MusicManager = class MusicManager {
         this.songBeingPlayedBufferSource = null;
         this.songBeingPlayedArrayBuffer = null;
         this.nextSongArrayBuffer = null;
-        this.currentSongSmoothedAmplitude = new Variable.Value(0, `CurrentSongSmoothedAmplitude`);
         this.analyser = Zon.audioContext.createAnalyser();
         this.analyser.fftSize = 256;
         this.dataArray = new Uint8Array(this.analyser.fftSize);
+
+        this.currentSongSmoothedAmplitude = new Variable.Value(0, `CurrentSongSmoothedAmplitude`);
+
         this.songNames = Variable.createArray(`SongNames`);
         this.songPlayOrder = [];
         this._songIndex = new Variable.Value(-1, `SongIndex`);
-        this._songBeingPlayedName = new Variable.Dependent(() => this.songNames[this._songIndex.value] ?? "", `SongBeingPlayed`, this);//Use this when a song is recieved to check if it should play immediatly.
+        this.songBeingPlayedName = new Variable.Dependent(() => this.songNames[this._songIndex.value] ?? "", `SongBeingPlayed`, this);//Use this when a song is recieved to check if it should play immediatly.
         this._nextSongName = new Variable.Value("", `NextSongName`);
         this._nextSongIndex = new Variable.Value(-1, `NextSongIndex`);
         this._nextSongIndex.onChangedAction.add(this._pickAndQueueNextSong);
         this._songOrderIndex = -1;
+
         this._paused = new Variable.Value(false, `MusicPaused`);
-        this._playingSong = new Variable.Value(false, `PlayingSong`);
-        this._displayPlayButton = new Variable.Dependent(() => !this._playingSong.value || this._paused.value, `DisplayPlayButton`, this);
+        this._displayPlayButton = new Variable.Dependent(() => this._songIndex.value === -1 || this._paused.value, `DisplayPlayButton`, this);
         this._startTime = 0;
         this._resumeOffset = 0;
         this.songNames.onChangedAction.add(this._updateSongOrder);
@@ -32,7 +34,9 @@ Zon.MusicManager = class MusicManager {
     postLoadSetup = () => {
         this.shuffleSongsSetting = Zon.Settings.getPreferenceVariable(Zon.PreferenceSettingsID.SHUFFLE_SONGS);
         this.shuffleSongsSetting.onChangedAction.add(this._onShuffleSongsChanged);
-        this._getStoredSongNames();
+        this._getStoredSongNames().then(() => {
+            this._nextSongIndex.value = 0;
+        });
     }
 
     _openDB = async () => {
@@ -48,24 +52,24 @@ Zon.MusicManager = class MusicManager {
     }
 
     _saveSongToIndexedDB = async (file) => {
-        console.log(`Saving song "${file.name}" to IndexedDB...`);
+        //console.log(`Saving song "${file.name}" to IndexedDB...`);
         const arrayBuffer = await file.arrayBuffer();
-        console.log(`Song "${file.name}" loaded as ArrayBuffer.`);
+        //console.log(`Song "${file.name}" loaded as ArrayBuffer.`);
         const db = await this.dbPromise;
-        console.log(`Got IndexedDB instance for saving song "${file.name}"...`);
+        //console.log(`Got IndexedDB instance for saving song "${file.name}"...`);
         const tx = db.transaction("songs", "readwrite");
         const store = tx.objectStore("songs");
         const name = file.name.removeFileExtension();
         store.put(arrayBuffer, name);
-        console.log(`Saving song "${name}" before Promise...`);
+        //console.log(`Saving song "${name}" before Promise...`);
         await new Promise((resolve, reject) => {
             tx.oncomplete = resolve;
             tx.onerror = reject;
         });
 
-        console.log(`Saving song "${name}" after Promise...`);
+        //console.log(`Saving song "${name}" after Promise...`);
         this.songNames.push(name);
-        console.log(`Saved song "${name}" to IndexedDB`);
+        //console.log(`Saved song "${name}" to IndexedDB`);
     }
 
     _getStoredSongNames = async () => {
@@ -134,7 +138,7 @@ Zon.MusicManager = class MusicManager {
             this.songBeingPlayedBufferSource = null;
             this.songBeingPlayedArrayBuffer = null;
             this.currentSongSmoothedAmplitude.value = 0;
-            this._stopSong(false);
+            this.stopSong();
             return;
         }
         
@@ -210,6 +214,28 @@ Zon.MusicManager = class MusicManager {
         this._queueNextSong(nextSongName);
     }
 
+    _queueNextSong = async (name) => {
+        const decodedBuffer = await this._loadSongByName(name);
+        if (!decodedBuffer) {
+            console.error(`Failed to load song by name: ${name}`);
+            return;
+        }
+
+        this._storeNextSong(name, decodedBuffer);
+    }
+
+    _storeNextSong = (name, nextSongArrayBuffer) => {
+        if (!nextSongArrayBuffer) {
+            console.error("No next song array buffer provided.");
+            return;
+        }
+
+        this.nextSongArrayBuffer = nextSongArrayBuffer;
+        console.log(`_storeNextSong();  this.songBeingPlayedName.value: ${this.songBeingPlayedName.value}, name: ${name}.`);
+        if (this.songBeingPlayedName.value === name)
+            this._tryPlayNextSong();
+    }
+
     _updateSongIndexes = () => {
         if (this._songOrderIndex >= this.songPlayOrder.length)
             throw new Error(`Song order index out of bounds: ${this._songOrderIndex} >= ${this.songPlayOrder.length}`);
@@ -235,33 +261,30 @@ Zon.MusicManager = class MusicManager {
         }
     }
 
-    _queueNextSong = async (name) => {
-        const decodedBuffer = await this._loadSongByName(name);
-        if (!decodedBuffer) {
-            console.error(`Failed to load song by name: ${name}`);
-            return;
-        }
-
-        this._storeNextSong(decodedBuffer);
-    }
-
     playSongByName = async (name) => {
-        const decodedBuffer = await this._loadSongByName(name);
-        this._storeNextSong(decodedBuffer);
-        this._tryPlayNextSong();
-    }
+        const indexOfSong = this.songNames.indexOf(name);
+        if (indexOfSong === -1)
+            console.error(`Song "${name}" not found in songNames.`);
 
-    _storeNextSong = (nextSongArrayBuffer) => {
-        if (!nextSongArrayBuffer) {
-            console.error("No next song array buffer provided.");
-            return;
+        const indexOfSongInPlayOrder = this.songPlayOrder.indexOf(indexOfSong);
+        if (indexOfSongInPlayOrder === -1)
+            console.error(`Song "${name}" not found in songPlayOrder.`);
+
+        //TODO: If the new index is less than the current song order index, and shuffle is enabled, shuffle.
+
+        
+        if (this.songBeingPlayedName.value) {
+            if (this.songBeingPlayedName.value === name)
+                return;
+
+            this.stopSong();
         }
 
-        this.nextSongArrayBuffer = nextSongArrayBuffer;
-        if (!this._playingSong.value && this._failedToPlayNextSong)
-            this._tryPlayNextSong();
+        this._songOrderIndex = indexOfSongInPlayOrder;
+        this._updateSongIndexes();
 
-        this._failedToPlayNextSong = false;
+        // const decodedBuffer = await this._loadSongByName(name);
+        // this._storeNextSong(name, decodedBuffer);
     }
 
     playButtonPressed = () => {
@@ -292,7 +315,7 @@ Zon.MusicManager = class MusicManager {
     }
 
     _playSong = (songArrayBuffer, offset = 0) => {
-        this._stopSong();
+        this.stopSong();
         this.songBeingPlayedArrayBuffer = songArrayBuffer;
         this.songBeingPlayedBufferSource = Zon.audioContext.createBufferSource();
         this.songBeingPlayedBufferSource.buffer = this.songBeingPlayedArrayBuffer;
@@ -305,31 +328,24 @@ Zon.MusicManager = class MusicManager {
         };
         this._startTime = Zon.audioContext.currentTime - offset;
         this.songBeingPlayedBufferSource.start(0, offset);
-        this._playingSong.value = true;
     }
 
-    _playNextSong = () => {
-        if (!this.nextSongArrayBuffer) {
-            //this._stopSong(false);
-            console.error("No music file stored to play.");
+    _tryPlayNextSong = () => {
+        const nextSongIndex = this._nextSongIndex.value;
+        if (nextSongIndex < 0 || nextSongIndex >= this.songNames.length) {
+            if (this.songNames.length !== 0)
+                throw new Error(`Next song index out of bounds: ${nextSongIndex}, but there is at least 1 song: ${this.songNames.length}`);
+
             return;
         }
 
         this._songOrderIndex = this._nextSongIndex.value;
-        this._playSong(this.nextSongArrayBuffer);
-        this.nextSongArrayBuffer = null;
-    }
-
-    _tryPlayNextSong = () => {
-        this._failedToPlayNextSong = false;
-        if (this.nextSongArrayBuffer) {
-            this._playNextSong();
-            this._updateSongIndexes();
-        } else {
-            this._playingSong.value = false;
-            this._failedToPlayNextSong = true;
-            console.warn("No next song to play.");
+        if (this.nextSongArrayBuffer !== null) {
+            this._playSong(this.nextSongArrayBuffer);
         }
+        
+        this.nextSongArrayBuffer = null;
+        this._updateSongIndexes();
     };
 
     pauseSong = () => {
@@ -340,7 +356,7 @@ Zon.MusicManager = class MusicManager {
             try {
                 this._paused.value = true;
                 this._resumeOffset = Zon.audioContext.currentTime - this._startTime;
-                this._stopSong();
+                this.stopSong();
             } catch (e) {
                 this._paused.value = false;
                 this._resumeOffset = 0;
@@ -359,7 +375,7 @@ Zon.MusicManager = class MusicManager {
     }
 
     nextSong = () => {
-        this._stopSong();
+        this.stopSong();
         this.resumeSong();
         this._tryPlayNextSong();
     }
@@ -431,7 +447,7 @@ Zon.MusicManager = class MusicManager {
         });
     }
 
-    _stopSong = async (stoppingToPlayNextSong = true) => {
+    stopSong = (triggerOnChanged = true) => {
         if (this.songBeingPlayedBufferSource) {
             this.songBeingPlayedBufferSource.onended = null;
             try {
@@ -439,11 +455,21 @@ Zon.MusicManager = class MusicManager {
             } catch (e) {}
             this.songBeingPlayedBufferSource.disconnect();
             this.songBeingPlayedBufferSource = null;
+            this.songBeingPlayedArrayBuffer = null;
             this._startTime = 0;
         }
-
-        if (!stoppingToPlayNextSong)
-            this._playingSong.value = false;
+        
+        this._songOrderIndex = -1;
+        this.nextSongArrayBuffer = null;
+        this.currentSongSmoothedAmplitude.value = 0;
+        if (triggerOnChanged) {
+            this._songIndex.value = -1;
+            this._nextSongIndex.value = -1;
+        }
+        else {
+            this._songIndex._value = -1;
+            this.songBeingPlayedName._value = "";
+        }
     };
 
 
