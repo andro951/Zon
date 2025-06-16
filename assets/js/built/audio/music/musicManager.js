@@ -4,301 +4,485 @@ Zon.audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
 Zon.MusicManager = class MusicManager {
     constructor() {
-        this.songBeingPlayedBufferSource = null;
-        this.songBeingPlayedArrayBuffer = null;
-        this.nextSongArrayBuffer = null;
-        this.analyser = Zon.audioContext.createAnalyser();
-        this.analyser.fftSize = 256;
-        this.dataArray = new Uint8Array(this.analyser.fftSize);
+        this._songs = new Map();//Map of [SongData, Song]
+        this._songQueue = new Struct.Deque();//Queue of SongReferences
+        this._maxSongQueueSize = 10;
+        this._previousSongs = new Struct.Deque();//Queue of SongReferences
+        this._maxPreviousSongsSize = 2;
+        this._previousSongDatas = new Struct.Deque();//Queue of SongData
+        this._maxPreviousSongDatasSize = 10 - this._maxPreviousSongsSize;
+        this._allSongDatas = new Struct.NodeArray(`SongData`);
+
+        this.songNames = new Set();
+
+        this.totalSongWeight = new Variable.Dependent(() => this._allSongDatas.reduce((sum, songData) => sum + songData.weight.value, 0), `TotalSongWeight`, this);
+        this.totalSongWeight.onChangedAction.add(this._onTotalSongWeightChanged);
+
+        this._songBeingPlayedBufferSource = null;
+        this._songBeingPlayedArrayBuffer = null;
+        this._analyser = Zon.audioContext.createAnalyser();
+        this._analyser.fftSize = 256;
+        this._dataArray = new Uint8Array(this._analyser.fftSize);
 
         this.currentSongSmoothedAmplitude = new Variable.Value(0, `CurrentSongSmoothedAmplitude`);
 
-        this.songNames = Variable.createArray(`SongNames`);
-        this.songPlayOrder = [];
-        this._songIndex = new Variable.Value(-1, `SongIndex`);
-        this.songBeingPlayedName = new Variable.Dependent(() => this.songNames[this._songIndex.value] ?? "", `SongBeingPlayed`, this);//Use this when a song is recieved to check if it should play immediatly.
-        this._nextSongName = new Variable.Value("", `NextSongName`);
-        this._nextSongIndex = new Variable.Value(-1, `NextSongIndex`);
-        this._nextSongIndex.onChangedAction.add(this._pickAndQueueNextSong);
-        this._songOrderIndex = -1;
+        this.songBeingPlayedName = new Variable.Value(() => "", `SongBeingPlayed`);
 
-        this._paused = new Variable.Value(false, `MusicPaused`);
-        this._displayPlayButton = new Variable.Dependent(() => this._songIndex.value === -1 || this._paused.value, `DisplayPlayButton`, this);
-        this._startTime = 0;
-        this._resumeOffset = 0;
-        this.songNames.onChangedAction.add(this._updateSongOrder);
-        this.dbPromise = this._openDB();
+        this._paused = new Variable.Value(true, `MusicPaused`);
+        this._displayPlayButton = new Variable.Dependent(() => this._paused.value, `DisplayPlayButton`, this);
+        this._allSongDatas.onChangedAction.add(this._onSongDatasChanged);
+        this._dbPromise = this._openDB();
         Zon.Setup.postLoadSetupActions.add(this.postLoadSetup);
     }
 
     postLoadSetup = () => {
+        //console.log("Zon.MusicManager postLoadSetup called.");
         this.shuffleSongsSetting = Zon.Settings.getPreferenceVariable(Zon.PreferenceSettingsID.SHUFFLE_SONGS);
         this.shuffleSongsSetting.onChangedAction.add(this._onShuffleSongsChanged);
-        this._getStoredSongNames().then(() => {
-            this._nextSongIndex.value = 0;
-        });
+        this._getSongDatas();
     }
 
+    static _songMetaName = "songsMeta";
+    static _songDataName = "songsData";
     _openDB = async () => {
+        //Deletes old database
+        // await new Promise((resolve, reject) => {
+        //     const deleteRequest = indexedDB.deleteDatabase("ZonMusicDB");
+
+        //     deleteRequest.onsuccess = () => {
+        //         console.log("Old database deleted successfully.");
+        //         resolve();
+        //     };
+
+        //     deleteRequest.onerror = (event) => {
+        //         console.warn("Error deleting old database. Proceeding anyway.");
+        //         resolve(); // Still resolve so we can continue trying to open the DB
+        //     };
+
+        //     deleteRequest.onblocked = () => {
+        //         console.warn("Database deletion blocked (possibly still open elsewhere).");
+        //         resolve(); // Proceed cautiously anyway
+        //     };
+        // });
+
         return new Promise((resolve, reject) => {
             const request = indexedDB.open("ZonMusicDB", 1);
+
             request.onupgradeneeded = (event) => {
                 const db = event.target.result;
-                db.createObjectStore("songs");
+
+                if (!db.objectStoreNames.contains(Zon.MusicManager._songMetaName)) {
+                    db.createObjectStore(Zon.MusicManager._songMetaName, { keyPath: "name" });
+                }
+
+                if (!db.objectStoreNames.contains(Zon.MusicManager._songDataName)) {
+                    db.createObjectStore(Zon.MusicManager._songDataName, { keyPath: "name" });
+                }
             };
+
             request.onsuccess = () => resolve(request.result);
             request.onerror = () => reject(request.error);
         });
     }
 
-    _saveSongToIndexedDB = async (file) => {
-        //console.log(`Saving song "${file.name}" to IndexedDB...`);
-        const arrayBuffer = await file.arrayBuffer();
-        //console.log(`Song "${file.name}" loaded as ArrayBuffer.`);
-        const db = await this.dbPromise;
-        //console.log(`Got IndexedDB instance for saving song "${file.name}"...`);
-        const tx = db.transaction("songs", "readwrite");
-        const store = tx.objectStore("songs");
+    _getSongDatas = async () => {
+        //console.log("Loading song metadata from IndexedDB...");
+        const db = await this._dbPromise;
+        //console.log(`Opened IndexedDB: ${db.name}, version: ${db.version}`);
+        const tx = db.transaction(Zon.MusicManager._songMetaName, "readonly");
+        const store = tx.objectStore(Zon.MusicManager._songMetaName);
+        const request = store.getAll();
+        //console.log(`Requesting all song metadata entries from store: ${Zon.MusicManager._songMetaName}`);
+        try {
+            const entries = await new Promise((resolve, reject) => {
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+
+            entries.sort((a, b) => a.addedAt - b.addedAt);
+
+            //console.log(`Loaded ${entries.length} song metadata entries from IndexedDB.`);
+            const newSongDatas = entries.map(entry => Zon.SongData.fromDBEntry(entry));
+            this._allSongDatas.replaceAll(newSongDatas);
+        } catch (error) {
+            console.error("Failed to load song metadata:", error);
+        }
+    }
+
+    _saveNewSongFromFile = async (file) => {
         const name = file.name.removeFileExtension();
-        store.put(arrayBuffer, name);
-        //console.log(`Saving song "${name}" before Promise...`);
+        if (this.songNames.has(name)) {
+            console.warn(`Song with name "${name}" already exists. Skipping upload.`);
+            return;
+        }
+
+        const arrayBuffer = await file.arrayBuffer();
+        const db = await this._dbPromise;
+        const tx = db.transaction([Zon.MusicManager._songMetaName, Zon.MusicManager._songDataName], "readwrite");
+        const metaStore = tx.objectStore(Zon.MusicManager._songMetaName);
+        const dataStore = tx.objectStore(Zon.MusicManager._songDataName);
+        dataStore.put({
+            name: name,
+            data: arrayBuffer,
+        });
+        metaStore.put({
+            name: name,
+            weightExpMult: 0,
+            artist: "",
+            album: "",
+            img: null,
+            addedAt: Date.now(),
+        });
+
         await new Promise((resolve, reject) => {
             tx.oncomplete = resolve;
             tx.onerror = reject;
         });
 
-        //console.log(`Saving song "${name}" after Promise...`);
-        this.songNames.push(name);
-        //console.log(`Saved song "${name}" to IndexedDB`);
+        this._allSongDatas.push(new Zon.SongData(name, 0));
     }
 
-    _getStoredSongNames = async () => {
-        const db = await this.dbPromise;
-        const tx = db.transaction("songs", "readonly");
-        const store = tx.objectStore("songs");
-        const request = store.getAllKeys();
-
-        try {
-            const names = await new Promise((resolve, reject) => {
-                request.onsuccess = () => resolve(request.result);
-                request.onerror = () => reject(request.error);
-            });
-
-            this.songNames.replaceAll(names);
-        } catch (error) {
-            console.error("Failed to load song names:", error);
-        }
+    onUploadMusicFile = async (file) => {
+        //console.log(`Uploading music file: ${file.name}`);
+        await this._saveNewSongFromFile(file);
     }
 
-    _loadSongByName = async (name) => {
+    _loadSong = async (name) => {
         if (!name)
             throw new Error("Song name cannot be null or undefined.");
 
-        const db = await this.dbPromise;
-        const tx = db.transaction("songs", "readonly");
-        const store = tx.objectStore("songs");
+        const db = await this._dbPromise;
+        const tx = db.transaction(Zon.MusicManager._songDataName, "readonly");
+        const store = tx.objectStore(Zon.MusicManager._songDataName);
         const request = store.get(name);
 
         return new Promise((resolve, reject) => {
             request.onsuccess = async () => {
-                const arrayBuffer = request.result;
-                if (arrayBuffer) {
+                const entry = request.result;
+                if (entry && entry.data) {
                     try {
-                        const decoded = await Zon.audioContext.decodeAudioData(arrayBuffer.slice(0));
+                        const decoded = await Zon.audioContext.decodeAudioData(entry.data.slice(0));
                         resolve(decoded);
                     } catch (err) {
                         reject(err);
                     }
                 } else {
-                    reject(new Error("No song found with name: " + name));
+                    reject(new Error("No song data found with name: " + name));
                 }
             };
             request.onerror = () => reject(request.error);
         });
     }
 
-    onUploadMusicFile = async (file) => {
-        console.log(`Uploading music file: ${file.name}`);
-        await this._saveSongToIndexedDB(file);
-    }
-
-    _updateSongOrder = () => {
-        console.log(`Updating song order.  SongNames:`, this.songNames);//TODO: this is being called twice at the start.
-        const playOrderLength = this.songPlayOrder.length;
-        const songNamesLength = this.songNames.length;
-        if (playOrderLength === songNamesLength)
-            return;
-
-        if (songNamesLength <= 0) {
-            this.songPlayOrder = [];
-            this._songIndex.value = -1;
-            this._nextSongIndex.value = -1;
-            this._songOrderIndex = -1;
-            this.nextSongArrayBuffer = null;
-            this.songBeingPlayedBufferSource = null;
-            this.songBeingPlayedArrayBuffer = null;
-            this.currentSongSmoothedAmplitude.value = 0;
-            this.stopSong();
-            return;
-        }
+    deleteSong = async (name) => {
+        //console.log(`Deleting song "${name}" from IndexedDB...`);
+        const db = await this._dbPromise;
+        const tx = db.transaction([Zon.MusicManager._songMetaName, Zon.MusicManager._songDataName], "readwrite");
+        const metaStore = tx.objectStore(Zon.MusicManager._songMetaName);
+        const dataStore = tx.objectStore(Zon.MusicManager._songDataName);
         
-        if (playOrderLength === 0) {
-            this._setDefaultSongPlayOrder();
+        const metaRequest = metaStore.delete(name);
+        const dataRequest = dataStore.delete(name);
 
-            if (Zon.Settings.getPreference(Zon.PreferenceSettingsID.SHUFFLE_SONGS))
-                this.songPlayOrder.shuffle();
+        await new Promise((resolve, reject) => {
+            dataRequest.onerror = metaRequest.onerror = () => {
+                console.error(`Failed to delete song "${name}":`, metaRequest.error || dataRequest.error);
+                reject(metaRequest.error || dataRequest.error);
+            };
 
-            this._songOrderIndex = -1;
-        }
-        else if (playOrderLength < songNamesLength)  {
-            //Added new song(s)
-            if (Zon.Settings.getPreference(Zon.PreferenceSettingsID.SHUFFLE_SONGS)) {
-                while (this.songPlayOrder.length < songNamesLength) {
-                    const i = Math.floor(Math.random() * songNamesLength);
-                    if (i <= this._songOrderIndex) {
-                        this._songOrderIndex++;
-                        this.songPlayOrder.splice(i, 0, this.songPlayOrder.length);
-                        if (i === this._nextSongIndex.value)
-                            this._nextSongIndex.onChanged();
-
-                        if (this._songIndex.value !== this.songPlayOrder[this._songOrderIndex])
-                            throw new Error(`Song order index mismatch: ${this._songIndex.value} !== ${this.songPlayOrder[this._songOrderIndex]}`);
+            dataRequest.onsuccess = metaRequest.onsuccess = () => {
+                let songData = null;
+                for (const item of this._allSongDatas) {
+                    if (item.name === name) {
+                        songData = item;
+                        break;
                     }
                 }
+
+                if (!songData) {
+                    console.warn(`Song "${name}" not found in _allSongDatas.`);
+                    return resolve();
+                }
+
+                songData.removeGetNext();
+                //console.log(`Deleted song "${name}" from IndexedDB`);
+                resolve();
+            };
+        });
+    }
+
+    deleteAllSongs = async () => {
+        //console.log("Deleting all songs from IndexedDB...");
+        const db = await this._dbPromise;
+        const tx = db.transaction([Zon.MusicManager._songMetaName, Zon.MusicManager._songDataName], "readwrite");
+        const metaStore = tx.objectStore(Zon.MusicManager._songMetaName);
+        const dataStore = tx.objectStore(Zon.MusicManager._songDataName);
+        
+        const metaRequest = metaStore.clear();
+        const dataRequest = dataStore.clear();
+
+        await new Promise((resolve, reject) => {
+            metaRequest.onerror = dataRequest.onerror = () => {
+                console.error("Failed to delete all songs:", metaRequest.error || dataRequest.error);
+                reject(metaRequest.error || dataRequest.error);
+            };
+
+            metaRequest.onsuccess = dataRequest.onsuccess = () => {
+                console.log("All songs deleted from IndexedDB.");
+                this._allSongDatas.clear();
+                resolve();
+            };
+        });
+    }
+
+    _onTotalSongWeightChanged = () => {
+        //console.log("Total song weight changed, updating play chances and bounds...");
+        if (this._allSongDatas.length === 0)
+            return;
+
+        const totalWeight = this.totalSongWeight.value;
+        let cumulative = 0;
+        for (const song of this._allSongDatas) {
+            song._playChance = song.weight.value / totalWeight;
+            song._lowerBound = cumulative;
+            cumulative += song._playChance;
+            song._upperBound = cumulative;
+            //console.log(`Updated song: ${song.name.value}, Weight: ${song.weight.value}, PlayChance: ${song._playChance}, LowerBound: ${song._lowerBound}, UpperBound: ${song._upperBound}`);
+        }
+
+        this._allSongDatas.at(-1)._upperBound = 1;
+
+        //console.log(`Updated play chances and bounds for ${this._allSongDatas.length} songs.  New total weight: ${totalWeight}`);
+    }
+
+    _onSongDatasChanged = () => {
+        //console.log(`Song datas changed.  this._allSongDatas.length: ${this._allSongDatas.length}, this.songNames.size: ${this.songNames.size}`);
+        //this._allSongDatas.forEach(songData => console.log(`SongData: ${songData.name.value}, Weight: ${songData.weight.value}`));
+        if (this._allSongDatas.length === this.songNames.size) {
+            if (this._allSongDatas.length === 0) {
+                return;
             }
             else {
-                while (this.songPlayOrder.length < songNamesLength) {
-                    this.songPlayOrder.push(this.songPlayOrder.length);
-                }
+                throw new Error(`_onSongDatasChanged();  this._allSongDatas.length === this.songNames.size; ${this._allSongDatas.length} === ${this.songNames.size}`);
             }
+        }
+        if (this._allSongDatas.length < this.songNames.size) {
+            //Song(s) removed
+            this._onRemoveSongs();
         }
         else {
-            //Removed song(s)
-            for (let i = this.songPlayOrder.length - 1; i >= 0; i--) {
-                const songIndex = this.songPlayOrder[i];
-                if (songIndex >= songNamesLength) {
-                    if (songIndex === this._songIndex.value) {
-                        this._tryPlayNextSong();
-                    }
+            //Song(s) added or renamed
+            this._onAddSongs();
+        }
+    }
 
-                    this.songPlayOrder.splice(i, 1);
-                }
+    _onRemoveSongs = () => {
+        //console.log("Removing songs that no longer exist in the song data array...");
+        this._updateSongNames();
+        if (!this._songQueue.isEmpty) {
+            if (!this.songNames.has(this._songQueue.first.name))
+                this._songQueue.first.stop();
+        }
+
+        this._songQueue.removeWhere(song => !this.songNames.has(song.name));
+        this._updateSongQueue();
+
+        this._previousSongDatas.removeWhere(name => !this.songNames.has(name));
+        this._previousSongs.removeWhere(song => !this.songNames.has(song.name));
+        this._updatePreviousSongs();
+    }
+
+    _updatePreviousSongs = () => {
+        while (this._previousSongs.size < this._maxPreviousSongsSize && !this._previousSongDatas.isEmpty) {
+            const mostRecentSongData = this._previousSongDatas.popLast();
+            const songRef = mostRecentSongData.getSongReference();
+            if (!songRef)
+                throw new Error(`Failed to get song reference for previous song data: ${mostRecentSongData}`);
+
+            this._previousSongs.addToFront(songRef);
+        }
+
+        while (this._previousSongs.size > this._maxPreviousSongsSize) {
+            const removedSongRef = this._previousSongs.popFirst();
+            if (!removedSongRef)
+                throw new Error("Failed to remove previous song, deque is empty.");
+            
+            this._previousSongDatas.add(removedSongRef.song.songData);
+            const song = removedSongRef.song;
+            removedSongRef.onDelete();
+            song.tryDelete();
+        }
+
+        while (this._previousSongDatas.size > this._maxPreviousSongDatasSize) {
+            this._previousSongDatas.next();
+        }
+    }
+
+    _onAddSongs = () => {
+        //console.log("Adding new songs...");
+        this._updateSongNames();
+        this._clearAndRefreshSongQueue();
+    }
+
+    _clearQueueExceptCurrent = () => {
+        while (this._songQueue.size > 1) {
+            //console.log(`Removing last song from queue: ${this._songQueue.last.name.value}`);
+            this._songQueue.prev();
+        }
+    }
+
+    _clearAndRefreshSongQueue = () => {
+        this._clearQueueExceptCurrent();
+        this._updateSongQueue();
+    }
+
+    _getRandomSong = () => {
+        if (this._allSongDatas.length === 0)
+            throw new Error("No songs available to select from.");
+
+        const r = Math.random();
+        let low = 0;
+        let high = this._allSongDatas.length - 1;
+        //console.log(`Selecting random song from ${this._allSongDatas.length} songs.  r: ${r}, low: ${low}, high: ${high}`);
+        while (low < high) {
+            const mid = Math.floor((low + high) / 2);
+            const song = this._allSongDatas.get(mid);
+            if (song._lowerBound < 0 || song._upperBound > 1)
+                throw new Error(`Invalid bounds for song ${song.name.value}: lowerBound: ${song._lowerBound}, upperBound: ${song._upperBound}`);
+
+            //console.log(`Checking song at index ${mid}: ${song.name.value}, lowerBound: ${song._lowerBound}, upperBound: ${song._upperBound}`);
+            if (r < song._lowerBound) {
+                high = mid - 1;
+            } else if (r >= song._upperBound) {
+                low = mid + 1;
+            } else {
+                low = mid;
+                break;
             }
-
-            if (this.songPlayOrder.length !== songNamesLength)
-                throw new Error(`Song play order length mismatch: ${this.songPlayOrder.length} !== ${songNamesLength}`);
         }
 
-        this._updateSongIndexes();
+        return this._allSongDatas.get(low).getSongReference();
     }
 
-    _pickAndQueueNextSong = () => {
-        if (this._nextSongIndex.value === undefined || this._nextSongIndex.value === null) {
-            console.warn("Next song index is undefined or null, resetting to 0.");
-            this._nextSongIndex.value = 0;
-            return;
-        }
+    _getNextSong = () => {
+        if (this._allSongDatas.length === 0)
+            throw new Error("No songs available.");
 
-        this.nextSongArrayBuffer = null;
-        if (this.songPlayOrder.length === 0) {
-            console.warn("_pickAndQueueNextSong(); songPlayOrder is empty.");
-            return;
-        }
-        
-        const nextSongName = this.songNames[this._nextSongIndex.value];
-        if (!nextSongName) {
-            console.warn(`No song name found for next song index: ${this._nextSongIndex.value}`);
-            return;
-        }
-
-        this._queueNextSong(nextSongName);
+        return (this._songQueue.last?.song.songData.next() ?? this._allSongDatas.get(0)).getSongReference();
     }
 
-    _queueNextSong = async (name) => {
-        const decodedBuffer = await this._loadSongByName(name);
-        if (!decodedBuffer) {
-            console.error(`Failed to load song by name: ${name}`);
+    _updateSongQueue = () => {
+        if (this._allSongDatas.length === 0) {
+            if (!this._paused.value)
+                this._paused.value = true;
+
             return;
         }
 
-        this._storeNextSong(name, decodedBuffer);
-    }
+        const shuffle = this.shuffleSongsSetting.value;
+        while (this._songQueue.size < this._maxSongQueueSize) {
+            const song = shuffle ? this._getRandomSong() : this._getNextSong();
+            if (!song)
+                throw new Error("Failed to get a random song from the song data array.");
 
-    _storeNextSong = (name, nextSongArrayBuffer) => {
-        if (!nextSongArrayBuffer) {
-            console.error("No next song array buffer provided.");
-            return;
+            //console.log(`Adding song to queue: ${song.name.value}`);
+            this._songQueue.add(song);
         }
 
-        this.nextSongArrayBuffer = nextSongArrayBuffer;
-        console.log(`_storeNextSong();  this.songBeingPlayedName.value: ${this.songBeingPlayedName.value}, name: ${name}.`);
-        if (this.songBeingPlayedName.value === name)
-            this._tryPlayNextSong();
+        while (this._songQueue.size > this._maxSongQueueSize) {
+            const removedSongRef = this._songQueue.popLast();
+            if (!removedSongRef)
+                throw new Error("Failed to remove song from queue, deque is empty.");
+
+            const song = removedSongRef.song;
+            removedSongRef.onDelete();
+            song.tryDelete();
+        }
     }
 
-    _updateSongIndexes = () => {
-        if (this._songOrderIndex >= this.songPlayOrder.length)
-            throw new Error(`Song order index out of bounds: ${this._songOrderIndex} >= ${this.songPlayOrder.length}`);
+    _updateSongNames = () => {
+        this.songNames = new Set(this._allSongDatas.map(songData => songData.name));
+    }
 
-        this._songIndex.value = this._songOrderIndex !== -1 ? this.songPlayOrder[this._songOrderIndex] : -1;
-        this._nextSongIndex.value = this.songPlayOrder[this._songOrderIndex + 1] ?? 0;
+    _onRenameSong = (oldName, newName) => {
+        this.songNames.delete(oldName);
+        this.songNames.add(newName);
     }
 
     _onShuffleSongsChanged = () => {
-        const shuffle = this.shuffleSongsSetting.value;
-        if (shuffle) {
-            this.songPlayOrder.shuffle();
-        } else {
-            this._setDefaultSongPlayOrder();
-            this._updateSongIndexes();
-        }
+        this._clearAndRefreshSongQueue();
     }
 
-    _setDefaultSongPlayOrder = () => {
-        this.songPlayOrder.length = 0;
-        for (let i = 0; i < this.songNames.length; i++) {
-            this.songPlayOrder.push(i);
-        }
+    playNextSong = () => {
+        if (this._songQueue.isEmpty)
+            return;
+
+        this._songQueue.first.stop();
+
+        const currentSong = this._songQueue.popFirst();
+        if (!currentSong)
+            throw new Error("Failed to get current song from queue.");
+
+        currentSong.removeAsCurrentSong();
+        this._previousSongs.add(currentSong);
+        this._updatePreviousSongs();
+        this._updateSongQueue();
+        this.play();
     }
 
-    playSongByName = async (name) => {
-        const indexOfSong = this.songNames.indexOf(name);
-        if (indexOfSong === -1)
-            console.error(`Song "${name}" not found in songNames.`);
+    playPreviousSong = () => {
+        if (this._previousSongs.isEmpty) {
+            this._restartSong();
+            return;
+        }
 
-        const indexOfSongInPlayOrder = this.songPlayOrder.indexOf(indexOfSong);
-        if (indexOfSongInPlayOrder === -1)
-            console.error(`Song "${name}" not found in songPlayOrder.`);
+        this._songQueue.first.stop();
 
-        //TODO: If the new index is less than the current song order index, and shuffle is enabled, shuffle.
+        const previousSong = this._previousSongs.popLast();
+        if (!previousSong)
+            throw new Error("Failed to get previous song from queue.");
 
-        
-        if (this.songBeingPlayedName.value) {
-            if (this.songBeingPlayedName.value === name)
+        const currentSong = this._songQueue.first;
+        if (!currentSong)
+            throw new Error("No current song to play previous song after.");
+
+        currentSong.removeAsCurrentSong();
+        this._songQueue.addToFront(previousSong);
+        this._updatePreviousSongs();
+        this._songQueue.first.play();
+        this._updateSongQueue();
+    }
+
+    _restartSong = () => {
+        this._songQueue?.first.restart();
+    }
+
+    _playSong = (songArrayBuffer, offset, songDataRef) => {
+        this._stopSong();
+        this._songBeingPlayedArrayBuffer = songArrayBuffer;
+        this._songBeingPlayedBufferSource = Zon.audioContext.createBufferSource();
+        this._songBeingPlayedBufferSource.buffer = this._songBeingPlayedArrayBuffer;
+        this._songBeingPlayedBufferSource.connect(this._analyser).connect(Zon.audioContext.destination);
+        this._songBeingPlayedBufferSource.onended = () => {
+            if (this._paused.value)
                 return;
 
-            this.stopSong();
-        }
-
-        this._songOrderIndex = indexOfSongInPlayOrder;
-        this._updateSongIndexes();
-
-        // const decodedBuffer = await this._loadSongByName(name);
-        // this._storeNextSong(name, decodedBuffer);
+            this.playNextSong();
+        };
+        songDataRef._startTime = Zon.audioContext.currentTime - offset;
+        this._songBeingPlayedBufferSource.start(0, offset);
     }
 
-    playButtonPressed = () => {
-        if (this._paused.value) {
-            this.resumeSong();
-            return;
+    _stopSong = () => {
+        if (this._songBeingPlayedBufferSource) {
+            this._songBeingPlayedBufferSource.onended = null;
+            try {
+                this._songBeingPlayedBufferSource.stop();
+            } catch (e) {}
+            this._songBeingPlayedBufferSource.disconnect();
+            this._songBeingPlayedBufferSource = null;
+            this._songBeingPlayedArrayBuffer = null;
         }
-
-        if (this.songBeingPlayedArrayBuffer) {
-            this.pauseSong();
-            return;
-        }
-
-        this._tryPlayNextSong();
     }
 
     linkPauseButton = (pauseButton) => {
@@ -314,168 +498,55 @@ Zon.MusicManager = class MusicManager {
         });
     }
 
-    _playSong = (songArrayBuffer, offset = 0) => {
-        this.stopSong();
-        this.songBeingPlayedArrayBuffer = songArrayBuffer;
-        this.songBeingPlayedBufferSource = Zon.audioContext.createBufferSource();
-        this.songBeingPlayedBufferSource.buffer = this.songBeingPlayedArrayBuffer;
-        this.songBeingPlayedBufferSource.connect(this.analyser).connect(Zon.audioContext.destination);
-        this.songBeingPlayedBufferSource.onended = () => {
-            if (this._paused.value)
-                return;
+    playSongByName = async (name) => {
+        let songData = null;
+        for (let i = 0; i < this._allSongDatas.length; i++) {
+            const song = this._allSongDatas.get(i);
+            if (song.name.value === name) {
+                songData = song;
+                break;
+            }
+        }
 
-            this._tryPlayNextSong();
-        };
-        this._startTime = Zon.audioContext.currentTime - offset;
-        this.songBeingPlayedBufferSource.start(0, offset);
+        if (songData === null)
+            throw new Error(`Song with name "${name}" not found in song data.`);
+
+        this._clearQueueExceptCurrent();
+        this._songQueue.add(songData.getSongReference());
+        this.playNextSong();
     }
 
-    _tryPlayNextSong = () => {
-        const nextSongIndex = this._nextSongIndex.value;
-        if (nextSongIndex < 0 || nextSongIndex >= this.songNames.length) {
-            if (this.songNames.length !== 0)
-                throw new Error(`Next song index out of bounds: ${nextSongIndex}, but there is at least 1 song: ${this.songNames.length}`);
-
+    playButtonPressed = () => {
+        if (this._songQueue.isEmpty)
             return;
-        }
 
-        this._songOrderIndex = this._nextSongIndex.value;
-        if (this.nextSongArrayBuffer !== null) {
-            this._playSong(this.nextSongArrayBuffer);
+        if (this._paused.value) {
+            this.play();
         }
-        
-        this.nextSongArrayBuffer = null;
-        this._updateSongIndexes();
-    };
+        else {
+            this.pause();
+        }
+    }
 
-    pauseSong = () => {
+    pause = () => {
         if (this._paused.value)
             return;
 
-        if (this.songBeingPlayedBufferSource) {
-            try {
-                this._paused.value = true;
-                this._resumeOffset = Zon.audioContext.currentTime - this._startTime;
-                this.stopSong();
-            } catch (e) {
-                this._paused.value = false;
-                this._resumeOffset = 0;
-            }
-        }
+        this._songQueue.first.stop();
+        this._paused.value = true;
     }
 
-    resumeSong = () => {
-        if (this._paused.value) {
-            this._paused.value = false;
-            if (this.songBeingPlayedArrayBuffer)
-                this._playSong(this.songBeingPlayedArrayBuffer, this._resumeOffset);
+    play = () => {
+        if (this._songQueue.isEmpty)
+            return;
 
-            this._resumeOffset = 0;
-        }
+        this._paused.value = false;
+        this._songQueue.first.play();
     }
-
-    nextSong = () => {
-        this.stopSong();
-        this.resumeSong();
-        this._tryPlayNextSong();
-    }
-
-    deleteSong = async (name) => {
-        console.log(`Deleting song "${name}" from IndexedDB...`);
-        const db = await this.dbPromise;
-        const tx = db.transaction("songs", "readwrite");
-        const store = tx.objectStore("songs");
-        const request = store.delete(name);
-
-        await new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                const index = this.songNames.indexOf(name);
-                if (index === -1)
-                    return;
-
-                if (index < this.songNames.length - 1) {//If it's the last song, calling this.songNames.remove(name) will handle it correctly.
-                    for (let i = this.songPlayOrder.length - 1; i >= 0; i--) {
-                        if (this.songPlayOrder[i] > index) {
-                            this.songPlayOrder[i]--;
-                            if (i === this._songOrderIndex) {
-                                this._songIndex.value = this.songPlayOrder[i];
-                            }
-                        }
-                        else if (this.songPlayOrder[i] === index) {
-                            if (i === this._songOrderIndex) {
-                                this._tryPlayNextSong();
-                            }
-                            else if (i === this._nextSongIndex.value) {
-                                this._nextSongIndex.value = this.songPlayOrder[i + 1] ?? 0;
-                            }
-
-                            this.songPlayOrder.splice(i, 1);
-                        }
-                    }
-                }
-
-                if (this._songIndex.value === index)
-                    return reject(new Error(`Failed to switch song index after deletion: ${this._songIndex.value} === ${index}`));
-
-                this.songNames.remove(name);
-                console.log(`Deleted song "${name}" from IndexedDB`);
-                resolve();
-            };
-            request.onerror = () => {
-                console.error(`Failed to delete song "${name}":`, request.error);
-                reject(request.error);
-            };
-        });
-    }
-
-    deleteAllSongs = async () => {
-        console.log("Deleting all songs from IndexedDB...");
-        const db = await this.dbPromise;
-        const tx = db.transaction("songs", "readwrite");
-        const store = tx.objectStore("songs");
-        const request = store.clear();
-
-        await new Promise((resolve, reject) => {
-            request.onsuccess = () => {
-                this.songNames.clear();
-                resolve();
-            };
-            request.onerror = () => {
-                console.error("Failed to delete all songs:", request.error);
-                reject(request.error);
-            };
-        });
-    }
-
-    stopSong = (triggerOnChanged = true) => {
-        if (this.songBeingPlayedBufferSource) {
-            this.songBeingPlayedBufferSource.onended = null;
-            try {
-                this.songBeingPlayedBufferSource.stop();
-            } catch (e) {}
-            this.songBeingPlayedBufferSource.disconnect();
-            this.songBeingPlayedBufferSource = null;
-            this.songBeingPlayedArrayBuffer = null;
-            this._startTime = 0;
-        }
-        
-        this._songOrderIndex = -1;
-        this.nextSongArrayBuffer = null;
-        this.currentSongSmoothedAmplitude.value = 0;
-        if (triggerOnChanged) {
-            this._songIndex.value = -1;
-            this._nextSongIndex.value = -1;
-        }
-        else {
-            this._songIndex._value = -1;
-            this.songBeingPlayedName._value = "";
-        }
-    };
-
 
     preDraw() {
-        this.analyser.getByteTimeDomainData(this.dataArray);
-        const raw = this.dataArray[Math.floor(this.dataArray.length / 2)];
+        this._analyser.getByteTimeDomainData(this._dataArray);
+        const raw = this._dataArray[Math.floor(this._dataArray.length / 2)];
         const normalized = (raw - 128) / 128;
 
         const alpha = 0.2;

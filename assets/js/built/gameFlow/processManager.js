@@ -50,19 +50,19 @@ Zon.ProcessManager = class {
         if (!this.hasProcesses)
             return false;
 
-        if (this.loadProcesses.length > 0) {
+        if (!this.loadProcesses.isEmpty) {
             const moreToDo = this._doProcessesYieldTime(yieldTime, this.loadProcesses);
             if (moreToDo)
                 return true;
         }
 
-        if (this.saveProcesses.length > 0) {
+        if (!this.saveProcesses.isEmpty) {
             const moreToDo = this._doProcessesYieldTime(yieldTime, this.saveProcesses);
             if (moreToDo)
                 return true;
         }
 
-        if (this.processes.length > 0) {
+        if (!this.processes.isEmpty) {
             const moreToDo = this._doProcessesYieldTime(yieldTime, this.processes);
             if (moreToDo)
                 return true;
@@ -73,7 +73,7 @@ Zon.ProcessManager = class {
 
     _doProcessesImmediate = (processes) => {
         let process = processes.first;
-        while (processes.length > 0) {
+        while (!processes.isEmpty) {
             const result = process.next(Zon.ProcessCommandID.STOP_YIELDING);
             if (result.done) {
                 processes.next();
@@ -86,7 +86,7 @@ Zon.ProcessManager = class {
     //Returns true if there are still processes to run.
     _doProcessesYieldTime = (yieldTime, processes) => {
         let process = processes.first;
-        while (processes.length > 0 && performance.now() < yieldTime) {
+        while (!processes.isEmpty && performance.now() < yieldTime) {
             const result = process.next(Zon.ProcessCommandID.NONE);
             if (result.done) {
                 processes.next();
@@ -95,12 +95,12 @@ Zon.ProcessManager = class {
             }
         }
 
-        return processes.length > 0;
+        return !processes.isEmpty;
     }
     
     //Not used
     // abortAllLoadProcesses = () => {
-    //     while (this.loadProcesses.length > 0) {
+    //     while (!this.loadProcesses.isEmpty) {
     //         const process = this.loadProcesses.first;
     //         process.next(Zon.ProcessCommandID.ABORT);
     //         process.return();

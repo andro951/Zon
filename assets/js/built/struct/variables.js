@@ -343,7 +343,7 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
                 if (!current)
                     break;
 
-                if (current instanceof Variable.Base)
+                if (current.onChangedAction)
                     break;
             }
 
@@ -443,7 +443,7 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         return null;
     }
     tryExtractVariablesFromObject(current) {
-        if (current instanceof Variable.Base) {
+        if (current.onChangedAction) {
             if (Variable.Dependent.debuggExtractVariables) console.log(`Adding onChangedAction to object: ${current}`);
             //current.onChangedAction.add(this.onChanged);
             this.dependentActions.add(current.onChangedAction);

@@ -64,7 +64,7 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
 
             const pauseButton = this._addButton('pauseButton', Zon.musicManager.playButtonPressed, Zon.UI.MusicUIState.MusicControls.pauseButtonDefaultIcon);
             Zon.musicManager.linkPauseButton(pauseButton);
-            this._addButton('nextSongButton', Zon.musicManager.nextSong, 'NextIcon');
+            this._addButton('nextSongButton', Zon.musicManager.playNextSong, 'NextIcon');
 
             //const skipButton
         }
@@ -94,7 +94,7 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             // console.log(`Zon.UI.musicUIState.fileInput.bottom: ${Zon.UI.musicUIState.fileInput.bottom}`);
             // console.log(`top: ${this.top}`);
 
-            Zon.musicManager.songNames.onChangedAction.add(this.addAllButtons);
+            Zon.musicManager._allSongDatas.onChangedAction.add(this.addAllButtons);
             this.addAllButtons();
         }
         _addButton(songName) {
@@ -109,11 +109,11 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             });
         }
         addAllButtons() {
-            console.log(`Adding all song buttons:`, Zon.musicManager.songNames.length);
+            //console.log(`Adding all song buttons:`, Zon.musicManager._allSongDatas.length);
             this.removeAllChildren();
-            const songNames = Zon.musicManager.songNames;
-            for (const songName of songNames) {
-                this._addButton(songName);
+            const songNames = Zon.musicManager._allSongDatas;
+            for (const songData of songNames) {
+                this._addButton(songData.name.value);
             }
         }
     }
