@@ -16,12 +16,18 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                 d.element.style.borderRadius = `$8px`;
                 d.element.style.fontWeight = `bold`;
                 d.element.textContent = `Select Stage`;
+                d.element.style.display = 'flex';
+                d.element.style.justifyContent = 'center';
+                d.element.style.alignItems = 'center';
+                d.element.style.whiteSpace = 'nowrap';
+                d.element.style.pointerEvents = 'none';
+                d.element.style.userSelect = 'none';
             },
             setupFunc: (d) => {
-                d.replaceLeft(() => Zon.UI.stageUIState.width * 0.3);
-                d.replaceTop(() => Zon.UI.stageUIState.height * 0.05);
+                d.replaceLeft(() => Zon.UI.stageUIState.width * 0.1);
+                d.replaceTop(() => Zon.UI.stageUIState.height * 0.02);
                 d.replaceWidth(() => Zon.UI.stageUIState.width - d.left * 2, { d });
-                d.replaceHeight(() => Zon.UI.stageUIState.height * 0.1);
+                d.replaceHeight(() => Zon.UI.stageUIState.height * 0.05);
             }
         });
     }

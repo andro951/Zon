@@ -14,6 +14,8 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.element.style.display = "flex";
         this.element.style.alignItems = "center";
         this.element.style.justifyContent = "center";
+        this.element.style.pointerEvents = 'none';
+        this.element.style.userSelect = 'none';
         this.element.setBorder(1, "black");
 
         // Fill element
@@ -25,6 +27,8 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.fill.style.backgroundColor = Struct.Color.fromUInt(0x52E36AFF).cssString;
         this.fill.style.zIndex = "0";
         this.fill.style.width = "0%";
+        this.fill.style.pointerEvents = 'none';
+        this.fill.style.userSelect = 'none';
         this.element.appendChild(this.fill);
 
         // Text overlay
@@ -34,6 +38,8 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.textElement.textContent = "Level 1";
         this.textElement.style.whiteSpace = 'nowrap';
         this.textElement.style.display = 'flex';
+        this.textElement.style.pointerEvents = 'none';
+        this.textElement.style.userSelect = 'none';
         this.element.appendChild(this.textElement);
     }
     postConstructor() {

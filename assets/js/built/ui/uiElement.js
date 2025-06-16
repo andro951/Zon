@@ -82,8 +82,6 @@ Zon.UI.UIElementBase = class UIElementBase {
             Variable.Dependent.resumeGetWhenNotLinkedWarning(this);
         }
 
-        this.addChildComponents();
-
         return this;
     }
     postConstructor() {

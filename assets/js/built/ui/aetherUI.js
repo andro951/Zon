@@ -12,6 +12,8 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         this.element.style.lineHeight = "100%";
         this.element.style.display = "flex";
         this.element.style.alignItems = "center";
+        this.element.style.pointerEvents = 'none';
+        this.element.style.userSelect = 'none';
         //this.element.style.justifyContent = "right";
         this.element.setBorder(1, "black");
 
@@ -19,6 +21,8 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         this.label.style.position = "relative";
         this.label.style.zIndex = "1";
         this.label.textContent = "0";
+        this.label.style.pointerEvents = 'none';
+        this.label.style.userSelect = 'none';
         this.element.appendChild(this.label);
     }
     postConstructor() {
