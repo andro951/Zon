@@ -13,7 +13,7 @@ Zon.TimeController = class {
         this.gameStarted = false;
         this.paused = false;
         this.targetFPS = new Variable.Value(60, `TargetFPS`);
-        this.targetTimePerFrameMilliseconds = new Variable.Dependent(() => 1000 / this.targetFPS.value, `TargetTimePerFrameMilliseconds`, this);
+        this.targetTimePerFrameMilliseconds = new Variable.Dependent(() => 1000 / this.targetFPS.value, `TargetTimePerFrameMilliseconds`, { this: this });
     }
 
     postLoadSetup = () => {

@@ -15,7 +15,7 @@ Zon.MusicManager = class MusicManager {
 
         this.songNames = new Set();
 
-        this.totalSongWeight = new Variable.Dependent(() => this._allSongDatas.reduce((sum, songData) => sum + songData.weight.value, 0), `TotalSongWeight`, this);
+        this.totalSongWeight = new Variable.Dependent(() => this._allSongDatas.reduce((sum, songData) => sum + songData.weight.value, 0), `TotalSongWeight`, { this: this });
         this.totalSongWeight.onChangedAction.add(this._onTotalSongWeightChanged);
 
         this._songBeingPlayedBufferSource = null;
@@ -29,7 +29,7 @@ Zon.MusicManager = class MusicManager {
         this.songBeingPlayedName = new Variable.Value(() => "", `SongBeingPlayed`);
 
         this._paused = new Variable.Value(true, `MusicPaused`);
-        this._displayPlayButton = new Variable.Dependent(() => this._paused.value, `DisplayPlayButton`, this);
+        this._displayPlayButton = new Variable.Dependent(() => this._paused.value, `DisplayPlayButton`, { this: this });
         this._allSongDatas.onChangedAction.add(this._onSongDatasChanged);
         this._dbPromise = this._openDB();
         Zon.Setup.postLoadSetupActions.add(this.postLoadSetup);

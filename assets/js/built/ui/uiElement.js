@@ -34,8 +34,8 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.rect = Struct.DynamicRectangle.dependent(this.element.id, this);
         this._leftOffset = new Variable.Value(0, `${this.element.id}LeftOffset`);
         this._topOffset = new Variable.Value(0, `${this.element.id}TopOffset`);
-        this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, this, true);
-        this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, this, true);
+        this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, { this: this }, true);
+        this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, { this: this }, true);
         this.rect._left.replaceEquation(() => {
             return this._leftEquationVar.value + this._leftOffset.value;
         });
@@ -82,6 +82,8 @@ Zon.UI.UIElementBase = class UIElementBase {
             Variable.Dependent.resumeGetWhenNotLinkedWarning(this);
         }
 
+        this.addChildComponents();
+
         return this;
     }
     postConstructor() {
@@ -110,7 +112,7 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.element.style.display = "none";
         const shownName = `${this.element.id}Shown`;
         if (this.parent && this.inheritShown && this.parent !== Zon.device && this.parent !== window.document.body) {
-            this.shown = new Variable.Dependent(() => this.parent.shown.value, shownName, this);
+            this.shown = new Variable.Dependent(() => this.parent.shown.value, shownName, { this: this });
         }
         else {
             this.shown = new Variable.Value(false, shownName);
@@ -158,7 +160,6 @@ Zon.UI.UIElementBase = class UIElementBase {
         //fontSize setter
     }
     postSetup() {
-
         //Order - super first
 
         //Usage:
@@ -176,7 +177,7 @@ Zon.UI.UIElementBase = class UIElementBase {
         //Not ready:
         //(none)
 
-        this._computedStyle = undefined;
+        delete this._computedStyle;
         this._updateAllValues();
     }
 
@@ -257,17 +258,17 @@ Zon.UI.UIElementBase = class UIElementBase {
             //console.log(`UIElementBase _updateAllValues: ${this.element.id} - left: ${this.left}, top: ${this.top}, width: ${this.width}, height: ${this.height}`);
         }
     }
-    replaceTop(func) {
-        this._topEquationVar.replaceEquation(func);
+    replaceTop(func, references = {}) {
+        this._topEquationVar.replaceEquation(func, references);
     }
-    replaceLeft(func) {
-        this._leftEquationVar.replaceEquation(func);
+    replaceLeft(func, references = {}) {
+        this._leftEquationVar.replaceEquation(func, references);
     }
-    replaceWidth(func) {
-        this.rect._width.replaceEquation(func);
+    replaceWidth(func, references = {}) {
+        this.rect._width.replaceEquation(func, references);
     }
-    replaceHeight(func) {
-        this.rect._height.replaceEquation(func);
+    replaceHeight(func, references = {}) {
+        this.rect._height.replaceEquation(func, references);
     }
 
     //#endregion Rect
@@ -519,7 +520,6 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             });
         }
         else {
-            //Use this.fontSize.replaceEuquation() with Variable.DependentFunction
             this.textHeightPadding = new Variable.Value(0.1, `${this.element.id}TextHeightPadding`);
             this.textWidthPadding = new Variable.Value(0.05, `${this.element.id}TextWidthPadding`);
 
@@ -590,6 +590,31 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         const maxWidth = this.width * (1 - this.textWidthPadding.value * 2);
         const scale = Math.min(1, maxWidth / textWidth);
         textElement.style.fontSize = `${this.fontSize.value * scale}px`;
+    }
+}
+
+Zon.UI.UIElementDiv2 = class UIElementDiv2 extends Zon.UI.UIElementDiv {
+    constructor(divId, zIndex = 0, parent = Zon.device, { constructorFunc, postConstructorFunc, setupFunc, postSetupFunc } = {}) {
+        super(divId, zIndex, parent);
+        constructorFunc?.(this);
+        this.funcs = {
+            postConstructorFunc,
+            setupFunc,
+            postSetupFunc
+        };
+    }
+    postConstructor() {
+        super.postConstructor();
+        this.funcs.postConstructorFunc?.(this);
+    }
+    setup() {
+        super.setup();
+        this.funcs.setupFunc?.(this);
+    }
+    postSetup() {
+        super.postSetup();
+        this.funcs.postSetupFunc?.(this);
+        delete this.funcs;
     }
 }
 

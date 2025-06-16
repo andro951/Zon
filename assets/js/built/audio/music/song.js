@@ -5,9 +5,9 @@ Zon.SongData = class SongData {
     constructor(name, weight) {
         this.name = new Variable.Value(name, `${name}_Name`);
         this._weightExpMult = new Variable.Value(weight, `${name}_WeightExpMult`);
-        this.weight = new Variable.Dependent(() => Math.pow(2, this._weightExpMult.value * Zon.SongData._expBase), `${name}_Weight`, this);
+        this.weight = new Variable.Dependent(() => Math.pow(2, this._weightExpMult.value * Zon.SongData._expBase), `${name}_Weight`, { this: this });
         this.weight.onChangedAction.add(() => this.totalSongWeight.onChanged());
-        //this._playChance = new Variable.Dependent(() => this.weight.value / Zon.musicManager.totalSongWeight.value, `${name}_PlayChance`, this, false);//Not linked
+        //this._playChance = new Variable.Dependent(() => this.weight.value / Zon.musicManager.totalSongWeight.value, `${name}_PlayChance`, { this: this }, false);//Not linked
 
         this._playChance = -1;
         this._lowerBound = -1;

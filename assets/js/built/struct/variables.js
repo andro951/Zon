@@ -213,29 +213,34 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
 }
 
 Variable.Dependent = class DependentVariable extends Variable.Base {
-    constructor(getValue, name, thisObj = undefined, linkDependentActions = true) {
+    constructor(getValue, name, references = {}, linkDependentActions = true) {
         super(name);
         if (typeof getValue !== 'function' && !(getValue instanceof Variable.DependentFunction))
             throw new Error(`getValue must be a function or Variable.DependentFunction, got ${typeof getValue}: ${getValue}`);
 
         this.dependentActions = new Set();
         this._dependentActionsLinked = linkDependentActions;
-        this._thisObj = thisObj;
-        this.replaceEquation(getValue, thisObj);
+        this._references = references;
+        this.replaceEquation(getValue, references);
     }
     static empty = (name, thisObj = undefined, linkDependentActions = false) => {
         return new Variable.Dependent(Variable.Dependent.defaultEquation, name, thisObj, linkDependentActions);
     }
     static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
-    replaceEquation(newGetValue, thisObj = undefined) {
+    replaceEquation(newGetValue, references = {}) {
         if (typeof newGetValue !== 'function' && !(newGetValue instanceof Variable.DependentFunction))
             throw new Error(`newGetValue must be a function or Variable.DependentFunction, got ${typeof newGetValue}: ${newGetValue}`);
 
         if (zonDebug) {
             //console.log(`Replacing equation of DependentVariable with: ${newGetValue}, thisObj: ${thisObj}, thisObj name: ${thisObj ? thisObj.constructor.name : 'undefined'}`);
         }
-        
+
         const isDependentFunction = newGetValue instanceof Variable.DependentFunction;
+        this._references = { ...this._references, ...references };
+        if (isDependentFunction) {
+            this._references = { ...this._references, ...newGetValue.references };
+        }
+
         this.getValue = isDependentFunction ? newGetValue.getValue : newGetValue;
         this.needsRecalculate = true;
         const linked = this._dependentActionsLinked;
@@ -244,24 +249,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
 
         if (newGetValue === Variable.Dependent.defaultEquation)
             return;
-
+        
         this.dependentActions.clear();
-        if (isDependentFunction) {
-            const references = newGetValue.references;
-            const referenceThis = thisObj ?? this._thisObj;
-            if (referenceThis)
-                references.this = referenceThis;
-
-            this.extractVariables(newGetValue.getValue, references);
-        }
-        else {
-            const references = {};
-            const referenceThis = thisObj ?? this._thisObj;
-            if (referenceThis)
-                references.this = referenceThis;
-
-            this.extractVariables(newGetValue, references);
-        }
+        this.extractVariables(this.getValue, this._references);
         this._dependentActionsLinked = false;
         if (linked)
             this.linkDependentActions();
@@ -470,7 +460,7 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
             }
             else if (zonDebug) {
                 if (Variable.Dependent._pausedGetWhenNotLinkedWarning.size === 0 && Zon.Setup.postLinkAndFinalizeUiSetupActions === null)//Indicates UIs are finished setting up.
-                    console.warn(`DependentVariable get value() when _dependentActionsLinked is false.  This shouldn't happen frequently.  name: ${this._thisObj ? this._thisObj.constructor.name : 'undefined'}, this.getValue: ${this.getValue}, this._value: ${this._value}`);
+                    console.warn(`DependentVariable get value() when _dependentActionsLinked is false.  This shouldn't happen frequently.  name: ${this._references.this ? this._references.this.constructor.name : 'undefined'}, this.getValue: ${this.getValue}, this._value: ${this._value}`);
             }
         }
 

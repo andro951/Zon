@@ -12,19 +12,19 @@ Struct.ProgressLevelTracker_Sum = class ProgressLevelTracker_Sum extends Struct.
 
         this.totalProgressAtLevel = new Variable.Dependent(() => {
             return this.levelToProgress(this.level.value);
-        }, `ProgressAt${levelName}`, this);
+        }, `ProgressAt${levelName}`, { this: this });
         this.totalProgressAtNextLevel = new Variable.Dependent(() => {
             return this.levelToProgress(this.level.value + 1);
-        }, `ProgressAtNext${levelName}`, this);
+        }, `ProgressAtNext${levelName}`, { this: this });
         this.progressNeededFromThisLevelToNextLevel = new Variable.Dependent(() => {
             return this.totalProgressAtNextLevel.value.subtract(this.totalProgressAtLevel.value);
-        }, `ProgressNeededFromThisLevelToNext${levelName}`, this);
+        }, `ProgressNeededFromThisLevelToNext${levelName}`, { this: this });
         this.logProgressToNextLevel = new Variable.Dependent(() => {
             return this.totalProgress.value.logarithmicProgress(this.totalProgressAtLevel.value, this.totalProgressAtNextLevel.value);
-        }, `LogarithmicProgressToNext${levelName}`, this);
+        }, `LogarithmicProgressToNext${levelName}`, { this: this });
         this.progressToNextLevel = new Variable.Dependent(() => {
             return this.totalProgress.value.linearProgress(this.totalProgressAtLevel.value, this.totalProgressAtNextLevel.value);
-        }, `ProgressToNext${levelName}`, this);
+        }, `ProgressToNext${levelName}`, { this: this });
     }
     updateLevelFromProgress = () => {
         if (this.totalProgress.value.greaterThanOrEqual(this.totalProgressAtNextLevel.value)) {

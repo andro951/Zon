@@ -159,7 +159,7 @@ Zon.PlayerInventory = class {
     constructAetherNodeVariables = () => {
         this.aetherNodeTimer = new Variable.Value(0, `AetherNodeTimer`);
         this.aetherNodeInterval = new Variable.Value(6000, `AetherNodeInterval`);
-        this.aetherNodeProductionPercent = new Variable.Dependent(() => this.aetherNodeTimer.value / this.aetherNodeInterval.value, `AetherNodeProductionPercent`, this);
+        this.aetherNodeProductionPercent = new Variable.Dependent(() => this.aetherNodeTimer.value / this.aetherNodeInterval.value, `AetherNodeProductionPercent`, { this: this });
     }
 
     constructAetherNodeProductionRate = () => {
@@ -168,7 +168,7 @@ Zon.PlayerInventory = class {
             Zon.AetherBonusManager.aetherBonus.value * 
             Zon.AetherNodePower.totalMultiplier.value *
             Zon.CreationPower.totalMultiplier.value
-        , `AetherNodeProductionRate`, this);
+        , `AetherNodeProductionRate`, { this: this });
     }
 
     //#endregion Aether Nodes
