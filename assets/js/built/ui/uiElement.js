@@ -4,7 +4,7 @@ Zon.UI.UIElementBase = class UIElementBase {
 
     //#region Constructors
 
-    constructor(element, zIndex, parent = Zon.device, inheritShown = true) {
+    constructor(element, zIndex, parent = Zon.device, { inheritShown = true, dependentRect = true } = {}) {
         if (new.target === Zon.UI.UIElementBase)
             throw new TypeError("Cannot construct UIElementBase instances directly");
         
@@ -25,33 +25,42 @@ Zon.UI.UIElementBase = class UIElementBase {
             Variable.Dependent.pauseGetWhenNotLinkedWarning(this);
         }
 
+        Variable.Base.pauseObj(this);
+
         this.parent = parent;
         this.inheritShown = inheritShown;
         this.element = element;
         this.element.style.zIndex = zIndex.toString();
         this.element.style.display = "none";
         this.element.style.position = "absolute";
-        this.rect = Struct.DynamicRectangle.dependent(this.element.id, this);
-        this._leftOffset = new Variable.Value(0, `${this.element.id}LeftOffset`);
-        this._topOffset = new Variable.Value(0, `${this.element.id}TopOffset`);
-        this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, { this: this }, true);
-        this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, { this: this }, true);
-        this.rect._left.replaceEquation(() => {
-            return this._leftEquationVar.value + this._leftOffset.value;
-        });
-        this.rect._left.linkDependentActions();
-        this.rect._top.replaceEquation(() => {
-            return this._topEquationVar.value + this._topOffset.value;
-        });
-        this.rect._top.linkDependentActions();
-
+        this.element.style.userSelect = 'none';
+        if (dependentRect) {
+            this.rect = Struct.DynamicRectangle.dependent(this.element.id, this);
+            this._leftOffset = new Variable.Value(0, `${this.element.id}LeftOffset`);
+            this._topOffset = new Variable.Value(0, `${this.element.id}TopOffset`);
+            this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, this , false);
+            this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, this, false);
+            this.rect._left.replaceEquation(() => {
+                return this._leftEquationVar.value + this._leftOffset.value;
+            });
+            this.rect._left.linkDependentActions();
+            this.rect._top.replaceEquation(() => {
+                return this._topEquationVar.value + this._topOffset.value;
+            });
+            this.rect._top.linkDependentActions();
+            this.dependentVariables = [
+                this._leftEquationVar,
+                this._topEquationVar,
+                this.rect._width,
+                this.rect._height,
+            ];
+        }
+        else {
+            this.rect = Struct.DynamicRectangle.empty(this.element.id, this);
+            this.dependentVariables = [];
+        }
+        
         (parent instanceof Zon.UI.UIElementBase ? parent.element : parent).appendChild(this.element);
-        this.dependentVariables = [
-            this._leftEquationVar,
-            this._topEquationVar,
-            this.rect._width,
-            this.rect._height,
-        ];
     }
     static create(...args) {
         return new this(...args).callAllPostConstructorMethods();
@@ -74,8 +83,6 @@ Zon.UI.UIElementBase = class UIElementBase {
         }
         else {
             this.postSetup();
-            if (this.shown.value)
-                this._updateShown();
         }
 
         if (zonDebug) {
@@ -111,6 +118,9 @@ Zon.UI.UIElementBase = class UIElementBase {
         const shownName = `${this.element.id}Shown`;
         if (this.parent && this.inheritShown && this.parent !== Zon.device && this.parent !== window.document.body) {
             this.shown = new Variable.Dependent(() => this.parent.shown.value, shownName, { this: this });
+            //All panels start off hidden.  Manually setting false here prevent's _updateShown being 
+            // called when it would change from undefined to false.
+            this.shown._value = false;
         }
         else {
             this.shown = new Variable.Value(false, shownName);
@@ -123,21 +133,43 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.position = new Variable.Value(this.element.style.position, `${this.element.id}Position`);
         this.position.onChangedAction.add(() => this.element.style.position = this.position.value);
 
-        this.backgroundColor = new Variable.ColorVar(`${this.element.id}BackGroundColor`, this._computedStyle.backgroundColor);
+        this.backgroundColor = new Variable.ColorVar(this._computedStyle.backgroundColor, `${this.element.id}BackGroundColor`);
         this.backgroundColor.onChangedAction.add(() => this.element.style.backgroundColor = this.backgroundColor.value.cssString);
         if (!this.element.style.backgroundColor)
             this.backgroundColor.onChangedAction.call();
 
-        this.border = new Variable.Value(this.element.style.border, `${this.element.id}Border`);
-        this.border.onChangedAction.add(() => this.element.style.border = this.border.value);
+        if (this.element.style.border)
+            throw new Error(`Don't use style.border directly.  Use borderWidth, borderColor, and borderStyle instead.`);
 
-        this.borderRadius = new Variable.Value(parseFloat(this.element.style.borderRadius), `${this.element.id}BorderRadius`);
+        // this.border = new Variable.Value(this.element.style.border, `${this.element.id}Border`);
+        // this.border.onChangedAction.add(() => {
+            //Would need to dynamically find all 3 then update them.  Not worth it to me right now.
+        //     this.element.style.border = this.border.value;
+        // });
+
+        this.borderWidth = new Variable.Value(this.getElementParameterNumber(this.element.style.borderWidth), `${this.element.id}BorderWidth`);
+        this.borderWidth.onChangedAction.add(() => this.element.style.borderWidth = `${this.borderWidth.value}px`);
+
+        this.borderColor = new Variable.ColorVar(this._computedStyle.borderColor, `${this.element.id}BorderColor`);
+        this.borderColor.onChangedAction.add(() => this.element.style.borderColor = this.borderColor.value.cssString);
+
+        this.borderStyle = new Variable.Value(this.element.style.borderStyle, `${this.element.id}BorderStyle`);
+        this.borderStyle.onChangedAction.add(() => this.element.style.borderStyle = this.borderStyle.value);
+
+        this.borderRadius = new Variable.Value(this.getElementParameterNumber(this.element.style.borderRadius), `${this.element.id}BorderRadius`);
         this.borderRadius.onChangedAction.add(() => this.element.style.borderRadius = `${this.borderRadius.value}px`);
 
         this.rect._left.onChangedAction.add(this._updateLeft);
         this.rect._top.onChangedAction.add(this._updateTop);
         this.rect._width.onChangedAction.add(this._updateWidth);
         this.rect._height.onChangedAction.add(this._updateHeight);
+    }
+    getElementParameterNumber(string) {
+        let value = parseFloat(string);
+        if (isNaN(value) || !value)
+            return 0;
+
+        return value;
     }
     setup() {
         //Here to make sure super.setup() is always a valid call in children setup() methods.
@@ -177,6 +209,7 @@ Zon.UI.UIElementBase = class UIElementBase {
 
         delete this._computedStyle;
         this._updateAllValues();
+        Variable.Base.resumeObj(this);
     }
 
     //#endregion Constructors
@@ -242,10 +275,10 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.element.style.left = `${this.left}px`;
     }
     _updateWidth() {
-        this.element.style.width = `${this.width}px`;
+        this.element.style.width = `${this.width - this.borderWidth.value * 2}px`;
     }
     _updateHeight() {
-        this.element.style.height = `${this.height}px`;
+        this.element.style.height = `${this.height - this.borderWidth.value * 2}px`;
     }
     _updateAllValues() {
         this._updateWidth();
@@ -410,6 +443,26 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.children = Variable.createArray();
         this.isColumn = false;//!isColumn means isRow.
     }
+    addChild(childClass, ...args) {
+        const lastChild = this.children?.at(-1);
+        const applyDefaultLeftOrTop = (d) => {
+            if (this.isColumn) {
+                //Column
+                const topFunc = lastChild ? new Variable.DependentFunction(() => lastChild.bottom + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
+                d.replaceTop(topFunc);
+            } else {
+                //Row
+                const rightFunc = lastChild ? new Variable.DependentFunction(() => lastChild.right + this.childrenPadding.value, { lastChild }) : () => this.childrenPadding.value;
+                d.replaceRight(rightFunc);
+            }
+        }
+        const child = childClass.create(this, lastChild, this.childrenPadding, applyDefaultLeftOrTop, ...args);
+        if (!child || !child.element)
+            throw new Error(`UIElementBase.addChild: childFunc did not return a valid child.  Make sure to return the child from the childFunc.`);
+
+        this.children.push(child);
+        return child;
+    }
     addIconButton(buttonName, onClick, iconName, options = {}) {
         if (!this.children)
             throw new Error(`UIElementBase.addIconButton: this.children is undefined.  Call makeScrollableColumn() or makeScrollableRow() first.`);
@@ -460,10 +513,10 @@ Zon.UI.UIElementBase = class UIElementBase {
 }
 
 Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
-    constructor(canvasId, width = 300, height = 150, zIndex = 0, parent = Zon.device) {
+    constructor(canvasId, width = 300, height = 150, zIndex = 0, parent = Zon.device, { inheritShown = true, dependentRect = true } = {}) {
         const newCanvas = document.createElement("canvas");
         newCanvas.id = canvasId;
-        super(newCanvas, zIndex, parent);
+        super(newCanvas, zIndex, parent, { inheritShown, dependentRect });
         this.element.width = width;
         this.element.height = height;
         this.ctx = this.element.getContext('2d');
@@ -483,10 +536,10 @@ Zon.UI.UIElementCanvas = class UIElementCanvas extends Zon.UI.UIElementBase {
 }
 
 Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
-    constructor(divId, zIndex = 0, parent = Zon.device) {
+    constructor(divId, zIndex = 0, parent = Zon.device, { inheritShown = true, dependentRect = true } = {}) {
         const newDiv = document.createElement("div");
         newDiv.id = divId;
-        super(newDiv, zIndex, parent);
+        super(newDiv, zIndex, parent, { inheritShown, dependentRect });
     }
     postConstructor() {
         super.postConstructor();
@@ -518,10 +571,10 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             });
         }
         else {
-            this.textHeightPadding = new Variable.Value(0.1, `${this.element.id}TextHeightPadding`);
-            this.textWidthPadding = new Variable.Value(0.05, `${this.element.id}TextWidthPadding`);
+            this.textHeightPadding = new Variable.Value(0.05, `${this.element.id}TextHeightPadding`);
+            this.textWidthPadding = new Variable.Value(0.02, `${this.element.id}TextWidthPadding`);
 
-            this.fontSize = new Variable.Dependent(() => this.height * (1 - this.textHeightPadding.value * 2), fontSizeName, this);
+            this.fontSize = new Variable.Dependent(() => this.height * (1 - this.textHeightPadding.value * 2), fontSizeName, { this: this});
             this.fontSize.onChangedAction.add(this._fitText);
             this._width.onChangedAction.add(this._fitText);
 
@@ -531,7 +584,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             });
         }
 
-        this.textColor = new Variable.ColorVar(`${this.element.id}TextColor`, this._computedStyle.color);
+        this.textColor = new Variable.ColorVar(this._computedStyle.color, `${this.element.id}TextColor`);
         this.textColor.onChangedAction.add(() => this.element.style.color = this.textColor.value.cssString);
         if (!this.element.style.color)
             this.textColor.onChangedAction.call();
@@ -587,13 +640,13 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
 
         const maxWidth = this.width * (1 - this.textWidthPadding.value * 2);
         const scale = Math.min(1, maxWidth / textWidth);
-        textElement.style.fontSize = `${this.fontSize.value * scale}px`;
+        textElement.style.fontSize = `${this.fontSize.value * scale - this.borderWidth.value * 2}px`;
     }
 }
 
 Zon.UI.UIElementDiv2 = class UIElementDiv2 extends Zon.UI.UIElementDiv {
-    constructor(divId, zIndex = 0, parent = Zon.device, { constructorFunc, postConstructorFunc, setupFunc, postSetupFunc } = {}) {
-        super(divId, zIndex, parent);
+    constructor(divId, zIndex = 0, parent = Zon.device, { constructorFunc, postConstructorFunc, setupFunc, postSetupFunc, inheritShown = true, dependentRect = true } = {}) {
+        super(divId, zIndex, parent, { inheritShown, dependentRect });
         constructorFunc?.(this);
         this.funcs = {
             postConstructorFunc,
@@ -622,6 +675,7 @@ Zon.UI.UIElementZID = {
     MENU: 2,
     SIDE_BAR: 3,
     CLOSE_BUTTON_MENU: 4,
+    POPUP: 5,
 };
 Zon.UI.UIElementZIDNames = [];
 Enum.createEnum(Zon.UI.UIElementZID, Zon.UI.UIElementZIDNames, false);

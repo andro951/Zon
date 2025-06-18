@@ -25,10 +25,10 @@ Struct.DynamicRectangle = class {
             throw new Error("Name cannot be null or undefined for Struct.DynamicRectangle.dependent");
 
         return new Struct.DynamicRectangle(
-            Variable.Dependent.empty(`${name}Left`, { this: thisObj }, linkDependentActions),
-            Variable.Dependent.empty(`${name}Top`, { this: thisObj }, linkDependentActions),
-            Variable.Dependent.empty(`${name}Width`, { this: thisObj }, linkDependentActions),
-            Variable.Dependent.empty(`${name}Height`, { this: thisObj }, linkDependentActions),
+            Variable.Dependent.empty(`${name}Left`, thisObj, linkDependentActions),
+            Variable.Dependent.empty(`${name}Top`, thisObj, linkDependentActions),
+            Variable.Dependent.empty(`${name}Width`, thisObj, linkDependentActions),
+            Variable.Dependent.empty(`${name}Height`, thisObj, linkDependentActions),
             name
         );
     }

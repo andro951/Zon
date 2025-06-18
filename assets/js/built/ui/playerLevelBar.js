@@ -5,7 +5,9 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         super('playerLevelBar', Zon.UI.UIElementZID.MAIN_UI, parent);
         // Style outer container
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x060606FF).cssString;
-        this.element.style.border = "2px solid #888";
+        this.element.style.bordeerWidth = "2px";
+        this.element.style.borderStyle = "solid";
+        this.element.style.borderColor = `#888`;
         this.element.style.overflow = "hidden";
         this.element.style.color = "white";
         this.element.style.fontFamily = "Bruno Ace SC";
@@ -15,7 +17,6 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.element.style.alignItems = "center";
         this.element.style.justifyContent = "center";
         this.element.style.pointerEvents = 'none';
-        this.element.style.userSelect = 'none';
         this.element.setBorder(1, "black");
 
         // Fill element
@@ -27,8 +28,6 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.fill.style.backgroundColor = Struct.Color.fromUInt(0x52E36AFF).cssString;
         this.fill.style.zIndex = "0";
         this.fill.style.width = "0%";
-        this.fill.style.pointerEvents = 'none';
-        this.fill.style.userSelect = 'none';
         this.element.appendChild(this.fill);
 
         // Text overlay
@@ -38,8 +37,6 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         this.textElement.textContent = "Level 1";
         this.textElement.style.whiteSpace = 'nowrap';
         this.textElement.style.display = 'flex';
-        this.textElement.style.pointerEvents = 'none';
-        this.textElement.style.userSelect = 'none';
         this.element.appendChild(this.textElement);
     }
     postConstructor() {

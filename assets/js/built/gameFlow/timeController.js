@@ -66,6 +66,10 @@ Zon.TimeController = class {
         this.paused = false;
         Zon.GameManager.onResume();
     }
+
+    onSwitchStage = () => {
+        
+    }
 }
 
 Zon.timeController = new Zon.TimeController();

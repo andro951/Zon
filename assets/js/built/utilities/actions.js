@@ -36,7 +36,12 @@ Actions.Action = class {
     }
 
     callAndClear(...args) {
-        this.call(...args);
-        this.clear();
+        while (this.callbacks.size > 0) {
+            const callbacks = this.callbacks;
+            this.callbacks = new Set();
+            for (const callback of callbacks) {
+                callback(...args);
+            }
+        }
     }
 }

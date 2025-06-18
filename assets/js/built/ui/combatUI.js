@@ -54,7 +54,6 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         // panel.style.width = '200px';
         // panel.style.height = '150px';
         // panel.style.backgroundColor = 'rgba(30, 30, 30, 1)';
-        // panel.style.border = '2px solid white';
         // panel.style.borderRadius = '8px';
         // document.body.appendChild(panel);
         

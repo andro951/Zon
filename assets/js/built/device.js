@@ -3,14 +3,13 @@
 Zon.Device = class extends Zon.UI.UIElementDiv {
     constructor() {
         //this.isMobile = /Mobi|Android/i.test(navigator.userAgent);
-        super('device', 0, window.document.body);
+        super('device', 0, window.document.body, { dependentRect: false });
         this.dependentVariables = [];
         this.element.style.overflow = 'hidden';
         this.DEFAULT_HEIGHT_RATIO = 15;
         this.DEFAULT_WIDTH_RATIO = 9;
         this.heightRatio = this.DEFAULT_HEIGHT_RATIO;
         this.widthRatio = this.DEFAULT_WIDTH_RATIO;
-        this.rect = Struct.DynamicRectangle.empty(`Device`);
         this.onResize = new Actions.Action();
     }
     postConstructor() {

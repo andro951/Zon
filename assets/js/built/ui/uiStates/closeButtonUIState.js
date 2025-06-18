@@ -5,7 +5,7 @@ Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
         super('closeButton', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
     }
-    static heightScale = 0.2;
+    static heightScale = 0.08;
 
     setup() {
         super.setup();

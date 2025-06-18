@@ -44,16 +44,51 @@ Variable.Base = class VariableBase {
         return newVariable;
     }
 
+    static _paused = false;
     static paused = false;
     static pausedCallbacks = new Actions.Action();
 
     static pause() {
+        Variable.Base._paused = true;
         Variable.Base.paused = true;
     }
 
     static resume() {
-        Variable.Base.paused = false;
-        Variable.Base.pausedCallbacks.callAndClear();
+        Variable.Base._paused = false;
+        if (Variable.Base.pausedByObjects.size === 0) {
+            Variable.Base.paused = false;
+            Variable.Base.pausedCallbacks.callAndClear();
+        }
+    }
+
+    static pausedByObjects = new Set();
+
+    //Use when an object is being created and it needs to pause updates while it links variables.
+    static pauseObj(obj) {
+        if (typeof obj !== 'object' || !obj)
+            throw new Error(`obj must be a valid object, got ${typeof obj}: ${obj}`);
+
+        if (Variable.Base.pausedByObjects.has(obj))
+            throw new Error(`obj is already paused: ${obj}`);
+
+        Variable.Base.paused = true;
+        Variable.Base.pausedByObjects.add(obj);
+    }
+
+    static resumeObj(obj) {
+        if (typeof obj !== 'object' || !obj)
+            throw new Error(`obj must be a valid object, got ${typeof obj}: ${obj}`);
+
+        if (!Variable.Base.pausedByObjects.has(obj))
+            throw new Error(`obj is not paused: ${obj}`);
+
+        Variable.Base.pausedByObjects.delete(obj);
+        if (Variable.Base.pausedByObjects.size === 0) {
+            if (!Variable.Base._paused) {
+                Variable.Base.paused = false;
+                Variable.Base.pausedCallbacks.callAndClear();
+            }
+        }
     }
 
     addOnChangedDrawAction(funct) {
@@ -75,8 +110,14 @@ Variable.Value = class VariableValue extends Variable.Base {
     }
 
     set value(newValue) {
-        if (zonDebug && typeof newValue === 'object')
-            throw new Error(`Variable.Value is not suitable for objects, got: ${newValue}`);
+        if (zonDebug) {
+            const type = typeof newValue;
+            if (type === 'object')
+                throw new Error(`Variable.Value is not suitable for objects, got: ${newValue}`);
+
+            if (type === 'number' && !Number.isFinite(newValue))
+                throw new Error(`Variable.Value cannot be set to NaN, got: ${newValue}`);
+        }
 
         if (this._value === newValue)
             return;
@@ -136,8 +177,26 @@ Variable.BigNumberVar = class BigNumberVar extends Variable.Base {
 }
 
 Variable.ColorVar = class ColorVar extends Variable.Base {
-    constructor(name, defaultColor = 0) {
+    constructor(defaultColor, name) {
         super(name);
+        if (typeof defaultColor !== `number`) {
+            if (typeof defaultColor === `string`) {
+                const color = Struct.Color.parseUInt(defaultColor);
+                if (typeof color !== `number`)
+                    throw new Error(`defaultColor must be a number or string, got ${typeof defaultColor}: ${defaultColor}`);
+
+                defaultColor = color;
+            }
+            else {
+                throw new Error(`defaultColor must be a number or string, got ${typeof defaultColor}: ${defaultColor}`);
+            }
+        }
+        else {
+            if (!Number.isFinite(defaultColor)) {
+                throw new Error(`defaultColor must be a valid number, got: ${defaultColor}`);
+            }
+        }
+
         this._defaultValue = defaultColor;
         this._value = Struct.Color.fromUInt(defaultColor);
     }
@@ -224,7 +283,8 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this.replaceEquation(getValue, references);
     }
     static empty = (name, thisObj = undefined, linkDependentActions = false) => {
-        return new Variable.Dependent(Variable.Dependent.defaultEquation, name, thisObj, linkDependentActions);
+        const references = thisObj ? { this: thisObj } : {};
+        return new Variable.Dependent(Variable.Dependent.defaultEquation, name, references, linkDependentActions);
     }
     static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
     replaceEquation(newGetValue, references = {}) {
@@ -244,17 +304,20 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this.getValue = isDependentFunction ? newGetValue.getValue : newGetValue;
         this.needsRecalculate = true;
         const linked = this._dependentActionsLinked;
-        if (linked)
+        if (linked) {
             this.unlinkDependentActions();
+            this._dependentActionsLinked = true;
+        }
 
         if (newGetValue === Variable.Dependent.defaultEquation)
             return;
         
         this.dependentActions.clear();
         this.extractVariables(this.getValue, this._references);
-        this._dependentActionsLinked = false;
-        if (linked)
+        if (linked) {
+            this._dependentActionsLinked = false;
             this.linkDependentActions();
+        }
     }
     linkDependentActions() {
         if (this._dependentActionsLinked) {
@@ -266,10 +329,30 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
 
         this._dependentActionsLinked = true;
         for (const action of this.dependentActions) {
-            action.add(this.onChanged);
+            action.add(this._checkIfChanged);
         }
 
-        this.onChanged();
+        if (Variable.Base.paused) {
+            Variable.Base.pausedCallbacks.add(this._checkIfChanged);
+        }
+        else {
+            this._checkIfChanged();
+        }
+    }
+    _checkIfChanged = () => {
+        if (this.onChangedAction.callbacks.size === 0)
+            return;
+
+        this.needsRecalculate = true;
+        const oldValue = this._value;
+        const newValue = this.value;
+        if (oldValue !== newValue) {
+            if (zonDebug) {
+                //console.log(`DependentVariable value changed: ${this.name}, oldValue: ${oldValue}, newValue: ${newValue}`);
+            }
+            
+            this.onChanged();
+        }
     }
     unlinkDependentActions() {
         if (!this._dependentActionsLinked) {
@@ -280,10 +363,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         }
 
         this.needsRecalculate = true;
-        this._value = undefined;
         this._dependentActionsLinked = false;
         for (const action of this.dependentActions) {
-            action.remove(this.onChanged);
+            action.remove(this._checkIfChanged);
         }
     }
     static debuggExtractVariables = zonDebug && false;
@@ -455,6 +537,15 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
     get value() {
         if (this.needsRecalculate) {
             this._value = this.getValue();
+            if (zonDebug) {
+                const type = typeof this._value;
+                if (type === 'number' && !Number.isFinite(this._value))
+                    throw new Error(`Variable.Value cannot be set to NaN, got: ${this._value}`);
+            }
+
+            if (this._value === undefined)
+                throw new Error(`DependentVariable getValue returned undefined.  This is likely due to a missing variable in the equation.  name: ${this.name}, this.getValue: ${this.getValue}, this._value: ${this._value}`);
+
             if (this._dependentActionsLinked) {
                 this.needsRecalculate = false;
             }

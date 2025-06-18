@@ -13,3 +13,11 @@ Zon.ProgressionManager.preSetLoadedValuesSetup = () => {
 Zon.ProgressionManager.onStartGame = () => {
     
 }
+
+Zon.ProgressionManager.onClickStageSelectButton = (stageID, stageNum) => {
+    
+}
+
+Zon.ProgressionManager.onPlayerSwitchToStage = (stageID, stageNum) => {
+    
+}

@@ -290,6 +290,22 @@ Zon.Game = class Game {
         Zon.blocksManager.clearAllBlocks();
     }
 
+    switchStages(stageID, stageNum) {
+        if (this.levelIsReady) {
+            Zon.blocksManager.onSwapLevel();
+            Zon.timeController.onSwitchStage();
+            this.stopStage();
+            this.stageID.value = stageID;
+            this.stageNum.value = stageNum;
+            this.setupLevel();
+        }
+        else {
+            //If !LevelIsReady, assumes this is being called in the middle of the onCompleteStage() method, so shouldn't stop the previous stage because it is already complete.
+            this.stageID.value = stageID;
+            this.stageNum.value = stageNum;
+        }
+    }
+
     giveLevelRewards = (levelData) => {
         levelData.giveLevelRewards();
     }

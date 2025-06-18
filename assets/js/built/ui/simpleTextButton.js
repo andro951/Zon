@@ -9,7 +9,9 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
         textColor = 0xFFFFFFFF,
         backgroundColorUint = 0x040404FF,
         hoverColorUint = 0x101010FF,
-        border = `2px solid #AAA`,
+        borderWidth = 2,
+        borderStyle = 'solid',
+        borderColor = '#AAA',
         borderRadius = 8,
         fontWeight = 'bold'
     } = {}) {
@@ -18,7 +20,9 @@ Zon.UI.SimpleTextButton = class SimpleTextButton extends Zon.UI.UIElementDiv {
         this.element.style.color = Struct.Color.fromUInt(textColor).cssString;
         this.element.style.backgroundColor = Struct.Color.fromUInt(backgroundColorUint).cssString;
         this.setHoverColor(hoverColorUint);
-        this.element.style.border = border;
+        this.element.style.borderWidth = `${borderWidth}px`;
+        this.element.style.borderStyle = borderStyle;
+        this.element.style.borderColor = borderColor;
         this.element.style.borderRadius = `${borderRadius}px`;
         this.element.style.fontWeight = fontWeight;
         if (!leftFunc || !topFunc || !widthFunc || !heightFunc)
