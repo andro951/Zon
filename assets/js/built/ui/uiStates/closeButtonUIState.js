@@ -2,8 +2,16 @@
 
 Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
     constructor() {
-        super('closeButton', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU);
+        super('closeButton', Zon.UI.UIElementZID.CLOSE_BUTTON);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
+        this.element.style.display = 'flex';
+        this.element.style.justifyContent = 'center';
+        this.element.style.alignItems = 'center';
+        this.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+        this.element.style.borderWidth = `2px`;
+        this.element.style.borderStyle = 'solid';
+        this.element.style.borderColor = `#AAA`;
+        this.openUIs = [];
     }
     static heightScale = 0.08;
 
@@ -17,22 +25,28 @@ Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
 
         this.element.addOnClick(this.hide);
         this.addEmptyIcon();
-        this.icon.setBackgroundImage(Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, 'CloseIcon'));
+        this.icon.setBackgroundImage(Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.ICONS, 'CloseIcon'), false);
     }
 
     hide() {
-        super.hide();
         if (this.linkedUIState) {
             this.linkedUIState.onHideActions.remove(this._onLinkedUIStateHide);
             if (this.linkedUIState.shown.value)
                 this.linkedUIState.hide();
-                
+            
             this.linkedUIState = undefined;
+            if (this.openUIs.length > 0) {
+                this.openUIs.pop().show();
+                return;
+            }
         }
+
+        super.hide();
     }
 
     setLinkedUIState(uiState) {
         if (this.linkedUIState) {
+            this.openUIs.push(this.linkedUIState);
             this.linkedUIState.onHideActions.remove(this._onLinkedUIStateHide);
             this.linkedUIState.hide();
         }

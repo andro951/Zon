@@ -37,7 +37,7 @@ Zon.MusicManager = class MusicManager {
 
     postLoadSetup = () => {
         //console.log("Zon.MusicManager postLoadSetup called.");
-        this.shuffleSongsSetting = Zon.Settings.getPreferenceVariable(Zon.PreferenceSettingsID.SHUFFLE_SONGS);
+        this.shuffleSongsSetting = Zon.Settings.getPreferenceVariable(Zon.PreferenceSettingsID.ShuffleSongs);
         this.shuffleSongsSetting.onChangedAction.add(this._onShuffleSongsChanged);
         this._getSongDatas();
     }

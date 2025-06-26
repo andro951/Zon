@@ -29,11 +29,11 @@ Zon.LevelData = class LevelData {
             return (stageID - this.startingStage) * this.maxStageNum + stageNum - this.startingStageNum;
         };
 
-        this.maxStageDisplayedNum = this.maxStage * this.maxStageNum;
-        this.blockHealthMultiplePerPrestige = this.maxStageDisplayedNum;
+        this.maxStageDisplayedNum = this.getDisplayedStageNum(this.maxStage, this.maxStageNum);
         this.stageCompletionAetherBonusPerPrestige = this.maxStageDisplayedNum;
         this.maxStageIndex = this.getStageIndex(this.maxStage, this.maxStageNum);
         this.stageCount = this.maxStageIndex + 1;
+        Zon.Setup.preLoadSetupActions.add(this.preLoadSetup.bind(this));
     }
     
     constructor(stageID, stageNum) {
@@ -41,9 +41,43 @@ Zon.LevelData = class LevelData {
         this.stageNum = stageNum;
         this.stageDuration = 0;
         this.setup();
-        this.blockMaxHealth = Zon.LevelData.getBlockMaxHealth(this.displayedStageNum, Zon.game.prestigeCount);
+        this.blockMaxHealth = Zon.LevelData.getBlockMaxHealth(this.displayedStageNum);
         this.getRandomPngFile();
     }
+
+    static preLoadSetup() {
+        const stageNum = `stageNum`;
+        const maxStageNum = `maxStageNum`;
+        const constants = [
+            [maxStageNum, `${this.maxStageDisplayedNum}`]
+        ];
+        const args = [
+            new Zon.Type_N(stageNum),
+        ];
+        const effStageNum = `effStageNum`;
+        this.effStageNumEquation = Zon.Equation_N.create(effStageNum, `${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, [], args, constants);
+        const healthPow = `healthPow`;
+        this.blockHealthPowEquation = Zon.Equation_N.create(healthPow, `3 * (2^(${effStageNum} / 10) - 1)`, [], args, constants, [this.effStageNumEquation]);
+        this.blockMaxHealthEquation = Zon.Equation_BN.create(`baseBlockHealth`, `10^${healthPow}`, [], args, constants, [this.effStageNumEquation, this.blockHealthPowEquation]);
+        this.getBlockMaxHealth = this.blockMaxHealthEquation.getValue;
+
+        const aetherBonusPow = `stageCompletionAetherBonusPow`;
+        this.stageCompletionAetherBonusPowEquation = Zon.Equation_N.create(aetherBonusPow, `3 * (2^(${effStageNum} / 10) - 1) + ${effStageNum} / 10`, [], args, constants, [this.effStageNumEquation]);
+
+        this.stageCompletionAetherBonusEquation = Zon.Equation_BN.create(`stageCompletionAetherBonus`, `10^${aetherBonusPow}`, [], args, constants, [this.effStageNumEquation, this.stageCompletionAetherBonusPowEquation]);
+        this.getStageCompletionBaseAetherReward = this.stageCompletionAetherBonusEquation.getValue
+    }
+
+    // static getBlockMaxHealth(displayedStageNum, prestigeCount) {
+    //     //return Zon.LevelData.baseBlockHealth.multiplyByPow10(displayedStageNum + this.maxStageDisplayedNum * prestigeCount);//.tryBumpDown();
+    //     return Zon.LevelData.baseBlockHealth.multiplyByPow10(3 * (2 ** ((displayedStageNum + this.maxStageDisplayedNum * prestigeCount) / 10) - 1));//.tryBumpDown();
+    // }
+
+    // static getStageCompletionBaseAetherReward(displayedStageNum, prestigeCount) {
+    //     //return Zon.LevelData.baseStageCompletionAetherBonus.multiplyByPow10((displayedStageNum + this.maxStageDisplayedNum * prestigeCount) / 2);
+    //     const stageCount = displayedStageNum + this.maxStageDisplayedNum * prestigeCount;
+    //     return Zon.LevelData.baseStageCompletionAetherBonus.multiplyByPow10(3 * (2 ** (stageCount / 10) - 1) + stageCount / 10);
+    // }
 
     copyStage = (stageID, stageNum, width, height, pixels, blockHP, blockMaxHealth, stageDuration) => {
         const stage = new Zon.LevelData(stageID, stageNum);
@@ -71,14 +105,6 @@ Zon.LevelData = class LevelData {
 
     get isStartingStage() {
         return this.stageID == Zon.LevelData.startingStage && this.stageNum == Zon.LevelData.startingStageNum;
-    }
-
-    static getBlockMaxHealth(displayedStageNum, prestigeCount) {
-        return Zon.LevelData.baseBlockHealth.multiplyByPow10(displayedStageNum + Zon.LevelData.blockHealthMultiplePerPrestige * prestigeCount);//.tryBumpDown();
-    }
-
-    static getStageCompletionBaseAetherReward(displayedStageNum, prestigeCount) {
-        return Zon.LevelData.baseStageCompletionAetherBonus.multiplyByPow10((displayedStageNum + Zon.LevelData.stageCompletionAetherBonusPerPrestige * prestigeCount) * Zon.LevelData.stageCompletionAetherBonusStageMultiplier);
     }
 
     static getStageToReturnToStage1Index() {
@@ -129,21 +155,21 @@ Zon.LevelData = class LevelData {
     }
 
     static getStageName(stageID, stageNum) {
-        return `${Zon.LevelData.getDisplayedStageNum(stageID, stageNum)}`;
+        return `${this.getDisplayedStageNum(stageID, stageNum)}`;
     }
 
     static getDisplayedStageNum(stageID, stageNum) {
-        return Zon.LevelData.getStageIndex(stageID, stageNum) + Zon.LevelData.startingStageDisplayedNum;
+        return this.getStageIndex(stageID, stageNum) + this.startingStageDisplayedNum;
     }
 
     static toStageIDAndNum(displayedStageIndex) {
-        const stageID = Math.floor(displayedStageIndex / Zon.LevelData.maxStageNum) + Zon.LevelData.startingStage;
-        const stageNum = displayedStageIndex % Zon.LevelData.maxStageNum + Zon.LevelData.startingStageNum;
+        const stageID = Math.floor(displayedStageIndex / this.maxStageNum) + this.startingStage;
+        const stageNum = displayedStageIndex % this.maxStageNum + this.startingStageNum;
         return { stageID, stageNum };
     }
 
     static displayedStageNumToStageIndex(displayedStageNum) {
-        return displayedStageNum - Zon.LevelData.startingStageDisplayedNum;
+        return displayedStageNum - this.startingStageDisplayedNum;
     }
 
     static allLevelTextures;

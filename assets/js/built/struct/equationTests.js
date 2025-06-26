@@ -14,7 +14,7 @@ Struct.EquationTests.runTests = () => {
 
 Struct.EquationTests.equationTests_N = (testClass) => {
     class EquationTest_N {
-        constructor(equationStr, expectedFunc, variables = [], args = [], constants = new Map(), testArgs = [], variableOverrides = []) {
+        constructor(equationStr, expectedFunc, variables = [], args = [], constants = new Map(), testArgs = [], variableOverrides = [], subEquations = []) {
             this.equationStr = equationStr;
             this.expectedFunc = expectedFunc;
             this.variables = variables;
@@ -22,6 +22,7 @@ Struct.EquationTests.equationTests_N = (testClass) => {
             this.constants = constants;
             this.testArgs = testArgs;
             this.variableOverrides = variableOverrides;
+            this.subEquations = subEquations;
         }
     }
     const testCases = [
@@ -298,13 +299,50 @@ Struct.EquationTests.equationTests_N = (testClass) => {
             ]);
             return new EquationTest_N(`${a} - ${b}`, (args, variables) => 0, [], [], constants);
         })(),
+        (() => {
+            const stageNum = `stageNum`;
+            const maxStageNum = `maxStageNum`;
+            const constants = [
+                [maxStageNum, `${Zon.LevelData.maxStageDisplayedNum}`]
+            ];
+            const args = [
+                new Zon.Type_N(stageNum),
+            ];
+            const effStageNum = `effStageNum`;
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_N(`${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, (args, variables) => args[0] + Zon.GlobalVariables.get(Zon.GlobalVarNames.PRESTIGE_COUNT).value * Zon.LevelData.maxStageDisplayedNum, [], args, constants, testArgs, [], []);
+        })(),
+        (() => {
+            const stageNum = `stageNum`;
+            const maxStageNum = `maxStageNum`;
+            const constants = [
+                [maxStageNum, `${Zon.LevelData.maxStageDisplayedNum}`]
+            ];
+            const args = [
+                new Zon.Type_N(stageNum),
+            ];
+            const effStageNum = `effStageNum`;
+            const effStageNumEquation = Zon.Equation_N.create(effStageNum, `${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, [], args, constants);
+            const healthPow = `healthPow`;
+            const subEquations = [
+                effStageNumEquation,
+            ];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_N(`3 * (2^(${effStageNum} / 10) - 1)`, (args, variables) => 3 * (2 ** ((args[0] + Zon.GlobalVariables.get(Zon.GlobalVarNames.PRESTIGE_COUNT).value * Zon.LevelData.maxStageDisplayedNum) / 10) - 1), [], args, constants, testArgs, [], subEquations);
+        })(),
     ];
 
     for (let i = 0; i < testCases.length; i++) {
         const test = testCases[i];
         const name = `e${i + 1}`;
-        const equation = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
-        const equation2 = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
+        const equation = testClass.create(name, test.equationStr, test.variables, test.args, test.constants, test.subEquations);
+        const equation2 = testClass.create(name, test.equationStr, test.variables, test.args, test.constants, test.subEquations);
         equation2._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation2._equationTreeHeadNotCondensed);
         const end = Math.max(test.variableOverrides.length, test.testArgs.length);
         if (end === undefined || end === null)
@@ -350,7 +388,7 @@ Struct.EquationTests.equationTests_N = (testClass) => {
 }
 Struct.EquationTests.equationTests_BN = (testClass) => {
     class EquationTest_BN {
-        constructor(equationStr, expectedFunc, variables = [], args = [], constants = new Map(), testArgs = [], variableOverrides = []) {
+        constructor(equationStr, expectedFunc, variables = [], args = [], constants = new Map(), testArgs = [], variableOverrides = [], subEquations = []) {
             this.equationStr = equationStr;
             this.expectedFunc = expectedFunc;
             this.variables = variables;
@@ -358,6 +396,7 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
             this.constants = constants;
             this.testArgs = testArgs;
             this.variableOverrides = variableOverrides;
+            this.subEquations = subEquations;
         }
     }
     const testCases = [
@@ -675,13 +714,58 @@ Struct.EquationTests.equationTests_BN = (testClass) => {
             ];
             return new EquationTest_BN(`${level} + 1`, (args, variables) => Struct.BigNumber.create(args[0]).add(Struct.BigNumber.ONE_), [], args, new Map(), testArgs, []);
         })(),
+        (() => {
+            const mult = `mult`;
+            const args = [
+                new Zon.Type_N(mult),
+            ];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_BN(`${Zon.GlobalVarNames.PLAYER_LEVEL} * ${mult}`, (args, variables) => Struct.BigNumber.create(args[0]).multiplyI(Struct.BigNumber.create(Zon.GlobalVariables.get(Zon.GlobalVarNames.PLAYER_LEVEL).value)), [], args, new Map(), testArgs, []);
+        })(),
+        (() => {
+            const healthPow = `healthPow`;
+            const args = [
+                new Zon.Type_N(healthPow),
+            ];
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            return new EquationTest_BN(`10^${healthPow}`, (args, variables) => Struct.BigNumber.create(10).pow(Struct.BigNumber.create(args[0])), [], args, [], testArgs, [], []);
+        })(),
+        (() => {
+            const stageNum = `stageNum`;
+            const maxStageNum = `maxStageNum`;
+            const constants = [
+                [maxStageNum, `${Zon.LevelData.maxStageDisplayedNum}`]
+            ];
+            const args = [
+                new Zon.Type_N(stageNum),
+            ];
+            const effStageNum = `effStageNum`;
+            const effStageNumEquation = Zon.Equation_N.create(effStageNum, `${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, [], args, constants);
+            const healthPow = `healthPow`;
+            const testArgs = [
+                [10],
+                [20]
+            ];
+            const healthPowEquation = Zon.Equation_N.create(healthPow, `3 * (2^(${effStageNum} / 10) - 1)`, [], args, constants, [effStageNumEquation]);
+            const subEquations = [
+                effStageNumEquation,
+                healthPowEquation
+            ];
+            return new EquationTest_BN(`10^${healthPow}`, (args, variables) => Struct.BigNumber.create(10).pow(Struct.BigNumber.create(3 * (2 ** ((args[0] + Zon.GlobalVariables.get(Zon.GlobalVarNames.PRESTIGE_COUNT).value * Zon.LevelData.maxStageDisplayedNum) / 10) - 1))), [], args, constants, testArgs, [], subEquations);
+        })(),
     ];
 
     for (let i = 0; i < testCases.length; i++) {
         const test = testCases[i];
         const name = `e${i + 1}`;
-        const equation = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
-        const equation2 = testClass.create(name, test.equationStr, test.variables, test.args, test.constants);
+        const equation = testClass.create(name, test.equationStr, test.variables, test.args, test.constants, test.subEquations);
+        const equation2 = testClass.create(name, test.equationStr, test.variables, test.args, test.constants, test.subEquations);
         equation2._equationTreeHead = Zon.Equation.EquationTreeBuilder.simplifyEquation(equation2._equationTreeHeadNotCondensed);
         const end = Math.max(test.variableOverrides.length, test.testArgs.length);
         if (end === undefined || end === null)

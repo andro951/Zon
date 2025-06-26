@@ -14,31 +14,44 @@
             this.variablesArr = [];
             this.defaultArgsArr = [];
             this.argsArr = [];
+            this._args = [];
             this._constantsMap = new Map();
             this._constantsTrees = [];
             this.constantsArr = [];
             this.constantsArrNames = [];
             this.constantsArrLookupMap = new Map();
             this._cachedConstants = [];
+            this.subEquations = [];
             this._equationTreeHeadNotCondensed = null;
             this._equationTreeHead = null;
             this._equationFunction = null;
         }
-        static create(equation, name, equationString, operationsSet, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        static create(equation, name, equationString, operationsSet, variablesArr = [], argsArr = [], constantsMap = new Map(), subEquations = []) {
             equation.name = name;
             equation.equationString = equationString;
             equation.operationsSet = operationsSet;
             equation.defaultVariablesArr = Array.from(variablesArr);
             equation.variablesArr = equation.defaultVariablesArr;
             equation.argsArr = Array.from(argsArr);
+            equation._defaultArgs = equation.argsArr.map(arg => arg.constructor.ONE);
+            equation._args = equation._defaultArgs;
             equation.constantsMap = constantsMap;
+            equation.subEquations = subEquations;
+            equation.subEquationsMap = equation.subEquations.reduce((map, subEq) => {
+                if (!subEq.name)
+                    throw new Error(`Sub-equation name is undefined or null: ${subEq}`);
+                    
+                map.set(subEq.name, subEq);
+                return map;
+            }, new Map());
+
             for (const [key, constantEquationString] of constantsMap) {
                 if (constantEquationString === undefined || constantEquationString === null) {
                     console.error(`Skipping constant "${key}" with undefined or null value.`);
                     continue;
                 }
 
-                const constantTree = Zon.Equation.EquationTreeBuilder.createTree(constantEquationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
+                const constantTree = Zon.Equation.EquationTreeBuilder.createTree(constantEquationString, equation, operationsSet, equation.defaultVariablesArr, argsArr, equation.constantsArrLookupMap);
                 this.EquationTreeBuilder.checkOnlyContainsConstants(constantTree);
                 equation._constantsTrees.push(constantTree);
                 const constantValue = constantTree.value;
@@ -50,7 +63,7 @@
                 }
             }
 
-            equation._equationTreeHeadNotCondensed = Zon.Equation.EquationTreeBuilder.createTree(equationString, equation, operationsSet, variablesArr, argsArr, equation.constantsArrLookupMap);
+            equation._equationTreeHeadNotCondensed = Zon.Equation.EquationTreeBuilder.createTree(equationString, equation, operationsSet, equation.defaultVariablesArr, argsArr, equation.constantsArrLookupMap);
             if (debugEquation) {
                 const treeHeadString = equation._equationTreeHeadNotCondensed.toString();
                 console.log(`  equationString: ${equation.equationString}`);
@@ -94,31 +107,32 @@
             return result;
         }
         get value() {
-            const result = this._equationFunction(this.variablesArr, this.constantsArr, this._cachedConstants, this.argsArr);
-            if (!this.operationsSet.isFinite(result))
-                throw new Error(`Equation value is not finite: ${result}.  Equation: ${this.toString()}`);
+            const result = this._equationFunction(this.variablesArr, this.constantsArr, this._cachedConstants, this._args, this.subEquations);
+            if (!this.operationsSet.isFinite(result)) {
+                throw new Error(`Equation value is not finite: ${result}.  Equation: ${this.toString()}\n${this._equationFunction.toString()}`);
+            }
 
             return result;
         }
-        getTreeValue(...args) {
-            this.argsArr = args;
+        getTreeValue = (...args) => {
+            this._args = args;
             const result = this.treeValue;
-            this.argsArr = [];
+            this._args = this._defaultArgs;
             return result;
         }
-        getTreeValueNewVariables(variablesArr, ...args) {
+        getTreeValueNewVariables = (variablesArr, ...args) => {
             this.variablesArr = variablesArr;
             const result = this.getTreeValue(...args);
             this.variablesArr = this.defaultVariablesArr;
             return result;
         }
-        getValue(...args) {
-            this.argsArr = args;
+        getValue = (...args) => {
+            this._args = args;
             const result = this.value;
-            this.argsArr = [];
+            this._args = this._defaultArgs;
             return result;
         }
-        getValueNewVariables(variablesArr, ...args) {
+        getValueNewVariables = (variablesArr, ...args) => {
             this.variablesArr = variablesArr;
             const result = this.getValue(...args);
             this.variablesArr = this.defaultVariablesArr;
@@ -135,9 +149,9 @@
         constructor() {
             super();
         }
-        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map(), subEquations = []) {
             const equation = new this();
-            return Zon.Equation.create(equation, name, equationString, Zon.Equation.BigNumberOperationSet.instance, variablesArr, argsArr, constantsMap);
+            return Zon.Equation.create(equation, name, equationString, Zon.Equation.BigNumberOperationSet.instance, variablesArr, argsArr, constantsMap, subEquations);
         }
     }
 
@@ -145,9 +159,9 @@
         constructor() {
             super();
         }
-        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map(), subEquations = []) {
             const equation = new this();
-            return Zon.Equation.create(equation, name, equationString, Zon.Equation.NumberOperationSet.instance, variablesArr, argsArr, constantsMap);
+            return Zon.Equation.create(equation, name, equationString, Zon.Equation.NumberOperationSet.instance, variablesArr, argsArr, constantsMap, subEquations);
         }
     }
 
@@ -155,9 +169,9 @@
         constructor() {
             super();
         }
-        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map()) {
+        static create(name, equationString, variablesArr = [], argsArr = [], constantsMap = new Map(), subEquations = []) {
             const equation = new this();
-            return Zon.Equation.create(equation, name, equationString, Zon.Equation.BoolOperationSet.instance, variablesArr, argsArr, constantsMap);
+            return Zon.Equation.create(equation, name, equationString, Zon.Equation.BoolOperationSet.instance, variablesArr, argsArr, constantsMap, subEquations);
         }
     }
 
@@ -419,14 +433,50 @@
                     return false;
                 }
 
+                const subEquation = equation.subEquationsMap.get(word);
+                if (subEquation !== undefined) {
+                    const index = equation.subEquations.indexOf(subEquation);
+                    if (index === -1)
+                        throw new Error(`SubEquation not found: ${subEquation}`);
+
+                    const subEquationRef = new SubEquationReference(equation, index);
+                    placeConstantOrVariable(subEquationRef);
+                    return true;
+                }
+
                 //if (debugEquation) console.log(`Extracted word2: ${word}`);
                 const variableIndex = variablesMap.get(word);
                 if (variableIndex !== undefined) {
                     const variable = variablesArr[variableIndex];
-                    if (Zon.Util.getType(variable.value) !== operationsSet.typeString)
+                    const globalVar = Zon.GlobalVariables.get(word);
+                    if (globalVar !== undefined && globalVar !== variable)
+                        throw new Error(`${word} is a global variable, you can't have a variable with the same name.`);
+
+                    if (Zon.Util.getTypeStr(variable.value) !== operationsSet.typeString)
                         applySingleVariableOperation(SingleVariableOperationID.CONVERT);
 
                     placeConstantOrVariable(new VariableReference(equation, word, variableIndex));
+                    return true;
+                }
+
+                const globalVariable = Zon.GlobalVariables.get(word);
+                //console.log(`Checking word: ${word}`);
+                if (globalVariable !== undefined) {
+                    const argIndexCheck = argsMap.get(word);
+                    if (argIndexCheck !== undefined)
+                        throw new Error(`${word} is a global variable, you can't have an argument with the same name.`);
+
+                    const constantIndexCheck = constantsArrLookupMap.get(word);
+                    if (constantIndexCheck !== undefined)
+                        throw new Error(`${word} is a global variable, you can't have a constant with the same name.`);
+
+                    if (Zon.Util.getTypeStr(globalVariable.value) !== operationsSet.typeString)
+                        applySingleVariableOperation(SingleVariableOperationID.CONVERT);
+
+                    if (word !== globalVariable.name)
+                        throw new Error(`Global variable name mismatch: expected "${globalVariable.name}", got "${word}"`);
+
+                    placeConstantOrVariable(new GlobalVariableReference(equation, word));
                     return true;
                 }
 
@@ -674,7 +724,9 @@
             if (tree == null)
                 throw new Error("Failed to parse string.  The tree was null.");
 
-            const head = tree.getTreeHead();
+            let head = tree.getTreeHead();
+
+            head = this.linkAndTypeCheckSubEquations(equation, head, operationsSet);
 
             const validationError = head.validate();
             if (validationError)
@@ -736,6 +788,41 @@
 
             return equation._equationTreeHead;
         }
+        static linkAndTypeCheckSubEquations(equation, treeHead, operationsSet) {
+            //if (debugEquation)  console.log(`Linking and type checking sub equations for: ${equation.name}; Equation: ${treeHead.toString()}`);
+            const subEquationRefs = [];
+            for (const node of treeHead.traverse()) {
+                if (!node)
+                    throw new Error(`Node in equation tree is null.  This should not happen.  Equation: ${treeHead.toString()}`);
+
+                if (!(node instanceof SubEquationReference))
+                    continue;
+
+                subEquationRefs.push(node);
+            }
+
+            for (const subEquationRef of subEquationRefs) {
+                subEquationRef._linkToSubEquation();
+                const subEquationValue = subEquationRef.value;
+                if (Zon.Util.getTypeStr(subEquationValue) !== operationsSet.typeString) {
+                    const operation = new SingleVariableOperation(equation, SingleVariableOperationID.CONVERT);
+                    const parent = subEquationRef.parent;
+                    if (!parent) {
+                        treeHead = operation;
+                        operation.variable = subEquationRef;
+                        subEquationRef.parent = operation;
+                    }
+                    else {
+                        parent.swap(subEquationRef, operation);
+                        operation.variable = subEquationRef;
+                        subEquationRef.parent = operation;
+                        operation.parent = parent;
+                    }
+                }
+            }
+
+            return treeHead;
+        }
     }
     Zon.Equation.EquationTreeBuilder = EquationTreeBuilder;
 
@@ -746,6 +833,7 @@
     const nconsts = `_namedConstants`;//Named constants
     const cconsts = `_cachedConstants`;//Cashed (unnamed) constants
     const cc = `_cc`;
+    const eq = `_subEquation`;
 
     class TreeNode {
         constructor(parent = null) {
@@ -853,10 +941,10 @@
         simplify() {
             return this.clone();
         }
-        populateFunctionReferences(variables, nconstants, cconstants, args) {
+        populateFunctionReferences(refs) {
             throw new Error(`populateFunctionReferences must be implemented by subclasses.  ${this.toString()}`);
         }
-        populateFunctionReferencesCounts(varsCounts, argCounts) {
+        populateFunctionReferencesCounts(operationSet) {
             throw new Error(`populateFunctionReferencesCounts must be implemented by subclasses.  ${this.toString()}`);
         }
         *traverse() {
@@ -944,6 +1032,8 @@
             this.equation = equation;
             this.name = name;
             this.index = index;
+            if (index === undefined || index === null)
+                throw new Error(`Invalid index for variable reference: ${name}.  Index cannot be undefined or null.`);
         }
         clone() {
             this.validate(this.parent);
@@ -971,13 +1061,13 @@
             if (parent !== this.parent)
                 return `Invalid parent for variable reference: ${this.name}`;
 
-            if (this.equation === undefined || this.equation === null)
+            if (!this.equation)
                 return `Invalid variable reference equation.  Equation is undefined or null on variable reference: ${this.name}`;
 
             if (this.index < 0 || this.index >= this.equation.defaultVariablesArr.length)
                 return `Invalid variable reference index.  Index is out of bounds on variable reference: ${this.name}.  Index: ${this.index}, Length: ${this.equation.defaultVariablesArr.length}`;
 
-            if (this.name === undefined || this.name === null)
+            if (!this.name)
                 return `Invalid variable reference name: ${this.name}`;
 
             return null;
@@ -985,17 +1075,200 @@
         writeToString(stringArr) {
             stringArr.push(`${this.name}`);
         }
-        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
-            if (varsStrings[this.index])
+        populateFunctionReferences(refs) {
+            if (refs.varsStrings[this.index])
                 return;
             
             const variable = this.equation.variablesArr[this.index];
-            const type = Zon.Util.getType(variable.value);
+            const type = Zon.Util.getTypeStr(variable.value);
             const wrongType = type !== this.equation.operationsSet.typeString;
-            varsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${vars}[${this.index}].value);//${type}\n` : `${vars}[${this.index}].value;\n`)}`;
+            refs.varsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${vars}[${this.index}].value);//${type}\n` : `${vars}[${this.index}].value;\n`)}`;
         }
-        populateFunctionReferencesCounts(varsCounts, argCounts) {
-            varsCounts[this.index]++;
+        populateFunctionReferencesCounts(operationSet) {
+            operationSet.varsCounts[this.index]++;
+        }
+    }
+    class GlobalVariableReference extends VariableGetter {
+        constructor(equation, name, parent = null) {
+            super(parent);
+            this.equation = equation;
+            this.name = name;
+        }
+        clone() {
+            this.validate(this.parent);
+            return new GlobalVariableReference(this.equation, this.name);
+        }
+        get value() {
+            const variable = Zon.GlobalVariables.get(this.name);
+            if (variable === undefined || variable === null)
+                throw new Error(`Variable not found in equation: ${this.name} at index ${this.index}.`);
+
+            return variable.value;
+        }
+        toString() {
+            return this.name;
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for variable reference: ${this.name}`;
+
+            if (!this.equation)
+                return `Invalid variable reference equation.  Equation is undefined or null on variable reference: ${this.name}`;
+
+            if (!this.name)
+                return `Invalid variable reference name: ${this.name}`;
+
+            const variable = Zon.GlobalVariables.get(this.name);
+            if (!variable)
+                return `Invalid global variable reference: ${this.name}.  Global variable not found.`;
+
+            if (variable.name !== this.name)
+                return `Invalid global variable reference: ${this.name}.  Global variable name mismatch. Expected "${variable.name}", got "${this.name}".`;
+
+            return null;
+        }
+        writeToString(stringArr) {
+            stringArr.push(`${this.name}`);
+        }
+        populateFunctionReferences(refs) {
+            this.index = refs.globalVarLookup.get(this.name);
+            if (this.index === undefined || this.index === null) {
+                this.index = refs.globalVarStrings.length;
+                refs.globalVarLookup.set(this.name, this.index);
+            }
+            else if (refs.globalVarStrings[this.index]) {
+                return;
+            }
+            
+            const variable = Zon.GlobalVariables.get(this.name);
+            const type = Zon.Util.getTypeStr(variable.value);
+            const wrongType = type !== this.equation.operationsSet.typeString;
+            refs.globalVarStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}Zon.GlobalVariables.get("${this.name}").value);//${type}\n` : `Zon.GlobalVariables.get("${this.name}").value;\n`)}`;
+        }
+        populateFunctionReferencesCounts(operationSet) {
+            if (!operationSet.globalVarCounts.length <= this.index) {
+                if (operationSet.globalVarCounts.length < this.index)
+                    throw new Error(`Invalid global variable index: ${this.index}.  Global variable counts length: ${operationSet.globalVarCounts.length}`);
+
+                operationSet.globalVarCounts.push(1);
+            }
+            else {
+                operationSet.globalVarCounts[this.index]++;
+            }
+        }
+    }
+    class SubEquationReference extends VariableGetter {
+        constructor(equation, index, parent = null) {
+            super(parent);
+            this.equation = equation;
+            this.index = index;
+            this.subEquation = equation.subEquations[index];
+            if (!this.subEquation)
+                throw new Error(`Invalid sub-equation index: ${index}.  Sub-equation not found in equation: ${equation.name}`);
+        }
+        _linkToSubEquation() {
+            //if (debugEquation) console.log(`Linking sub-equation: ${this.subEquation.name} to equation: ${this.equation.name}`);
+            if (this._args !== undefined)
+                return;
+
+            //args
+            this._args = new Array(this.subEquation._args.length);//Leave empty here
+            this._argsIndexs = new Array(this.subEquation._args.length);
+            for (let i = 0; i < this.subEquation._args.length; i++) {
+                const arg = this.subEquation._args[i];
+                const index = this.equation._args.findIndex(a => a.name === arg.name);
+                if (index === -1)
+                    throw new Error(`Argument not found in equation: ${arg.name}.  Sub-equation: ${this.subEquation.name}`);
+
+                this._args[i] = arg;
+                this._argsIndexs[i] = index;
+            }
+
+            //variables
+            this._variables = new Array(this.subEquation.variablesArr.length);//Leave empty here
+            this._variablesIndexs = new Array(this.subEquation.variablesArr.length);
+            for (let i = 0; i < this.subEquation.variablesArr.length; i++) {
+                const variable = this.subEquation.variablesArr[i];
+                const index = this.equation.variablesArr.findIndex(v => v.name === variable.name);
+                if (index === -1)
+                    throw new Error(`Variable not found in equation: ${variable.name}.  Sub-equation: ${this.subEquation.name}`);
+
+                this._variables[i] = variable;
+                this._variablesIndexs[i] = index;
+            }
+        }
+        clone() {
+            this.validate(this.parent);
+            const clone = new SubEquationReference(this.equation, this.index);
+            if (this._args) {
+                clone._args = Array.from(this._args);
+                clone._argsIndexs = Array.from(this._argsIndexs);
+                clone._variables = Array.from(this._variables);
+                clone._variablesIndexs = Array.from(this._variablesIndexs);
+            }
+
+            return clone;
+        }
+        get value() {
+            for (let i = 0; i < this._argsIndexs.length; i++) {
+                const arg = this.equation._args[this._argsIndexs[i]];
+                if (arg === undefined || arg === null)
+                    throw new Error(`Argument not found in equation: ${this.subEquation.name} at index ${this._argsIndexs[i]}.`);
+
+                this._args[i] = arg;
+            }
+
+            for (let i = 0; i < this._variablesIndexs.length; i++) {
+                const variable = this.equation.variablesArr[this._variablesIndexs[i]];
+                if (variable === undefined || variable === null)
+                    throw new Error(`Variable not found in equation: ${this.subEquation.name} at index ${this._variablesIndexs[i]}.`);
+
+                this._variables[i] = variable.value;
+            }
+
+            return this.subEquation.getValueNewVariables(this._variables, ...this._args);
+        }
+        toString() {
+            return this.subEquation.name;
+        }
+        validate(parent = null) {
+            if (parent !== this.parent)
+                return `Invalid parent for sub-equation reference: ${this.subEquation.name}`;
+
+            if (this.equation === undefined || this.equation === null)
+                return `Invalid sub-equation reference equation.  Equation is undefined or null on sub-equation reference: ${this.subEquation.name}`;
+
+            if (!(this.subEquation instanceof Zon.Equation))
+                return `Invalid sub-equation reference.  Sub-equation is not an instance of Zon.Equation: ${this.subEquation.name}`;
+
+            return null;
+        }
+        writeToString(stringArr) {
+            stringArr.push(this.subEquation.name);
+        }
+        populateFunctionReferences(refs) {
+            if (refs.subEquationsStrings[this.index])
+                return;
+            
+            const value = this.value;
+            const type = Zon.Util.getTypeStr(value);
+            const wrongType = type !== this.equation.operationsSet.typeString;
+            const parts = [];
+            parts.push(`\tconst ${this.subEquation.name} = `);
+            
+            const varsStr = this._variablesIndexs.map(i => `${vars}[${i}]`).join(', ');
+            const argsStr = this._argsIndexs.map(i => `${args}[${i}]`).join(', ');
+            const inner = `${eq}[${this.index}].getValueNewVariables([${varsStr}], ${argsStr})`;
+            parts.push(wrongType ? `${this.equation.operationsSet.convertString}${inner})` : inner);
+            parts.push(`;//${this.subEquation.toString()}`);
+            if (wrongType)
+                parts.push(` (${type})`);
+
+            parts.push('\n');
+            refs.subEquationsStrings[this.index] = parts.join('');
+        }
+        populateFunctionReferencesCounts(operationSet) {
+            operationSet.subEquationsCounts[this.index]++;
         }
     }
     class ArgReference extends VariableGetter {
@@ -1013,7 +1286,7 @@
             return new ArgReference(this.equation, this.name, this.index);
         }
         get value() {
-            const arg = this.equation.argsArr[this.index];
+            const arg = this.equation._args[this.index];
             if (arg === undefined || arg === null)
                 throw new Error(`Argument not found in equation: ${this.name} at index ${this.index}.`);
 
@@ -1040,16 +1313,16 @@
         writeToString(stringArr) {
             stringArr.push(this.name);
         }
-        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
-            if (argStrings[this.index])
+        populateFunctionReferences(refs) {
+            if (refs.argsStrings[this.index])
                 return;
 
             const arg = this.equation.argsArr[this.index];
             const wrongType = arg.typeID !== this.equation.operationsSet.type;
-            argStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${args}[${this.index}]);//${Zon.TypeNames[arg.typeID]}\n` : `${args}[${this.index}];\n`)}`;
+            refs.argsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${args}[${this.index}]);//${Zon.TypeNames[arg.typeID]}\n` : `${args}[${this.index}];\n`)}`;
         }
-        populateFunctionReferencesCounts(varsCounts, argCounts) {
-            argCounts[this.index]++;
+        populateFunctionReferencesCounts(operationSet) {
+            operationSet.argsCounts[this.index]++;
         }
     }
     class ConstantReference extends VariableGetter {
@@ -1094,11 +1367,11 @@
         writeToString(stringArr) {
             stringArr.push(this.name);
         }
-        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
-            if (!nconstsStrings[this.index])
-                nconstsStrings[this.index] = `\tconst ${this.name} = ${nconsts}[${this.index}];\n`;
+        populateFunctionReferences(refs) {
+            if (!refs.nconstsStrings[this.index])
+                refs.nconstsStrings[this.index] = `\tconst ${this.name} = ${nconsts}[${this.index}];\n`;
         }
-        populateFunctionReferencesCounts(varsCounts, argCounts) {
+        populateFunctionReferencesCounts(operationSet) {
             throw new Error(`Not used on ConstantReference.`);
         }
     }
@@ -1172,11 +1445,11 @@
         writeToString(stringArr) {
             stringArr.push(this.name ?? `${cc}${this.index}`);
         }
-        populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings) {
-            if (!cconstsStrings[this.index])
-                cconstsStrings[this.index] = `\tconst ${(this.name ?? `${cc}${this.index}`)} = ${cconsts}[${this.index}];${(this.name === null ? `//${this.replacedNode.toString()}` : '')}\n`;
+        populateFunctionReferences(refs) {
+            if (!refs.cconstsStrings[this.index])
+                refs.cconstsStrings[this.index] = `\tconst ${(this.name ?? `${cc}${this.index}`)} = ${cconsts}[${this.index}];${(this.name === null ? `//${this.replacedNode.toString()}` : '')}\n`;
         }
-        populateFunctionReferencesCounts(varsCounts, argCounts) {
+        populateFunctionReferencesCounts(operationSet) {
             throw new Error(`Not used on CachedConstants.`);
         }
     }
@@ -1769,11 +2042,25 @@
             this.typeID = typeID;
             this.name = name;
         }
+
+        static get ZERO() {
+            throw new Error("Zero must be implemented by subclasses.");
+        }
+        static get ONE() {
+            throw new Error("One must be implemented by subclasses.");
+        }
     }
 
     Zon.Type_N = class Type_N extends Zon.Type {
         constructor(name) {
             super(Zon.TypeID.NUMBER, name);
+        }
+
+        static get ZERO() {
+            return 0;
+        }
+        static get ONE() {
+            return 1;
         }
     }
 
@@ -1781,11 +2068,25 @@
         constructor(name) {
             super(Zon.TypeID.BIG_NUMBER, name);
         }
+
+        static get ZERO() {
+            return Struct.BigNumber.ZERO_;
+        }
+        static get ONE() {
+            return Struct.BigNumber.ONE_;
+        }
     }
 
     Zon.Type_B = class Type_B extends Zon.Type {
         constructor(name) {
             super(Zon.TypeID.BOOL, name);
+        }
+
+        static get ZERO() {
+            return false;
+        }
+        static get ONE() {
+            return true;
         }
     }
 
@@ -2072,21 +2373,36 @@
             ['π', Math.PI],
         ]);
         createFunction(equation) {
+            //if (debugEquation) console.log(`Creating function for equation: ${equation.toString()}`);
             const stringArr = [];
             
             const variablesArr = equation.variablesArr;
             const constantsArr = equation.constantsArr;
             const cachedConstants = equation._cachedConstants;
             const argsArr = equation.argsArr;
+            const subEquations = equation.subEquations;
 
-            const varsStrings = new Array(variablesArr.length);
-            const nconstsStrings = new Array(constantsArr.length);
-            const cconstsStrings = new Array(cachedConstants.length);
-            const argStrings = new Array(argsArr.length);
+            const refs = {
+                varsStrings: new Array(variablesArr.length),
+                nconstsStrings: new Array(constantsArr.length),
+                cconstsStrings: new Array(cachedConstants.length),
+                argsStrings: new Array(argsArr.length),
+                subEquationsStrings: new Array(subEquations.length),
+                globalVarStrings: [],
+                globalVarLookup: new Map()
+            };
+
+            const varsStrings = refs.varsStrings;
+            const nconstsStrings = refs.nconstsStrings;
+            const cconstsStrings = refs.cconstsStrings;
+            const argsStrings = refs.argsStrings;
+            const subEquationsStrings = refs.subEquationsStrings;
+            const globalVarStrings = refs.globalVarStrings;
 
             for (const node of equation.traverseNodes()) {
                 if (node instanceof VariableGetter) {
-                    node.populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings);
+                    //if (debugEquation) console.log(`Populating function references for node: ${node.toString()}`);
+                    node.populateFunctionReferences(refs);
                 }
             }
 
@@ -2105,16 +2421,25 @@
                     stringArr.push(cconstsString);
             }
 
-            for (const argString of argStrings) {
+            for (const argString of argsStrings) {
                 if (argString)
                     stringArr.push(argString);
+            }
+
+            for (const subEquationString of subEquationsStrings) {
+                if (subEquationString)
+                    stringArr.push(subEquationString);
+            }
+
+            for (const globalVarString of refs.globalVarStrings) {
+                stringArr.push(globalVarString);
             }
 
             stringArr.push('\treturn ');
             equation._equationTreeHead.writeToString(stringArr);
             stringArr.push(';');
             const equationString = stringArr.join('');
-            return new Function(vars, nconsts, cconsts, args, equationString);
+            return new Function(vars, nconsts, cconsts, args, eq, equationString);
         }
         writeOperationToString(stringArr, operationID, left, right) {
             left.writeToString(stringArr);
@@ -2285,20 +2610,41 @@
             const constantsArrNames = equation.constantsArrNames;
             const cachedConstants = equation._cachedConstants;
             const argsArr = equation.argsArr;
+            const subEquations = equation.subEquations;
+            
+            const refs = {
+                varsStrings: new Array(variablesArr.length),
+                nconstsStrings: new Array(constantsArr.length),
+                cconstsStrings: new Array(cachedConstants.length),
+                argsStrings: new Array(argsArr.length),
+                subEquationsStrings: new Array(subEquations.length),
+                globalVarStrings: [],
+                globalVarLookup: new Map()
+            };
 
-            const varsStrings = new Array(variablesArr.length);
-            const nconstsStrings = new Array(constantsArr.length);
-            const cconstsStrings = new Array(cachedConstants.length);
-            const argStrings = new Array(argsArr.length);
+            const varsStrings = refs.varsStrings;
+            const nconstsStrings = refs.nconstsStrings;
+            const cconstsStrings = refs.cconstsStrings;
+            const argsStrings = refs.argsStrings;
+            const subEquationsStrings = refs.subEquationsStrings;
+            const globalVarStrings = refs.globalVarStrings;
 
             this.varsCounts = new Array(variablesArr.length).fill(0);
             this.argsCounts = new Array(argsArr.length).fill(0);
+            this.subEquationsCounts = new Array(subEquations.length).fill(0);
+            this.globalVarCounts = [];
 
             for (const node of equation.traverseNodes()) {
                 if (node instanceof VariableGetter) {
-                    node.populateFunctionReferences(varsStrings, nconstsStrings, cconstsStrings, argStrings);
-                    if (node instanceof VariableReference || node instanceof ArgReference) {
-                        node.populateFunctionReferencesCounts(this.varsCounts, this.argsCounts);
+                    node.populateFunctionReferences(refs);
+                }
+            }
+
+            for (const node of equation.traverseNodes()) {
+                if (node instanceof VariableGetter) {
+                    node.populateFunctionReferences(refs);
+                    if (node instanceof VariableReference || node instanceof ArgReference || node instanceof SubEquationReference || node instanceof GlobalVariableReference) {
+                        node.populateFunctionReferencesCounts(this);
                     }
                 }
             }
@@ -2310,7 +2656,7 @@
                 }
                 else {
                     const variable = variablesArr[i];
-                    stringArr.push(`\t//${variable.name}: ${variable.value} (not used)\n`);
+                    stringArr.push(`\t//${variable.name}: ${variable.value} (not used.  Might be used by sub-equations)\n`);
                 }
             }
 
@@ -2335,15 +2681,30 @@
                 }
             }
 
-            for (let i = 0; i < argStrings.length; i++) {
-                const argString = argStrings[i];
+            for (let i = 0; i < argsStrings.length; i++) {
+                const argString = argsStrings[i];
                 if (argString) {
                     stringArr.push(argString);
                 }
                 else {
                     const arg = argsArr[i];
-                    stringArr.push(`\t//${arg.name}: ${arg.value} (not used)\n`);
+                    stringArr.push(`\t//${arg.name}: ${Zon.TypeNames[arg.typeID]} (not used.  Might be used by sub-equations)\n`);
                 }
+            }
+
+            for (let i = 0; i < subEquationsStrings.length; i++) {
+                const subEquationString = subEquationsStrings[i];
+                if (subEquationString) {
+                    stringArr.push(subEquationString);
+                }
+                else {
+                    const subEquation = subEquations[i];
+                    stringArr.push(`\t//${subEquation.toString()} (not used directly)\n`);
+                }
+            }
+
+            for (const globalVarString of globalVarStrings) {
+                stringArr.push(globalVarString);
             }
 
             if (debugEquationFunction) {
@@ -2371,10 +2732,12 @@
             stringArr.push(';');
             const equationString = stringArr.join('');
 
-            this.varsCounts = undefined;
-            this.argsCounts = undefined;
+            delete this.varsCounts;
+            delete this.argsCounts;
+            delete this.subEquationsCounts;
+            delete this.globalVarCounts;
 
-            return new Function(vars, nconsts, cconsts, args, equationString);
+            return new Function(vars, nconsts, cconsts, args, eq, equationString);
         }
         _getConst(num) {
             return `_v${num}`;
@@ -2499,6 +2862,14 @@
                     }
                     else if (variable instanceof ArgReference) {
                         if (this.argsCounts[variable.index] !== 1)//Skip clone if only used once.
+                            stringArr.push('.clone');
+                    }
+                    else if (variable instanceof SubEquationReference) {
+                        if (this.subEquationsCounts[variable.index] !== 1)//Skip clone if only used once.
+                            stringArr.push('.clone');
+                    }
+                    else if (variable instanceof GlobalVariableReference) {
+                        if (this.globalVarCounts[variable.index] !== 1)//Skip clone if only used once.
                             stringArr.push('.clone');
                     }
                     else {

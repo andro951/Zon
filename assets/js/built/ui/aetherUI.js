@@ -18,19 +18,16 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         //this.element.style.justifyContent = "right";
         this.element.setBorder(1, "black");
 
-        this.label = document.createElement("div");
-        this.label.style.position = "relative";
-        this.label.style.zIndex = "1";
-        this.label.textContent = "0";
-        this.element.appendChild(this.label);
+        this.textElement = document.createElement("div");
+        this.textElement.style.position = "relative";
+        this.textElement.style.zIndex = "1";
+        this.textElement.textContent = "0";
+        this.element.appendChild(this.textElement);
     }
     postConstructor() {
         super.postConstructor();
 
-        Zon.playerInventory.aether.addOnChangedDrawAction(this._updateText);
-    }
-    _updateText = () => {
-        this.label.textContent = `${Zon.playerInventory.aether.value.toString()}`;
+        this.text.replaceEquation(() => `${Zon.playerInventory.aether.value.toString()}`);
     }
 
     setup() {
@@ -40,7 +37,5 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         this.replaceTop(() => 5);
         this.replaceWidth(() => Zon.topUI.width * 0.3);
         this.replaceHeight(() => Zon.topUI.height * 0.2);
-
-        this._updateText();
     }
 }

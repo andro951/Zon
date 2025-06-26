@@ -51,7 +51,7 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         super('sideBar', Zon.UI.UIElementZID.SIDE_BAR);
         this.animation = new Zon.UI.SlideAnimationHorizontal(this, false);
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
-        this.makeScrollableColumn();
+        this.makeScrollableColumn(false);
     }
     setup() {
         super.setup();
@@ -76,6 +76,9 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
 
         //Delete All Music Button
         this._addButton('sideBarDeleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
+
+        //Testing UI button
+        this._addButton('testingButton', Zon.UI.testingUIState.show, 'UpgradeIcon');
     }
     _addButton(name, onClick, iconName, options = {}) {
         options.leftFunc ??= () => Zon.device.width * 0.01;

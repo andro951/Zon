@@ -13,7 +13,7 @@ Zon.Game = class Game {
         this.stageNum = new Variable.Value(Zon.LevelData.startingStageNum, `CurrentStageNumber`);
         this.highestStageAvailable = new Variable.Value(Zon.LevelData.startingStage, `HighestStageAvailable`);
         this.highestStageNumAvailable = new Variable.Value(Zon.LevelData.startingStageNum, `HighestStageNumberAvailable`);
-        this.prestigeCount = new Variable.Value(0, `PrestigeCount`);
+        this.prestigeCount = new Variable.Value(0, Zon.GlobalVarNames.PRESTIGE_COUNT).makeGlobal();
         this.tickRemainder = 0;
         this.lastTickStart = performance.now();
         this.timePerTick = 0.00000000001;
@@ -36,8 +36,8 @@ Zon.Game = class Game {
 
     preLoadSetup = () => {
         Zon.IOManager.registerSaveLoadInfo(Zon.SaveFileTypeID.GAME, new this.GameSaveLoadInfo());
-        Zon.Settings.getGameVariable(Zon.GameSettingsID.STAGE_TO_RETURN_TO_STAGE_1).onChangedAction.add(this.onStageToReturnToStage1SettingChanged);
-        Zon.Settings.getGameVariable(Zon.GameSettingsID.AUTOMATICALLY_RETURN_TO_STAGE_1).onChangedAction.add(this.onAutomaticallyReturnToStage1SettingChanged);
+        Zon.Settings.getGameVariable(Zon.GameSettingsID.StageToReturnToStage1).onChangedAction.add(this.onStageToReturnToStage1SettingChanged);
+        Zon.Settings.getGameVariable(Zon.GameSettingsID.AutomaticallyReturnToStage1).onChangedAction.add(this.onAutomaticallyReturnToStage1SettingChanged);
     }
 
     preSetLoadedValuesSetup = () => {
@@ -340,10 +340,10 @@ Zon.Game = class Game {
         if (completedLevelData.stageID !== this.stageID.value || completedLevelData.stageNum !== this.stageNum.value)
             return;
 
-        if (Zon.Settings.getGame(Zon.GameSettingsID.AUTOMATICALLY_GO_TO_NEXT_STAGE)) {
+        if (Zon.Settings.getGame(Zon.GameSettingsID.AutomaticallyGoToNextStage)) {
             let stageSelected = false;
-            if (Zon.Settings.getGame(Zon.GameSettingsID.AUTOMATICALLY_RETURN_TO_STAGE_1)) {
-                if (Zon.Settings.getGame(Zon.GameSettingsID.STAGE_TO_RETURN_TO_STAGE_1) <= Zon.LevelData.startingStage) {
+            if (Zon.Settings.getGame(Zon.GameSettingsID.AutomaticallyReturnToStage1)) {
+                if (Zon.Settings.getGame(Zon.GameSettingsID.StageToReturnToStage1) <= completedLevelData.displayedStageNum) {
                     Variable.Base.pause();
                     this.stageID.value = Zon.LevelData.startingStage;
                     this.stageNum.value = Zon.LevelData.startingStageNum;

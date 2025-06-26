@@ -10,23 +10,26 @@ HTMLDivElement.prototype.setBorder = function(size, color = 'black', blurRadius 
     `
 }
 
-HTMLDivElement.prototype.setBackgroundImage = function(path) {
+HTMLDivElement.prototype.setBackgroundImage = function(path, stretchToFit = true) {
     this.style.backgroundImage = `url(${path})`;
-    this.style.backgroundSize = "100% 100%";
+    this.style.backgroundSize = stretchToFit ? "100% 100%" : "contain";
     this.style.backgroundRepeat = "no-repeat";
+    this.style.backgroundPosition = "center center";
 }
 
 HTMLDivElement.prototype.addOnClick = function(onClick) {
     this.addEventListener('click', onClick);
 }
 
-HTMLDivElement.prototype.setScrollableColumnStyle = function() {
-    this.style.overflowY = 'auto';
+HTMLDivElement.prototype.setScrollableColumnStyle = function(alwaysShowScrollBar = true) {
+    this.style.overflowY = alwaysShowScrollBar ? 'scroll' : 'auto';
+    this.style.overflowX = 'hidden';
     this.style.display = 'flex';
     this.style.flexDirection = 'column';
 }
-HTMLDivElement.prototype.setScrollableRowStyle = function() {
-    this.style.overflowX = 'auto';
+HTMLDivElement.prototype.setScrollableRowStyle = function(alwaysShowScrollBar = true) {
+    this.style.overflowX = alwaysShowScrollBar ? 'scroll' : 'auto';
+    this.style.overflowY = 'hidden';
     this.style.display = 'flex';
     this.style.flexDirection = 'row';
 }

@@ -2,17 +2,15 @@
 
 Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
-        super('musicUI', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU);
+        super('musicUI', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, Zon.device, {
+            postConstructorFunc: Zon.UI.MusicUIState._postConstructorFunc,
+        });
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x404040FF).cssString;
     }
-
-    postConstructor() {
-        super.postConstructor();
-
-        this.fileInput = Zon.UI.MusicUIState.MusicFileInput.create(this);
-        this.musicControls = Zon.UI.MusicUIState.MusicControls.create(this);
-        this.songButtons = Zon.UI.MusicUIState.SongButtonsList.create(this);
-
+    static _postConstructorFunc(d) {
+        d.fileInput = Zon.UI.MusicUIState.MusicFileInput.create(d);
+        d.musicControls = Zon.UI.MusicUIState.MusicControls.create(d);
+        d.songButtons = Zon.UI.MusicUIState.SongButtonsList.create(d);
     }
     static MusicFileInput = class MusicFileInput extends Zon.UI.UIElementDiv {
         constructor(parent) {
@@ -51,16 +49,16 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
         constructor(parent) {
             super('musicControls', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, parent);
 
-            this.makeScrollableRow();
+            this.makeScrollableRow(false);
         }
         static pauseButtonDefaultIcon = 'PlayIcon';
         setup() {
             super.setup();
 
-            this.replaceLeft(() => Zon.UI.musicUIState.width * 0.05);
-            this.replaceTop(() => Zon.UI.musicUIState.fileInput.bottom + 4);
-            this.replaceWidth(() => Zon.UI.musicUIState.width - this.left * 2);
-            this.replaceHeight(() => Zon.UI.musicUIState.height * 0.08);
+            this.replaceLeft(() => Zon.UI.musicUIState.useableSpace.width * 0.05);
+            this.replaceTop(() => Zon.UI.musicUIState.useableSpace.fileInput.bottom + 4);
+            this.replaceWidth(() => Zon.UI.musicUIState.useableSpace.width - this.left * 2);
+            this.replaceHeight(() => Zon.UI.musicUIState.useableSpace.height * 0.08);
 
             const pauseButton = this._addButton('pauseButton', Zon.musicManager.playButtonPressed, Zon.UI.MusicUIState.MusicControls.pauseButtonDefaultIcon);
             Zon.musicManager.linkPauseButton(pauseButton);
@@ -69,9 +67,9 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             //const skipButton
         }
         _addButton(name, onClick, iconName, options = {}) {
-            options.topFunc ??= () => Zon.UI.musicUIState.musicControls.height * 0.05;
-            options.widthFunc ??= () => Zon.UI.musicUIState.musicControls.height * 1.2;
-            options.heightFunc ??= () => Zon.UI.musicUIState.musicControls.height * 0.9;
+            options.topFunc ??= () => Zon.UI.musicUIState.useableSpace.musicControls.height * 0.05;
+            options.widthFunc ??= () => Zon.UI.musicUIState.useableSpace.musicControls.height * 1.2;
+            options.heightFunc ??= () => Zon.UI.musicUIState.useableSpace.musicControls.height * 0.9;
             return this.addIconButton(name, onClick, iconName, options);
         }
     }
@@ -88,9 +86,9 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             super.setup();
             
             this.replaceLeft(() => 0);
-            this.replaceTop(() => Zon.UI.musicUIState.musicControls.bottom + 4);
-            this.replaceWidth(() => Zon.UI.musicUIState.width);
-            this.replaceHeight(() => Zon.UI.musicUIState.height - this.top);
+            this.replaceTop(() => Zon.UI.musicUIState.useableSpace.musicControls.bottom + 4);
+            this.replaceWidth(() => Zon.UI.musicUIState.useableSpace.width);
+            this.replaceHeight(() => Zon.UI.musicUIState.useableSpace.height - this.top);
             // console.log(`Zon.UI.musicUIState.fileInput.bottom: ${Zon.UI.musicUIState.fileInput.bottom}`);
             // console.log(`top: ${this.top}`);
 
@@ -103,9 +101,9 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             // console.log(`lastSongButton.height: ${lastSongButton?.height}`);
 
             return this.addTextButton(`songButton_${songName}`, () => Zon.musicManager.playSongByName(songName), songName, {
-                leftFunc: () => Zon.UI.musicUIState.width * 0.1,
-                widthFunc: () => Zon.UI.musicUIState.width * 0.8,
-                heightFunc: () => Zon.UI.musicUIState.height * 0.1,
+                leftFunc: () => Zon.UI.musicUIState.useableSpace.width * 0.1,
+                widthFunc: () => Zon.UI.musicUIState.useableSpace.width * 0.8,
+                heightFunc: () => Zon.UI.musicUIState.useableSpace.height * 0.1,
             });
         }
         addAllButtons() {
@@ -120,15 +118,6 @@ Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
 
     postLoadSetup() {
         
-    }
-
-    setup = () => {
-        super.setup();
-
-        this.replaceLeft(() => 0);
-        this.replaceTop(() => 0);
-        this.replaceWidth(() => Zon.device.width);
-        this.replaceHeight(() => Zon.device.height * (1 - Zon.UI.CloseButtonUIState.heightScale));
     }
 }
 

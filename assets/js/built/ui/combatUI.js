@@ -1,13 +1,13 @@
 "use strict";
 
 Zon.updateCombatLayout = () => {
-    const combatLayoutSetting = Zon.Settings.getDisplay(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT);
+    const combatLayoutSetting = Zon.Settings.getDisplay(Zon.DisplaySettingsID.CombatUILayout);
     Zon.topUI.updateCombatLayout(combatLayoutSetting);
     Zon.combatUI.updateCombatLayout(combatLayoutSetting);
     Zon.bottomUI.updateCombatLayout(combatLayoutSetting);
 }
 Zon.Setup.preLoadSetupActions.add(() => 
-    Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT).onChangedAction.add(Zon.updateCombatLayout)
+    Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.CombatUILayout).onChangedAction.add(Zon.updateCombatLayout)
 );
 
 Zon.showCombatUI = () => {
@@ -42,7 +42,7 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Math.min(Zon.device.height * this.topUIPercentOfHeight, Zon.device.width / this.topUIAspectRatio));
-        this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT));
+        this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.CombatUILayout));
         // this.draw();
         // Zon.device.onResize.add(this.draw);
 
@@ -133,7 +133,7 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Zon.device.width / Zon.combatUI.combatUIAspectRatio);
-        this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT));
+        this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.CombatUILayout));
     }
     
     updateCombatLayout = (newLayout) => {
@@ -160,7 +160,7 @@ Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Math.min(Zon.device.height * this.bottomUIPercentOfHeight, Zon.device.width / this.bottomUIAspectRatio));
-        this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.COMBAT_UI_LAYOUT));
+        this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.CombatUILayout));
     }
 
     updateCombatLayout = (newLayout) => {

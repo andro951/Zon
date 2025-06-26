@@ -28,24 +28,24 @@ Zon.BlocksManager = class {
     }
 
     preSetLoadedValues = () => {
-        this.blockDrawModeSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_DRAW_MODE);
-        this.blockHealthDimSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_DIM);
+        this.blockDrawModeSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthDrawMode);
+        this.blockHealthDimSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthDim);
         this.blockHealthDimSetting.onChangedAction.add(this.updateAllBlockDullColors);
-        this.blockDamagedColorStrengthSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_DAMAGED_COLOR_STRENGTH);
-        this.blockDamagedColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_DAMAGED_COLOR);
-        this.blockDamagedFadeTimeSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_DAMAGED_FADE_TIME);
+        this.blockDamagedColorStrengthSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockDamagedColorStrength);
+        this.blockDamagedColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockDamagedColor);
+        this.blockDamagedFadeTimeSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockDamagedFadeTime);
         this.blockDamagedFadeTimeSettingInv = new Variable.Dependent(() => 1 / this.blockDamagedFadeTimeSetting, `BlockDamagedFadeTimeSettingInv`, { this: this });
-        this.blockHealthTextFontSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_FONT);
+        this.blockHealthTextFontSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthTextFont);
         this.blockHealthTextFont = new Variable.Dependent(() => `24px ` + Zon.Settings.BlockHealthTextFonts[this.blockHealthTextFontSetting.value], `BlockHealthTextFont`, { this: this });
         this.blockHealthTextFont.onChangedAction.add(this.updateAllBlockHealthTextFonts);
-        this.blockHealthTextColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_COLOR);
+        this.blockHealthTextColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthTextColor);
         this.blockHealthTextColorString = new Variable.Dependent(() => this.blockHealthTextColorSetting.value.cssString, `BlockHealthTextColorString`, { this: this });
-        this.blockHealthTextOutlineColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_COLOR);
+        this.blockHealthTextOutlineColorSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthTextOutlineColor);
         this.blockHealthTextOutlineColorString = new Variable.Dependent(() => this.blockHealthTextOutlineColorSetting.value.cssString, `BlockHealthTextOutlineColorString`, { this: this });
-        this.blockHealthTextOutlineStyleSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_STYLE);
-        this.blockHealthTextOutlineWidthSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT_OUTLINE_WIDTH);
-        this.blockHealthTextSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_TEXT);
-        this.blockHealthOutlineSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BLOCK_HEALTH_OUTLINE);
+        this.blockHealthTextOutlineStyleSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthTextOutlineStyle);
+        this.blockHealthTextOutlineWidthSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthTextOutlineWidth);
+        this.blockHealthTextSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthText);
+        this.blockHealthOutlineSetting = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.BlockHealthOutline);
     }
 
     updateAllBlockHealthTextFonts = () => {

@@ -72,57 +72,57 @@ StringHelper.ToTime2 = function(bigNumber, remainingTime, decimals = 2, scientif
     return StringHelper.ToTime(bigNumber.isPositive, bigNumber.S(decimals, scientific, removeTrailingZeros), remainingTime);
 }
 
-String.prototype.isUpper = function(c) {
-    const code = c.charCodeAt(0);
+String.prototype.isUpper = function() {
+    const code = this.charCodeAt(0);
     return code >= 65 && code <= 90; // 'A' - 'Z'
 }
 
-String.prototype.isLower = function(c) {
-    const code = c.charCodeAt(0);
+String.prototype.isLower = function() {
+    const code = this.charCodeAt(0);
     return code >= 97 && code <= 122; // 'a' - 'z'
 }
 
-String.prototype.isNumber = function(c) {
-    const code = c.charCodeAt(0);
+String.prototype.isNumber = function() {
+    const code = this.charCodeAt(0);
     return code >= 48 && code <= 57; // '0' - '9'
 }
 
-String.prototype.isUpperOrNumber = function(c) {
-    const code = c.charCodeAt(0);
+String.prototype.isUpperOrNumber = function() {
+    const code = this.charCodeAt(0);
     return (code >= 65 && code <= 90) || (code >= 48 && code <= 57);
 }
 
 StringHelper.lowerCaseAddSpacesStringWords = ["of"];
 
-String.prototype.addSpaces = function(s, checkLowerCaseWords = false, space = " ") {
-    if (!s || s.length < 2)
-        return s;
+String.prototype.addSpaces = function(checkLowerCaseWords = false, space = " ") {
+    if (!this || this.length < 2)
+        return this;
 
     let result = "";
     let start = 0;
-    let prev = s[0];
-    let curr = s[1];
+    let prev = this[0];
+    let curr = this[1];
 
-    for (let i = 2; i < s.length; i++) {
+    for (let i = 2; i < this.length; i++) {
         const prev2 = prev;
         prev = curr;
-        curr = s[i];
+        curr = this[i];
 
         const prevIsUpperOrNum = prev.isUpperOrNumber();
         const currIsUpperOrNum = curr.isUpperOrNumber();
 
         if (!prevIsUpperOrNum && currIsUpperOrNum) {
             if (prev === ' ') continue;
-            result += s.slice(start, i - 1 + 1) + space;
+            result += this.slice(start, i - 1 + 1) + space;
             start = i;
         } else if (prevIsUpperOrNum && prev2.isUpperOrNumber() && !currIsUpperOrNum) {
             if (curr === ' ') continue;
-            result += s.slice(start, i - 2 + 1) + space;
+            result += this.slice(start, i - 2 + 1) + space;
             start = i - 1;
         }
     }
 
-    result += s.slice(start);
+    result += this.slice(start);
 
     if (checkLowerCaseWords) {
         for (const word of StringHelper.lowerCaseAddSpacesStringWords) {

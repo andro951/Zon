@@ -633,7 +633,7 @@ BinaryTests.testVerifyFullyRead = () => {
 }
 
 BinaryTests.saveLoadHelperTest = () => {
-    const stageToReturnToStage1 = Zon.Settings.getGameSetting(Zon.GameSettingsID.STAGE_TO_RETURN_TO_STAGE_1);
+    const stageToReturnToStage1 = Zon.Settings.getGameSetting(Zon.GameSettingsID.StageToReturnToStage1);
     const saveLoadHelper = stageToReturnToStage1.saveLoadHelper();
     const writer = new Binary.Writer().createStream(1);
     console.log(`Initial value; ${stageToReturnToStage1.value}, ${saveLoadHelper.value}`);

@@ -272,7 +272,7 @@ Variable.ColorVar = class ColorVar extends Variable.Base {
 }
 
 Variable.Dependent = class DependentVariable extends Variable.Base {
-    constructor(getValue, name, references = {}, linkDependentActions = true) {
+    constructor(getValue, name, references = {}, { linkDependentActions = true } = {}) {
         super(name);
         if (typeof getValue !== 'function' && !(getValue instanceof Variable.DependentFunction))
             throw new Error(`getValue must be a function or Variable.DependentFunction, got ${typeof getValue}: ${getValue}`);
@@ -282,9 +282,9 @@ Variable.Dependent = class DependentVariable extends Variable.Base {
         this._references = references;
         this.replaceEquation(getValue, references);
     }
-    static empty = (name, thisObj = undefined, linkDependentActions = false) => {
+    static empty = (name, thisObj = undefined, { linkDependentActions = false } = {}) => {
         const references = thisObj ? { this: thisObj } : {};
-        return new Variable.Dependent(Variable.Dependent.defaultEquation, name, references, linkDependentActions);
+        return new Variable.Dependent(Variable.Dependent.defaultEquation, name, references, { linkDependentActions });
     }
     static defaultEquation = () => { throw new Error("Dependent variable has no equation set"); };
     replaceEquation(newGetValue, references = {}) {

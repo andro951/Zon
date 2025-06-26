@@ -42,11 +42,8 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
     postConstructor() {
         super.postConstructor();
 
-        Zon.playerLevel.level.addOnChangedDrawAction(this._updateText);
+        this.text.replaceEquation(() => `Level ${Zon.playerLevel.level.value}`);
         Zon.playerLevel.progressToNextLevel.addOnChangedDrawAction(this._updateFill);
-    }
-    _updateText = () => {
-        this.text.value = `Level ${Zon.playerLevel.level.value}`;
     }
 
     _updateFill = () => {

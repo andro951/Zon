@@ -34,12 +34,13 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.element.style.display = "none";
         this.element.style.position = "absolute";
         this.element.style.userSelect = 'none';
+        this.element.style.boxSizing = 'border-box';
         if (dependentRect) {
             this.rect = Struct.DynamicRectangle.dependent(this.element.id, this);
             this._leftOffset = new Variable.Value(0, `${this.element.id}LeftOffset`);
             this._topOffset = new Variable.Value(0, `${this.element.id}TopOffset`);
-            this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, this , false);
-            this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, this, false);
+            this._leftEquationVar = Variable.Dependent.empty(`${this.element.id}LeftDependency`, this , { linkDependentActions: false });
+            this._topEquationVar = Variable.Dependent.empty(`${this.element.id}TopDependency`, this, { linkDependentActions: false });
             this.rect._left.replaceEquation(() => {
                 return this._leftEquationVar.value + this._leftOffset.value;
             });
@@ -59,6 +60,8 @@ Zon.UI.UIElementBase = class UIElementBase {
             this.rect = Struct.DynamicRectangle.empty(this.element.id, this);
             this.dependentVariables = [];
         }
+
+        this.innerRect = Struct.DynamicRectangle.dependent(`${this.element.id}Inner`, this, true);
         
         (parent instanceof Zon.UI.UIElementBase ? parent.element : parent).appendChild(this.element);
     }
@@ -149,6 +152,11 @@ Zon.UI.UIElementBase = class UIElementBase {
 
         this.borderWidth = new Variable.Value(this.getElementParameterNumber(this.element.style.borderWidth), `${this.element.id}BorderWidth`);
         this.borderWidth.onChangedAction.add(() => this.element.style.borderWidth = `${this.borderWidth.value}px`);
+
+        this.innerRect._left.replaceEquation(() => this.left + this.borderWidth.value);
+        this.innerRect._top.replaceEquation(() => this.top + this.borderWidth.value);
+        this.innerRect._width.replaceEquation(() => this.width - this.borderWidth.value * 2);
+        this.innerRect._height.replaceEquation(() => this.height - this.borderWidth.value * 2);
 
         this.borderColor = new Variable.ColorVar(this._computedStyle.borderColor, `${this.element.id}BorderColor`);
         this.borderColor.onChangedAction.add(() => this.element.style.borderColor = this.borderColor.value.cssString);
@@ -268,6 +276,42 @@ Zon.UI.UIElementBase = class UIElementBase {
     get bottom() {
         return this.rect.bottom;
     }
+    get innerLeft() {
+        return this.innerRect.left;
+    }
+    get innerTop() {
+        return this.innerRect.top;
+    }
+    get innerWidth() {
+        return this.innerRect.width;
+    }
+    get innerHeight() {
+        return this.innerRect.height;
+    }
+    get innerRight() {
+        return this.innerRect.right;
+    }
+    get innerBottom() {
+        return this.innerRect.bottom;
+    }
+    get _innerLeft() {
+        return this.innerRect._left;
+    }
+    get _innerTop() {
+        return this.innerRect._top;
+    }
+    get _innerWidth() {
+        return this.innerRect._width;
+    }
+    get _innerHeight() {
+        return this.innerRect._height;
+    }
+    get _innerRight() {
+        return this.innerRect._right;
+    }
+    get _innerBottom() {
+        return this.innerRect._bottom;
+    }
     _updateTop() {
         this.element.style.top = `${this.top}px`;
     }
@@ -275,10 +319,10 @@ Zon.UI.UIElementBase = class UIElementBase {
         this.element.style.left = `${this.left}px`;
     }
     _updateWidth() {
-        this.element.style.width = `${this.width - this.borderWidth.value * 2}px`;
+        this.element.style.width = `${this.width}px`;
     }
     _updateHeight() {
-        this.element.style.height = `${this.height - this.borderWidth.value * 2}px`;
+        this.element.style.height = `${this.height}px`;
     }
     _updateAllValues() {
         this._updateWidth();
@@ -402,6 +446,8 @@ Zon.UI.UIElementBase = class UIElementBase {
 
     //#region Other
 
+    static expectedScrollBarWidth = 19 / 1.25;
+    static defaultButtonBorderRadius = 8;
     updateUIContent() {//Not used?
         if (!this.shown.value)
             return;
@@ -429,15 +475,15 @@ Zon.UI.UIElementBase = class UIElementBase {
             }
         });
     }
-    makeScrollableColumn() {
-        this.element.setScrollableColumnStyle();
-        
+    makeScrollableColumn(alwaysShowScrollBar = true) {
+        this.element.setScrollableColumnStyle(alwaysShowScrollBar);
+
         this.childrenPadding = new Variable.Value(4, `${this.element.id}ChildrenPadding`);
         this.children = Variable.createArray();
         this.isColumn = true;//!isColumn means isRow.
     }
-    makeScrollableRow() {
-        this.element.setScrollableRowStyle();
+    makeScrollableRow(alwaysShowScrollBar = true) {
+        this.element.setScrollableRowStyle(alwaysShowScrollBar);
 
         this.childrenPadding = new Variable.Value(4, `${this.element.id}ChildrenPadding`);
         this.children = Variable.createArray();
@@ -555,7 +601,9 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         if (this.text !== undefined)
             return;//Already created
 
-        this.text = new Variable.Value(this.textContent, `${this.element.id}Text`);
+        const text = this.element.textContent;
+        this.text = new Variable.Dependent(() => text, `${this.element.id}Text`, {}, { linkDependentActions: false });
+        this.dependentVariables.push(this.text);
 
         const fontSizeName = `${this.element.id}FontSize`;
         if (this.element.style.fontSize) {
@@ -571,7 +619,7 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             });
         }
         else {
-            this.textHeightPadding = new Variable.Value(0.05, `${this.element.id}TextHeightPadding`);
+            this.textHeightPadding = new Variable.Value(0.1, `${this.element.id}TextHeightPadding`);
             this.textWidthPadding = new Variable.Value(0.02, `${this.element.id}TextWidthPadding`);
 
             this.fontSize = new Variable.Dependent(() => this.height * (1 - this.textHeightPadding.value * 2), fontSizeName, { this: this});
@@ -579,6 +627,13 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
             this._width.onChangedAction.add(this._fitText);
 
             this.text.onChangedAction.add(() => {
+                if (zonDebug) {
+                    if (this.element.children.length > 0) {
+                        if (!this.textElement)
+                            throw new Error(`Setting textElement on a div deletes all children.`);
+                    }
+                }
+                
                 (this.textElement ?? this.element).textContent = this.text.value;
                 this._fitText();
             });
@@ -638,9 +693,9 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
         if (textWidth <= 0)
             return;
 
-        const maxWidth = this.width * (1 - this.textWidthPadding.value * 2);
+        const maxWidth = this.innerWidth * (1 - this.textWidthPadding.value * 2);
         const scale = Math.min(1, maxWidth / textWidth);
-        textElement.style.fontSize = `${this.fontSize.value * scale - this.borderWidth.value * 2}px`;
+        textElement.style.fontSize = `${this.fontSize.value * scale}px`;
     }
 }
 
@@ -675,7 +730,9 @@ Zon.UI.UIElementZID = {
     MENU: 2,
     SIDE_BAR: 3,
     CLOSE_BUTTON_MENU: 4,
-    POPUP: 5,
+    CBM_SUB_MENU: 5,
+    CLOSE_BUTTON: 6,
+    POPUP: 7,
 };
 Zon.UI.UIElementZIDNames = [];
 Enum.createEnum(Zon.UI.UIElementZID, Zon.UI.UIElementZIDNames, false);

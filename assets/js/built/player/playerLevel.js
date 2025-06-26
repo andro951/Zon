@@ -6,10 +6,10 @@ Zon.PlayerLevel = class PlayerLevel {
         const xpToLevelEquation = this._createXPToLevelEquation();
         this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
         this.levelToXP = this._playerLevelTracker.levelToProgress;
-        this.level = this._playerLevelTracker.level;
+        this.level = this._playerLevelTracker.level.makeGlobal();
         this.xpToLevel = this._playerLevelTracker.progressToLevel;
         this.progressToNextLevel = this._playerLevelTracker.progressToNextLevel;
-        this.totalXP = this._playerLevelTracker.totalProgress;
+        this.totalXP = this._playerLevelTracker.totalProgress.makeGlobal();
 
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
         Zon.Setup.postLoadSetupActions.add(this.postLoadSetup);
