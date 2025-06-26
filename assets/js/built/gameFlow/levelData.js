@@ -176,4 +176,16 @@ Zon.LevelData = class LevelData {
     static postLoadTextures() {
         Zon.LevelData.allLevelTextures = Zon.allTextures[Zon.TextureFolders.levels];
     }
+
+    saveLoadHelper() {
+        return new Zon.LevelDataSaveLoadHelper(this);
+    }
+
+    static LevelDataSaveLoadHelper = class LevelDataSaveLoadHelper {
+        constructor(index) {
+            this.index = index;
+        }
+        
+
+    }
 }
