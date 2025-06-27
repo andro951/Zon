@@ -102,16 +102,34 @@ Zon.BlocksManager = class {
         this._blockSize = new Vectors.Vector(this.blockArea.width / this.tileCount.x, this.blockArea.height / this.tileCount.y);//100, 100
         this._blocks = new Array(this._imagePixelsWidth * this._imagePixelsHeight);
 
+        const blockMaxHealth = this._levelData.blockMaxHealth;
         for (let yPixel = 0; yPixel < this._imagePixelsHeight; yPixel++) {
             for (let xPixel = 0; xPixel < this._imagePixelsWidth; xPixel++) {
-                const color = this._levelData.pixels([this.getBlockIndex(xPixel, yPixel)]);
+                const color = this._levelData.pixels(this.getBlockIndex(xPixel, yPixel));
                 const blockIndex = xPixel + yPixel * this._imagePixelsWidth;
                 if (color.a === 0) {
                     this._blocks[blockIndex] = null;
                     continue;
                 }
 
-                const block = new Zon.Block(this._blockSize.x, this._blockSize.y, this, this.getBlockX(xPixel), this.getBlockY(yPixel), blockIndex, this._levelData.blockHP ? this._levelData.blockHP[blockIndex] : this._levelData.blockMaxHealth, color);
+                let hp;
+                if (this._levelData.blockHP) {
+                    hp = this._levelData.blockHP[blockIndex];
+                    if (hp === null) {
+                        hp = blockMaxHealth;
+                    }
+                    else {
+                        if (hp.isZero) {
+                            this._blocks[blockIndex] = null;
+                            continue;
+                        }
+                    }
+                }
+                else {
+                    hp = blockMaxHealth;
+                }
+
+                const block = new Zon.Block(this._blockSize.x, this._blockSize.y, this, this.getBlockX(xPixel), this.getBlockY(yPixel), blockIndex, blockMaxHealth, color, hp);
                 this._blocks[blockIndex] = block;
                 this._blocksSet.add(block);
             }
@@ -167,19 +185,26 @@ Zon.BlocksManager = class {
     }
     updateLevelDataPixelsAndHP = () => {
         //TODO: switch to using the set to iterate and store as a map instead of an array.
-        if (!this._blocks || !this._levelData || !this._levelData.pixels || !this._levelData.blockHP)
+        if (!this._blocks || !this._levelData)
             return;
 
         this._levelData.blockHP = new Array(this._blocks.length);
+        const blockMaxHealth = this._levelData.blockMaxHealth;
         for (let yPixel = 0; yPixel < this._imagePixelsHeight; yPixel++) {
             for (let xPixel = 0; xPixel < this._imagePixelsWidth; xPixel++) {
                 const blockIndex = this.getBlockIndex(xPixel, yPixel);
-                const block = this._blocks[blockIndex];
-                if (block === null) {
-                    this._levelData.pixels([blockIndex]).a = 0;
-                    this._levelData.blockHP[blockIndex] = Struct.BigNumber.ZERO;
-                } else {
-                    this._levelData.blockHP[blockIndex] = block.health.HP;
+                const color = this._levelData.pixels(blockIndex);
+                if (color.a === 0) {
+                    this._levelData.blockHP[blockIndex] = null;
+                }
+                else {
+                    const block = this._blocks[blockIndex];
+                    if (block === null) {
+                        this._levelData.blockHP[blockIndex] = Struct.BigNumber.ZERO;
+                    } else {
+                        const hp = block.health.hp;
+                        this._levelData.blockHP[blockIndex] = hp.equals(blockMaxHealth) ? null : hp.clone;
+                    }
                 }
             }
         }

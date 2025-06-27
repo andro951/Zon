@@ -1,11 +1,11 @@
 "use strict";
 
 Zon.Block = class extends Struct.Rectangle {
-    constructor(width, height, blocksManager, left, top, index, health, color) {
+    constructor(width, height, blocksManager, left, top, index, maxHealth, color, health = null) {
         super(left, top, width, height);
         this.blocksManager = blocksManager;
         this.index = index;
-        this.health = new Zon.Health(health, this);
+        this.health = new Zon.Health(maxHealth.clone, this, health);
         //this.health = new Zon.Health(health.multiply(Struct.BigNumber.create(20)), this);
         this.health.onHPZero.add(this.kill);
         this.color = color;

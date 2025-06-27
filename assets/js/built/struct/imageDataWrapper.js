@@ -49,6 +49,7 @@ Struct.ColorArrayWrapper = class {
     }
 }
 Struct.PixelWrapper = class PixelWrapper extends Struct.ColorBase {
+    //Image data is stored as RGBA in Uint8Array, not the normal little-endian format, so you have to reverse the bytes when reading/writing.
     constructor(colorArrayWrapper, index) {
         super();
         this.colorArrayWrapper = colorArrayWrapper;
@@ -56,33 +57,42 @@ Struct.PixelWrapper = class PixelWrapper extends Struct.ColorBase {
     }
 
     get r() {
-        return this.colorArrayWrapper.pixelUint8Array[this.index + 3];
-    }
-    set r(value) {
-        this.colorArrayWrapper.pixelUint8Array[this.index + 3] = value;
-    }
-    get g() {
-        return this.colorArrayWrapper.pixelUint8Array[this.index + 2];
-    }
-    set g(value) {
-        this.colorArrayWrapper.pixelUint8Array[this.index + 2] = value;
-    }
-    get b() {
-        return this.colorArrayWrapper.pixelUint8Array[this.index + 1];
-    }
-    set b(value) {
-        this.colorArrayWrapper.pixelUint8Array[this.index + 1] = value;
-    }
-    get a() {
         return this.colorArrayWrapper.pixelUint8Array[this.index + 0];
     }
-    set a(value) {
+    set r(value) {
         this.colorArrayWrapper.pixelUint8Array[this.index + 0] = value;
     }
+    get g() {
+        return this.colorArrayWrapper.pixelUint8Array[this.index + 1];
+    }
+    set g(value) {
+        this.colorArrayWrapper.pixelUint8Array[this.index + 1] = value;
+    }
+    get b() {
+        return this.colorArrayWrapper.pixelUint8Array[this.index + 2];
+    }
+    set b(value) {
+        this.colorArrayWrapper.pixelUint8Array[this.index + 2] = value;
+    }
+    get a() {
+        return this.colorArrayWrapper.pixelUint8Array[this.index + 3];
+    }
+    set a(value) {
+        this.colorArrayWrapper.pixelUint8Array[this.index + 3] = value;
+    }
     get uint() {
-        return this.colorArrayWrapper.pixelUint32Array[this.index >>> 2];
+        const reverseUInt = this.colorArrayWrapper.pixelUint32Array[this.index >>> 2];
+        const uint = ((reverseUInt & 0xFF000000) >>> 24) |
+                      ((reverseUInt & 0x00FF0000) >>> 8) |
+                      ((reverseUInt & 0x0000FF00) << 8) |
+                      ((reverseUInt & 0x000000FF) << 24);
+        return uint;
     }
     set uint(value) {
-        this.colorArrayWrapper.pixelUint32Array[this.index >>> 2] = value;
+        const reverseUInt = ((value & 0xFF000000) >>> 24) |
+                            ((value & 0x00FF0000) >>> 8) |
+                            ((value & 0x0000FF00) << 8) |
+                            ((value & 0x000000FF) << 24);
+        this.colorArrayWrapper.pixelUint32Array[this.index >>> 2] = reverseUInt;
     }
 }

@@ -30,6 +30,7 @@ Zon.Game = class Game {
                 Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.highestStageAvailable, Zon.IOManager.commonDataHelper.stageBits),
                 Zon.SaveLoadHelper_UI32.fromVariable(Zon.game.highestStageNumAvailable, Zon.IOManager.commonDataHelper.stageNumBits),
                 Zon.SaveLoadHelper_UI32_AL.fromVariable(Zon.game.prestigeCount),
+                new Zon.LevelData.AllLevelDataSaveLoadHelper(),
             ]);
         }
     }
@@ -370,7 +371,7 @@ Zon.Game = class Game {
         const stageIndex = Zon.LevelData.getStageIndex(this.stageID.value, this.stageNum.value);
         let levelData = this.levelDatas[stageIndex];
         if (levelData === null) {
-            levelData = new Zon.LevelData(this.stageID.value, this.stageNum.value);
+            levelData = Zon.LevelData.createNew(this.stageID.value, this.stageNum.value);
             this.levelDatas[stageIndex] = levelData;
         }
 

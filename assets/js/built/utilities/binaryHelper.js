@@ -233,6 +233,7 @@ Binary.Writer = class Writer {
     constructor() {
         this.numBuffer = 0;
         this.currentBit = 0;
+        this.encoder = new TextEncoder();
     }
 
     createStream = (initialSize = 128) => {
@@ -433,12 +434,29 @@ Binary.Writer = class Writer {
         if (abs !== 0n)
             this.writeBool(negative);
     }
+
+    writeString = (string) => {
+        const encoded = this.encoder.encode(string);
+        this.writeUInt32AutoLength(encoded.length);
+
+        const fullWords = encoded.length >>> 2; // floor(encoded.length / 4)
+        const uint32Array = new Uint32Array(encoded.buffer, encoded.byteOffset, fullWords);
+        for (let w = 0; w < fullWords; w++) {
+            this.writeUInt32(uint32Array[w]);
+        }
+
+        // Write remaining 1–3 bytes
+        for (let i = fullWords << 2; i < encoded.length; i++) {//i = fullWords * 4
+            this.writeUInt32(encoded[i], 8);
+        }
+    }
 }
 
 Binary.Reader = class Reader {
     constructor() {
         this.numBuffer = 0;
         this.currentBit = Binary.BitExtractor.UINT_32_BITS;
+        this.decoder = new TextDecoder();
     }
 
     loadFromLocalStorage = (key) => {
@@ -625,5 +643,24 @@ Binary.Reader = class Reader {
         const length = this.readUInt32AutoLength() + 1;
         //console.log(`readBigIntAutoLength: length: ${length}`);
         return this.readBigInt(BigInt(length));
+    }
+
+    readString = () => {
+        const length = this.readUInt32AutoLength();
+        if (length === 0)
+            return '';
+        
+        const uint8Array = new Uint8Array(length);
+        const uint32Array = new Uint32Array(uint8Array.buffer, uint8Array.byteOffset, length >>> 2); // floor(length / 4)
+        for (let w = 0; w < uint32Array.length; w++) {
+            uint32Array[w] = this.readUInt32();
+        }
+
+        // Read remaining 1–3 bytes
+        for (let i = uint32Array.length << 2; i < length; i++) {//i = uint32Array.length * 4
+            uint8Array[i] = this.readUInt32(8);
+        }
+
+        return this.decoder.decode(uint8Array);
     }
 }

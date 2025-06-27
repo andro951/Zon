@@ -458,8 +458,11 @@ Zon.IOManager.CommonDataHelper = class CommonDataHelper extends Zon.SaveLoadInfo
     //The number of bits can safely be changed between versions if more space is needed.
     stageBits = new Zon.LoadConstantHelper_UI32((Zon.StageID.COUNT - 1).bitLength32());
     stageNumBits = new Zon.LoadConstantHelper_UI32(Zon.LevelData.maxStageNum.bitLength32());
+    stageIndexBits = new Zon.LoadConstantHelper_UI32(Zon.LevelData.maxStageIndex.bitLength32());
     settingsEnumBits = new Zon.LoadConstantHelper_UI32((Zon.GameSettingsID.COUNT - 1).bitLength32());
     itemIDBits = new Zon.LoadConstantHelper_UI32((Zon.ItemType.COUNT).bitLength32());
+    levelDataImageWidthBits = new Zon.LoadConstantHelper_UI32((16 - 1).bitLength32());//I manually subtract and add 1 when saving/loading the image width and height.
+    levelDataImageHeightBits = new Zon.LoadConstantHelper_UI32((16 - 1).bitLength32());//I manually subtract and add 1 when saving/loading the image width and height.
 
     addHelpers = () => {
         // for (const key of Object.keys(this)) {
@@ -472,6 +475,9 @@ Zon.IOManager.CommonDataHelper = class CommonDataHelper extends Zon.SaveLoadInfo
         this.add(this.stageNumBits);
         this.add(this.settingsEnumBits);
         this.add(this.itemIDBits);
+        this.add(this.stageIndexBits);
+        this.add(this.levelDataImageWidthBits);
+        this.add(this.levelDataImageHeightBits);
     }
 }
 

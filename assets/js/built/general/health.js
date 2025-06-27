@@ -8,10 +8,10 @@ Zon.Health = class {
     onHPFull = new Actions.Action();
     onMaxHPChanged = new Actions.Action();
 
-    constructor(maxHP, owner) {
+    constructor(maxHP, owner, hp = null) {
         this._maxHP = maxHP;
         this.owner = owner;
-        this._hp = maxHP;
+        this._hp = hp !== null ? hp.clone : maxHP.clone;
     }
 
     get enemy() {

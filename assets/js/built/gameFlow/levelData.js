@@ -36,13 +36,28 @@ Zon.LevelData = class LevelData {
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup.bind(this));
     }
     
-    constructor(stageID, stageNum) {
+    constructor(stageID, stageNum, textureName, blockHP, blockMaxHealth, stageDuration) {
         this.stageID = stageID;
         this.stageNum = stageNum;
-        this.stageDuration = 0;
+        this.blockHP = blockHP;
+        this.stageDuration = stageDuration;
+        this.textureName = textureName;
         this.setup();
-        this.blockMaxHealth = Zon.LevelData.getBlockMaxHealth(this.displayedStageNum);
-        this.getRandomPngFile();
+        this.blockMaxHealth = blockMaxHealth ?? Zon.LevelData.getBlockMaxHealth(this.displayedStageNum);
+        if (Zon.LevelData.allLevelTextures) {
+            this._setTexture();
+        }
+        else {
+            Zon.LevelData._postLoadTexturesActions.add(this._setTexture);
+        }
+    }
+
+    static createNew(stageID, stageNum) {
+        const blockHP = null;
+        const stageDuration = 0;
+        const textureName = this.getRandomPngFile(stageID);
+        const blockMaxHealth = null;
+        return new Zon.LevelData(stageID, stageNum, textureName, blockHP, blockMaxHealth, stageDuration);
     }
 
     static preLoadSetup() {
@@ -79,17 +94,6 @@ Zon.LevelData = class LevelData {
     //     return Zon.LevelData.baseStageCompletionAetherBonus.multiplyByPow10(3 * (2 ** (stageCount / 10) - 1) + stageCount / 10);
     // }
 
-    copyStage = (stageID, stageNum, width, height, pixels, blockHP, blockMaxHealth, stageDuration) => {
-        const stage = new Zon.LevelData(stageID, stageNum);
-        stage.width = width;
-        stage.height = height;
-        stage.pixels = pixels;
-        stage.blockHP = blockHP;
-        stage.stageDuration = stageDuration;
-        this.setup();
-        stage.blockMaxHealth = blockMaxHealth;
-    }
-
     setup = () => {
         this.displayedStageNum = Zon.LevelData.getDisplayedStageNum(this.stageID, this.stageNum);
         this.stageIndex = Zon.LevelData.getStageIndex(this.stageID, this.stageNum);
@@ -115,11 +119,16 @@ Zon.LevelData = class LevelData {
         return this.imgName();
     }
 
-    getRandomPngFile = () => {
-        const textures = Zon.LevelData.allLevelTextures[Zon.StageIDNames[this.stageID]];
+    static getRandomPngFile = (stageID) => {
+        const textures = Zon.LevelData.allLevelTextures[Zon.StageIDNames[stageID]];
         const keys = Object.keys(textures);
         const randomIndex = Math.floor(Math.random() * keys.length);
-        this.imageWrapper = textures[keys[randomIndex]];
+        return keys[randomIndex];
+    }
+
+    _setTexture = () => {
+        const textures = Zon.LevelData.allLevelTextures[Zon.StageIDNames[this.stageID]];
+        this.imageWrapper = textures[this.textureName];
         this.forwardMethodsFrom(this.imageWrapper, !!this.imgName);//Ignore duplicates error if this.imgName is already defined.  !! is to cast to boolean.
     }
 
@@ -173,19 +182,192 @@ Zon.LevelData = class LevelData {
     }
 
     static allLevelTextures;
+    static _postLoadTexturesActions = new Actions.Action();
     static postLoadTextures() {
         Zon.LevelData.allLevelTextures = Zon.allTextures[Zon.TextureFolders.levels];
+        this._postLoadTexturesActions.callAndClear();
     }
 
     saveLoadHelper() {
         return new Zon.LevelDataSaveLoadHelper(this);
     }
 
+    static AllLevelDataSaveLoadHelper = class AllLevelDataSaveLoadHelper {
+        constructor() {
+            this.levelDataCount = Number.MAX_SAFE_INTEGER;
+            this.levelDataSaveLoadHelpers = [];
+            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+                this.levelDataSaveLoadHelpers.push(new Zon.LevelData.LevelDataSaveLoadHelper(i));
+            }
+        }
+        get = () => {
+            if (this.levelDataCount !== Number.MAX_SAFE_INTEGER)
+                throw new Error(`AllLevelDataSaveLoadHelper.Get(); Failed because levelDataCount != uint.MaxValue; end: ${this.levelDataCount}`);
+
+            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+                this.levelDataSaveLoadHelpers[i].get();
+            }
+        }
+        set = () => {
+            if (this.levelDataCount === Number.MAX_SAFE_INTEGER) {
+                console.warn(`AllLevelDataSaveLoadHelper.Set(); Failed because levelDataCount == uint.MaxValue; end: ${this.levelDataCount}.  This should only happen when upgrading from an old save version that didn't include level data.`);
+                return;
+            }
+
+            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+                this.levelDataSaveLoadHelpers[i].set();
+            }
+
+            this.levelDataCount = Number.MAX_SAFE_INTEGER;
+        }
+        write = (writer) => {
+            if (this.levelDataCount !== Number.MAX_SAFE_INTEGER)
+                throw new Error(`AllLevelDataSaveLoadHelper.Write(); Failed because levelDataCount != uint.MaxValue; end: ${this.levelDataCount}`);
+
+            this.levelDataCount = this.levelDataSaveLoadHelpers.filter(helper => helper.hasData).length;
+            const stageIndexBits = Zon.IOManager.commonDataHelper.stageIndexBits.value;
+            writer.writeUInt32(this.levelDataCount, stageIndexBits);
+            let writtenCount = 0;
+            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+                const helper = this.levelDataSaveLoadHelpers[i];
+                if (!helper.hasData)
+                    continue;
+
+                writer.writeUInt32(i, stageIndexBits);
+                helper.write(writer);
+                writtenCount++;
+            }
+
+            if (writtenCount !== this.levelDataCount)
+                throw new Error(`AllLevelDataSaveLoadHelper.Write(); Failed because writtenCount != levelDataCount; writtenCount: ${writtenCount}, levelDataCount: ${this.levelDataCount}`);
+
+            this.levelDataCount = Number.MAX_SAFE_INTEGER;
+        }
+        read = (reader) => {
+            if (this.levelDataCount !== Number.MAX_SAFE_INTEGER)
+                throw new Error(`AllLevelDataSaveLoadHelper.Read(); Failed because levelDataCount != uint.MaxValue; end: ${this.levelDataCount}`);
+
+            const stageIndexBits = Zon.IOManager.commonDataHelper.stageIndexBits.value;
+            this.levelDataCount = reader.readUInt32(stageIndexBits);
+            for (let i = 0; i < this.levelDataCount; i++) {
+                const index = reader.readUInt32(stageIndexBits);
+                this.levelDataSaveLoadHelpers[index].read(reader);
+            }
+        }
+    }
+
     static LevelDataSaveLoadHelper = class LevelDataSaveLoadHelper {
         constructor(index) {
             this.index = index;
+            this.levelData = null;
+            this.hasData = false;
         }
         
+        _setLevelData = () => {
+            this.levelData = Zon.game.levelDatas[this.index];
+        }
+        _clearLevelData = () => {
+            this.levelData = null;
+        }
+        get = () => {
+            this._setLevelData();
+            if (this.levelData == null)
+                return;
 
+            this.stageID = this.levelData.stageID;
+            this.stageNum = this.levelData.stageNum;
+            this.textureName = this.levelData.textureName;
+            this.stageDuration = this.levelData.stageDuration;
+            this.blockMaxHealth = this.levelData.blockMaxHealth.clone;
+            this.width = this.levelData.width();
+            this.height = this.levelData.height();
+            this.blockHP = Array.from(this.levelData.blockHP);
+            this.hasData = true;
+
+            this._clearLevelData();
+        }
+        set = () => {
+            if (!this.hasData)
+                return;
+
+            Zon.game.levelDatas[this.index] = new Zon.LevelData(this.stageID, this.stageNum, this.textureName, this.blockHP, this.blockMaxHealth, this.stageDuration);
+            this._reset();
+        }
+        write = (writer) => {
+            writer.writeUInt32(this.stageID, Zon.IOManager.commonDataHelper.stageBits.value);
+            writer.writeUInt32(this.stageNum, Zon.IOManager.commonDataHelper.stageNumBits.value);
+            writer.writeString(this.textureName);
+            this.blockMaxHealth.write(writer);
+            writer.writeUInt32(this.width - 1, Zon.IOManager.commonDataHelper.levelDataImageWidthBits.value);
+            writer.writeUInt32(this.height - 1, Zon.IOManager.commonDataHelper.levelDataImageHeightBits.value);
+            const blockIndexBits = (this.width * this.height - 1).bitLength32();
+            writer.writeUInt32AutoLength(blockIndexBits);
+            const blocksToWrite = [];
+            const zeroBlocks = [];
+            for (let i = 0; i < this.blockHP.length; i++) {
+                const blockHP = this.blockHP[i];
+                if (blockHP !== null) {
+                    if (blockHP.isZero) {
+                        zeroBlocks.push(i);
+                    }
+                    else {
+                        blocksToWrite.push(i);
+                    }
+                }
+            }
+
+            writer.writeUInt32(blocksToWrite.length, blockIndexBits);
+            for (const blockIndex of blocksToWrite) {
+                if (zonDebug) {
+                    if (this.blockHP[blockIndex].equals(this.blockMaxHealth))
+                        throw new Error(`Writing a blocks hp when it's max; blockIndex: ${blockIndex}. This should not happen.`);
+                }
+
+                writer.writeUInt32(blockIndex, blockIndexBits);
+                this.blockHP[blockIndex].write(writer);
+            }
+
+            writer.writeUInt32(zeroBlocks.length, blockIndexBits);
+            for (const blockIndex of zeroBlocks) {
+                writer.writeUInt32(blockIndex, blockIndexBits);
+            }
+
+            this._reset();
+        }
+        read = (reader) => {
+            this.stageID = reader.readUInt32(Zon.IOManager.commonDataHelper.stageBits.value);
+            this.stageNum = reader.readUInt32(Zon.IOManager.commonDataHelper.stageNumBits.value);
+            this.textureName = reader.readString();
+            this.blockMaxHealth = Struct.BigNumber.read(reader);
+            this.width = reader.readUInt32(Zon.IOManager.commonDataHelper.levelDataImageWidthBits.value) + 1;
+            this.height = reader.readUInt32(Zon.IOManager.commonDataHelper.levelDataImageHeightBits.value) + 1;
+            const blockIndexBits = reader.readUInt32AutoLength();
+            const pixelsCount = this.width * this.height;
+            this.blockHP = new Array(pixelsCount).fill(null);
+
+            const blockCount = reader.readUInt32(blockIndexBits);
+            for (let i = 0; i < blockCount; i++) {
+                const blockIndex = reader.readUInt32(blockIndexBits);
+                const blockHP = Struct.BigNumber.read(reader);
+                this.blockHP[blockIndex] = blockHP;
+            }
+
+            const zeroBlockCount = reader.readUInt32(blockIndexBits);
+            for (let i = 0; i < zeroBlockCount; i++) {
+                const blockIndex = reader.readUInt32(blockIndexBits);
+                this.blockHP[blockIndex] = Struct.BigNumber.ZERO;
+            }
+
+            this.hasData = true;
+        }
+        _reset = () => {
+            this.stageID = null;
+            this.stageNum = null;
+            this.stageDuration = null;
+            this.textureName = null;
+            this.blockHP = null;
+            this.blockMaxHealth = null;
+            this.hasData = false;
+        }
     }
 }
