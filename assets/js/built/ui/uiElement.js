@@ -444,6 +444,123 @@ Zon.UI.UIElementBase = class UIElementBase {
 
 
 
+    //#region Text
+    
+    _tryCreateTextComponent() {
+        if ((this.element.tagName === 'INPUT' || this.element.tagName === 'DIV' && this.element.textContent) || this.element.fontSize || this.element.style.color || this.element.style.fontWeight) {
+            this.createTextComponent();
+        }
+    }
+    createTextComponent() {
+        if (this.text !== undefined)
+            return;//Already created
+
+        const isInput = this.element.tagName === 'INPUT';
+        this._getText = isInput ? () => this.element.value : () => this.element.textContent;
+        this._textElement = this.textElement ?? this.element;
+        this._setText = isInput ? (text) => this.element.value = text : (text) => this._textElement.textContent = text;
+        const text = this._getText();
+        this.text = new Variable.Dependent(() => text, `${this.element.id}Text`, {}, { linkDependentActions: false });
+        this.dependentVariables.push(this.text);
+
+        const fontSizeName = `${this.element.id}FontSize`;
+        if (this.element.style.fontSize) {
+            //I don't plan to ever have static font sizes, but this is here just in case.
+            this.fontSize = new Variable.Value(this.element.style.fontSize, fontSizeName);
+            this.fontSize.onChangedAction.add(() => {
+                const value = this.fontSize.value;
+                this.element.style.fontSize = typeof value === 'number' ? `${value}px` : value;
+            });
+
+            this.text.onChangedAction.add(() => {
+                this._setText(this.text.value);
+            });
+        }
+        else {
+            this.textHeightPadding = new Variable.Value(0.1, `${this.element.id}TextHeightPadding`);
+            this.textWidthPadding = new Variable.Value(0.02, `${this.element.id}TextWidthPadding`);
+
+            this.fontSize = new Variable.Dependent(() => this.height * (1 - this.textHeightPadding.value * 2), fontSizeName, { this: this});
+            this.fontSize.onChangedAction.add(this._fitText);
+            this._width.onChangedAction.add(this._fitText);
+
+            this.text.onChangedAction.add(() => {
+                if (zonDebug) {
+                    if (this.element.children.length > 0) {
+                        if (!this.textElement)
+                            throw new Error(`Setting textElement on a div deletes all children.`);
+                    }
+                }
+                
+                this._setText(this.text.value);
+                this._fitText();
+            });
+        }
+
+        this.textColor = new Variable.ColorVar(this._computedStyle.color, `${this.element.id}TextColor`);
+        this.textColor.onChangedAction.add(() => this.element.style.color = this.textColor.value.cssString);
+        if (!this.element.style.color)
+            this.textColor.onChangedAction.call();
+
+        this.fontWeight = new Variable.Value(this.element.style.fontWeight, `${this.element.id}FontWeight`);
+        this.fontWeight.onChangedAction.add(() => this.element.style.fontWeight = this.fontWeight.value);
+    }
+
+    _getTextWidth(text, elementStyle) {
+        if (!text)
+            return 0;
+
+        const div = Zon.UI.UIElementDiv;
+        if (!div._textMeasuringSpan) {
+            div._textMeasuringSpan = document.createElement("span");
+            const textMeasuringSpan = div._textMeasuringSpan;
+            textMeasuringSpan.id = "textMeasuringSpan";
+            const style = textMeasuringSpan.style;
+            style.position = "absolute";
+            style.visibility = "hidden";
+            style.pointerEvents = "none";
+            style.userSelect = "none";
+            style.whiteSpace = "nowrap";
+            document.body.appendChild(textMeasuringSpan);
+        }
+
+        const spanStyle = div._textMeasuringSpan.style;
+
+        spanStyle.fontFamily = elementStyle.fontFamily;
+        spanStyle.fontStyle = elementStyle.fontStyle;
+        spanStyle.fontWeight = elementStyle.fontWeight;
+        spanStyle.fontSize = elementStyle.fontSize;
+        spanStyle.letterSpacing = elementStyle.letterSpacing;
+        spanStyle.textTransform = elementStyle.textTransform;
+        spanStyle.textIndent = elementStyle.textIndent;
+        div._textMeasuringSpan.textContent = text;
+
+        return div._textMeasuringSpan.offsetWidth;
+    }
+
+    async _fitText() {
+        await document.fonts.ready;
+        this._textElement.style.fontSize = `${this.fontSize.value}px`;
+        const elementStyle = window.getComputedStyle(this._textElement);
+        const textWidth = this._getTextWidth(this._getText(), elementStyle);
+        if (zonDebug) {
+            //console.log(`Fitting text: ${this._textElement.id} - ${textWidth} - ${this._textElement.scrollWidth} - ${this._textElement.clientWidth} - ${this._textElement.getBoundingClientRect().width}, shown: ${this.shown.value}, text: ${this.text.value}, fontSize: ${this.fontSize.value}, width: ${this.width}, height: ${this.height}`);
+        }
+        
+        if (textWidth <= 0)
+            return;
+
+        const maxWidth = this.innerWidth * (1 - this.textWidthPadding.value * 2);
+        const scale = Math.min(1, maxWidth / textWidth);
+        this._textElement.style.fontSize = `${this.fontSize.value * scale}px`;
+    }
+
+    //#endregion Text
+
+
+
+
+
     //#region Other
 
     static expectedScrollBarWidth = 19 / 1.25;
@@ -592,111 +709,6 @@ Zon.UI.UIElementDiv = class UIElementDiv extends Zon.UI.UIElementBase {
 
         this._tryCreateTextComponent();
     }
-    _tryCreateTextComponent() {
-        if (this.element.textContent || this.element.fontSize || this.element.style.color || this.element.style.fontWeight) {
-            this.createTextComponent();
-        }
-    }
-    createTextComponent() {
-        if (this.text !== undefined)
-            return;//Already created
-
-        const text = this.element.textContent;
-        this.text = new Variable.Dependent(() => text, `${this.element.id}Text`, {}, { linkDependentActions: false });
-        this.dependentVariables.push(this.text);
-
-        const fontSizeName = `${this.element.id}FontSize`;
-        if (this.element.style.fontSize) {
-            //I don't plan to ever have static font sizes, but this is here just in case.
-            this.fontSize = new Variable.Value(this.element.style.fontSize, fontSizeName);
-            this.fontSize.onChangedAction.add(() => {
-                const value = this.fontSize.value;
-                this.element.style.fontSize = typeof value === 'number' ? `${value}px` : value;
-            });
-
-            this.text.onChangedAction.add(() => {
-                (this.textElement ?? this.element).textContent = this.text.value;
-            });
-        }
-        else {
-            this.textHeightPadding = new Variable.Value(0.1, `${this.element.id}TextHeightPadding`);
-            this.textWidthPadding = new Variable.Value(0.02, `${this.element.id}TextWidthPadding`);
-
-            this.fontSize = new Variable.Dependent(() => this.height * (1 - this.textHeightPadding.value * 2), fontSizeName, { this: this});
-            this.fontSize.onChangedAction.add(this._fitText);
-            this._width.onChangedAction.add(this._fitText);
-
-            this.text.onChangedAction.add(() => {
-                if (zonDebug) {
-                    if (this.element.children.length > 0) {
-                        if (!this.textElement)
-                            throw new Error(`Setting textElement on a div deletes all children.`);
-                    }
-                }
-                
-                (this.textElement ?? this.element).textContent = this.text.value;
-                this._fitText();
-            });
-        }
-
-        this.textColor = new Variable.ColorVar(this._computedStyle.color, `${this.element.id}TextColor`);
-        this.textColor.onChangedAction.add(() => this.element.style.color = this.textColor.value.cssString);
-        if (!this.element.style.color)
-            this.textColor.onChangedAction.call();
-
-        this.fontWeight = new Variable.Value(this.element.style.fontWeight, `${this.element.id}FontWeight`);
-        this.fontWeight.onChangedAction.add(() => this.element.style.fontWeight = this.fontWeight.value);
-    }
-
-    _getTextWidth(element, elementStyle) {
-        if (!element.textContent)
-            return 0;
-
-        const div = Zon.UI.UIElementDiv;
-        if (!div._textMeasuringSpan) {
-            div._textMeasuringSpan = document.createElement("span");
-            const textMeasuringSpan = div._textMeasuringSpan;
-            textMeasuringSpan.id = "textMeasuringSpan";
-            const style = textMeasuringSpan.style;
-            style.position = "absolute";
-            style.visibility = "hidden";
-            style.pointerEvents = "none";
-            style.userSelect = "none";
-            style.whiteSpace = "nowrap";
-            document.body.appendChild(textMeasuringSpan);
-        }
-
-        const spanStyle = div._textMeasuringSpan.style;
-
-        spanStyle.fontFamily = elementStyle.fontFamily;
-        spanStyle.fontStyle = elementStyle.fontStyle;
-        spanStyle.fontWeight = elementStyle.fontWeight;
-        spanStyle.fontSize = elementStyle.fontSize;
-        spanStyle.letterSpacing = elementStyle.letterSpacing;
-        spanStyle.textTransform = elementStyle.textTransform;
-        spanStyle.textIndent = elementStyle.textIndent;
-        div._textMeasuringSpan.textContent = element.textContent;
-
-        return div._textMeasuringSpan.offsetWidth;
-    }
-
-    async _fitText() {
-        await document.fonts.ready;
-        const textElement = this.textElement ?? this.element;
-        textElement.style.fontSize = `${this.fontSize.value}px`;
-        const elementStyle = window.getComputedStyle(textElement);
-        const textWidth = this._getTextWidth(textElement, elementStyle);
-        if (zonDebug) {
-            //console.log(`Fitting text: ${textElement.id} - ${textWidth} - ${textElement.scrollWidth} - ${textElement.clientWidth} - ${textElement.getBoundingClientRect().width}, shown: ${this.shown.value}, text: ${this.text.value}, fontSize: ${this.fontSize.value}, width: ${this.width}, height: ${this.height}`);
-        }
-        
-        if (textWidth <= 0)
-            return;
-
-        const maxWidth = this.innerWidth * (1 - this.textWidthPadding.value * 2);
-        const scale = Math.min(1, maxWidth / textWidth);
-        textElement.style.fontSize = `${this.fontSize.value * scale}px`;
-    }
 }
 
 Zon.UI.UIElementDiv2 = class UIElementDiv2 extends Zon.UI.UIElementDiv {
@@ -711,6 +723,37 @@ Zon.UI.UIElementDiv2 = class UIElementDiv2 extends Zon.UI.UIElementDiv {
     }
     postConstructor() {
         super.postConstructor();
+        this.funcs.postConstructorFunc?.(this);
+    }
+    setup() {
+        super.setup();
+        this.funcs.setupFunc?.(this);
+    }
+    postSetup() {
+        super.postSetup();
+        this.funcs.postSetupFunc?.(this);
+        delete this.funcs;
+    }
+}
+
+Zon.UI.UIInputElement = class UIInputElement extends Zon.UI.UIElementBase {
+    constructor(inputId, zIndex, parent = Zon.device, { constructorFunc, postConstructorFunc, setupFunc, postSetupFunc, changeFunc, inheritShown = true, dependentRect = true } = {}) {
+        const inputElement = document.createElement("input");
+        inputElement.id = inputId;
+        super(inputElement, zIndex, parent, { inheritShown, dependentRect });
+        if (changeFunc)
+            this.element.addEventListener('change', (e) => changeFunc(this, e));
+
+        constructorFunc?.(this);
+        this.funcs = {
+            postConstructorFunc,
+            setupFunc,
+            postSetupFunc
+        };
+    }
+    postConstructor() {
+        super.postConstructor();
+        this._tryCreateTextComponent();
         this.funcs.postConstructorFunc?.(this);
     }
     setup() {

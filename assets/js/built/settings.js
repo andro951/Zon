@@ -482,7 +482,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                     }
                 });
 
-                this.textBox = Zon.UI.UIElementDiv2.create(`${this.setting.name}TextBox`, this.element.style.zIndex, this.settingPanel, {
+                this.inputBox = Zon.UI.UIInputElement.create(`${this.setting.name}InputBox`, this.element.style.zIndex, this.settingPanel, {
                     constructorFunc: (d) => {
                         d.element.style.backgroundColor = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
                         d.element.style.color = Struct.Color.fromUInt(0x000000FF).cssString;
@@ -495,6 +495,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         //d.element.style.borderStyle = 'solid';
                         //d.element.style.borderColor = `#AAA`;
                         d.element.style.whiteSpace = 'nowrap';
+                        d.element.type = 'number';
                     },
                     postConstructorFunc: (d) => {
                         d.text.replaceEquation(() => `${d.parent.parent.setting.value}`, { d });
@@ -504,6 +505,17 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.replaceTop(() => padding, { d });
                         d.replaceWidth(() => d.parent.parent.decButton.left - padding * 2, { d });
                         d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    },
+                    changeFunc: (d, e) => {
+                        const settingValue = this.setting.value;
+                        const inputValue = parseInt(e.target.value, 10);
+                        if (isNaN(inputValue)) {
+                            d._setText(`${settingValue}`);
+                        }
+                        else {
+                            this.setting.value = Math.trunc(inputValue);
+                            d._setText(`${this.setting.value}`);
+                        }
                     }
                 });
             }
