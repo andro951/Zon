@@ -79,6 +79,9 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
 
         //Testing UI button
         this._addButton('testingButton', Zon.UI.testingUIState.show, 'UpgradeIcon');
+
+        //Mic Test Button
+        this._addButton('micTestButton', Zon.UI.micTestUIState.show, 'InfoIcon');
     }
     _addButton(name, onClick, iconName, options = {}) {
         options.leftFunc ??= () => Zon.device.width * 0.01;

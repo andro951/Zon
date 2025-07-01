@@ -1,6 +1,6 @@
 "use strict";
 
-Zon.UI.MusicUIState = class extends Zon.UI.CloseButtonLinkedUIState {
+Zon.UI.MusicUIState = class MusicUIState extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
         super('musicUI', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, Zon.device, {
             postConstructorFunc: Zon.UI.MusicUIState._postConstructorFunc,
