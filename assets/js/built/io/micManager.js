@@ -37,6 +37,10 @@ Zon.MicManager = class MicManager {
         this.binSize = sampleRate / this.analyser.fftSize;
         this.micReady = true;
         Zon.UI.micTestUIState.onMicReady();
+
+        if (Zon.audioContext.state === "suspended") {
+            await Zon.audioContext.resume();
+        }
     }
     
     getDominantFrequency() {
