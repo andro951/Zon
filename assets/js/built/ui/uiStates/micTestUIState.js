@@ -15,7 +15,7 @@ Zon.UI.MicTestUIState = class MicTestUIState extends Zon.UI.CloseButtonLinkedUIS
                 d.element.style.color = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
             },
             postConstructorFunc: (d) => {
-                d.text.replaceEquation(() => Zon.UI.micTestUIState.micFrequency.value, {d});
+                d.text.replaceEquation(() => d.parent.parent.micFrequency.value.toFixed(2).padStart(7, '0'), {d});
             },
             setupFunc: (d) => {
                 d.replaceLeft(() => Zon.UI.micTestUIState.useableSpace.width * 0.1);
