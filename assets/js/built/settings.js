@@ -377,8 +377,109 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             this._value.value = newValue;
         }
 
-        createButton = (canvas, x, y, width, height) => {//TODO
-            throw new Error("createButton not implemented");
+        static SettingUIPanelClass = class IntSettingPanel extends Zon.Setting.SettingPanel {
+            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
+                super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
+            }
+            postConstructor() {
+                super.postConstructor();
+
+                const borderWidth = Zon.Setting.SettingPanel.borderWidth;
+                const padding = Zon.Setting.SettingPanel.padding;
+                this.incButton = Zon.UI.UIElementDiv2.create(`${this.setting.name}Inc`, this.element.style.zIndex, this.settingPanel, {
+                    constructorFunc: (d) => {
+                        d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
+                        d.element.style.color = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
+                        d.element.style.display = 'flex';
+                        d.element.style.justifyContent = 'center';
+                        d.element.style.alignItems = 'center';
+                        d.element.style.cursor = 'pointer';
+                        d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+                        d.element.textContent = `>`;
+                        d.element.style.borderWidth = `${borderWidth}px`;
+                        d.element.style.borderStyle = 'solid';
+                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.whiteSpace = 'nowrap';
+                    },
+                    postConstructorFunc: (d) => {
+                        d.element.addOnClick(() => {
+                            this.setting.value = this.setting.value + 1;
+                        });
+                    },
+                    setupFunc: (d) => {
+                        d.replaceLeft(() => d.parent.innerWidth - d.width - padding, { d });
+                        d.replaceTop(() => padding, { d });
+                        d.replaceWidth(() => d.parent.innerWidth * 0.2 - padding, { d });
+                        d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    }
+                });
+
+                this.decButton = Zon.UI.UIElementDiv2.create(`${this.setting.name}Dec`, this.element.style.zIndex, this.settingPanel, {
+                    constructorFunc: (d) => {
+                        d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
+                        d.element.style.color = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
+                        d.element.style.display = 'flex';
+                        d.element.style.justifyContent = 'center';
+                        d.element.style.alignItems = 'center';
+                        d.element.style.cursor = 'pointer';
+                        d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+                        d.element.textContent = `<`;
+                        d.element.style.borderWidth = `${borderWidth}px`;
+                        d.element.style.borderStyle = 'solid';
+                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.whiteSpace = 'nowrap';
+                    },
+                    postConstructorFunc: (d) => {
+                        d.element.addOnClick(() => {
+                            this.setting.value = this.setting.value - 1;
+                        });
+                    },
+                    setupFunc: (d) => {
+                        d.replaceLeft(() => d.parent.parent.incButton.left - d.width - padding, { d });
+                        d.replaceTop(() => padding, { d });
+                        d.replaceWidth(() => d.parent.innerWidth * 0.2 - padding, { d });
+                        d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    }
+                });
+
+                this.inputBox = Zon.UI.UIInputElement.create(`${this.setting.name}InputBox`, this.element.style.zIndex, this.settingPanel, {
+                    constructorFunc: (d) => {
+                        d.element.style.backgroundColor = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
+                        d.element.style.color = Struct.Color.fromUInt(0x000000FF).cssString;
+                        d.element.style.display = 'flex';
+                        d.element.style.justifyContent = 'center';
+                        d.element.style.alignItems = 'center';
+                        d.element.style.cursor = 'pointer';
+                        //d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+                        //d.element.style.borderWidth = `${borderWidth}px`;
+                        //d.element.style.borderStyle = 'solid';
+                        //d.element.style.borderColor = `#AAA`;
+                        d.element.style.whiteSpace = 'nowrap';
+                        d.element.type = 'number';
+                    },
+                    postConstructorFunc: (d) => {
+                        d.text.replaceEquation(() => `${d.parent.parent.setting.value}`, { d });
+                    },
+                    setupFunc: (d) => {
+                        d.replaceLeft(() => padding, { d });
+                        d.replaceTop(() => padding, { d });
+                        d.replaceWidth(() => d.parent.parent.decButton.left - padding * 2, { d });
+                        d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    },
+                    changeFunc: (d, e) => {
+                        const settingValue = this.setting.value;
+                        const inputValue = parseInt(e.target.value, 10);
+                        if (isNaN(inputValue)) {
+                            d._setText(`${settingValue}`);
+                        }
+                        else {
+                            this.setting.value = Math.trunc(inputValue);
+                            d._setText(`${this.setting.value}`);
+                        }
+                    }
+                });
+            }
+            _getSettingWidthFunc = (d) => () => d.parent.innerWidth * 0.4;
         }
 
         valueSaveLoadHelper = () => {
@@ -417,7 +518,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             this._value.value = newValue;
         }
 
-        static SettingUIPanelClass = class BoolSettingPanel extends Zon.Setting.SettingPanel {
+        static SettingUIPanelClass = class UIntSettingPanel extends Zon.Setting.SettingPanel {
             constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
                 super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
             }
@@ -555,6 +656,111 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             }
 
             this._value.value = newValue;
+        }
+
+        static SettingUIPanelClass = class UIntSettingPanel extends Zon.Setting.SettingPanel {
+            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
+                super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
+            }
+            postConstructor() {
+                super.postConstructor();
+
+                const borderWidth = Zon.Setting.SettingPanel.borderWidth;
+                const padding = Zon.Setting.SettingPanel.padding;
+                this.incButton = Zon.UI.UIElementDiv2.create(`${this.setting.name}Inc`, this.element.style.zIndex, this.settingPanel, {
+                    constructorFunc: (d) => {
+                        d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
+                        d.element.style.color = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
+                        d.element.style.display = 'flex';
+                        d.element.style.justifyContent = 'center';
+                        d.element.style.alignItems = 'center';
+                        d.element.style.cursor = 'pointer';
+                        d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+                        d.element.textContent = `>`;
+                        d.element.style.borderWidth = `${borderWidth}px`;
+                        d.element.style.borderStyle = 'solid';
+                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.whiteSpace = 'nowrap';
+                    },
+                    postConstructorFunc: (d) => {
+                        d.element.addOnClick(() => {
+                            this.setting.value = this.setting.value + 1;
+                        });
+                    },
+                    setupFunc: (d) => {
+                        d.replaceLeft(() => d.parent.innerWidth - d.width - padding, { d });
+                        d.replaceTop(() => padding, { d });
+                        d.replaceWidth(() => d.parent.innerWidth * 0.2 - padding, { d });
+                        d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    }
+                });
+
+                this.decButton = Zon.UI.UIElementDiv2.create(`${this.setting.name}Dec`, this.element.style.zIndex, this.settingPanel, {
+                    constructorFunc: (d) => {
+                        d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
+                        d.element.style.color = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
+                        d.element.style.display = 'flex';
+                        d.element.style.justifyContent = 'center';
+                        d.element.style.alignItems = 'center';
+                        d.element.style.cursor = 'pointer';
+                        d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+                        d.element.textContent = `<`;
+                        d.element.style.borderWidth = `${borderWidth}px`;
+                        d.element.style.borderStyle = 'solid';
+                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.whiteSpace = 'nowrap';
+                    },
+                    postConstructorFunc: (d) => {
+                        d.element.addOnClick(() => {
+                            this.setting.value = this.setting.value - 1;
+                        });
+                    },
+                    setupFunc: (d) => {
+                        d.replaceLeft(() => d.parent.parent.incButton.left - d.width - padding, { d });
+                        d.replaceTop(() => padding, { d });
+                        d.replaceWidth(() => d.parent.innerWidth * 0.2 - padding, { d });
+                        d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    }
+                });
+
+                this.inputBox = Zon.UI.UIInputElement.create(`${this.setting.name}InputBox`, this.element.style.zIndex, this.settingPanel, {
+                    constructorFunc: (d) => {
+                        d.element.style.backgroundColor = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
+                        d.element.style.color = Struct.Color.fromUInt(0x000000FF).cssString;
+                        d.element.style.display = 'flex';
+                        d.element.style.justifyContent = 'center';
+                        d.element.style.alignItems = 'center';
+                        d.element.style.cursor = 'pointer';
+                        //d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
+                        //d.element.style.borderWidth = `${borderWidth}px`;
+                        //d.element.style.borderStyle = 'solid';
+                        //d.element.style.borderColor = `#AAA`;
+                        d.element.style.whiteSpace = 'nowrap';
+                        d.element.type = 'number';
+                    },
+                    postConstructorFunc: (d) => {
+                        d.text.replaceEquation(() => `${d.parent.parent.setting.value}`, { d });
+                    },
+                    setupFunc: (d) => {
+                        d.replaceLeft(() => padding, { d });
+                        d.replaceTop(() => padding, { d });
+                        d.replaceWidth(() => d.parent.parent.decButton.left - padding * 2, { d });
+                        d.replaceHeight(() => d.parent.innerHeight - 2 * padding, { d });
+                    },
+                    changeFunc: (d, e) => {
+                        const settingValue = this.setting.value;
+                        const inputValue = parseFloat(e.target.value);
+                        if (isNaN(inputValue)) {
+                            d._setText(`${settingValue}`);
+                        }
+                        else {
+                            this.setting.value = inputValue;
+                            d._setText(`${this.setting.value}`);
+                        }
+                    }
+                });
+            }
+            _getSettingWidthFunc = (d) => () => d.parent.innerWidth * 0.4;
         }
 
         valueSaveLoadHelper = () => {
@@ -712,7 +918,11 @@ Enum.createEnum(Zon.DisplaySettingsID, Zon.DisplaySettingsIDNames);
 
 Zon.PreferenceSettingsID = {
     ShuffleSongs: 0,
+    MicrophoneGain: 1,
+    MicrophoneNoiseThreshold: 2,
 }
+Zon.PreferenceSettingsIDNames = [];
+Enum.createEnum(Zon.PreferenceSettingsID, Zon.PreferenceSettingsIDNames);
 
 Zon.Settings.createAllSettings = () => {
     if (Zon.Settings.allGameSettings) {
@@ -747,7 +957,9 @@ Zon.Settings.createAllSettings = () => {
     ];
 
     Zon.Settings.allPreferenceSettings = [
-        new Zon.BoolSetting(Zon.PreferenceSettingsID.ShuffleSongs, Zon.SettingTypeID.DISPLAY, false),
+        new Zon.BoolSetting(Zon.PreferenceSettingsID.ShuffleSongs, Zon.SettingTypeID.PREFERENCE, false),
+        new Zon.NumberSetting(Zon.PreferenceSettingsID.MicrophoneGain, Zon.SettingTypeID.PREFERENCE, 1, 0, 10),
+        new Zon.NumberSetting(Zon.PreferenceSettingsID.MicrophoneNoiseThreshold, Zon.SettingTypeID.PREFERENCE, 0.01, 0, 1),
     ];
 
     Zon.Settings.ScientificNotation = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.ScientificNotation);
