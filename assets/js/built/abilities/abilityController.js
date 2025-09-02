@@ -22,6 +22,12 @@ Zon.AbilityController = class {
     _onLeftClickCombatArea = (clickPos) => {
         Zon.basicAttack.onLeftClick(clickPos);
     }
+
+    onBeatDetected = () => {
+        const blockArea = Zon.blocksManager.blockArea;
+        const clickPos = new Vectors.Vector(blockArea.left + Math.random() * blockArea.width, blockArea.top + Math.random() * blockArea.height);
+        Zon.basicAttack.onLeftClick(clickPos);
+    }
 }
 
 Zon.abilityController = new Zon.AbilityController();

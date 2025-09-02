@@ -920,6 +920,7 @@ Zon.PreferenceSettingsID = {
     ShuffleSongs: 0,
     MicrophoneGain: 1,
     MicrophoneNoiseThreshold: 2,
+    BeatLoudnessChange: 3,
 }
 Zon.PreferenceSettingsIDNames = [];
 Enum.createEnum(Zon.PreferenceSettingsID, Zon.PreferenceSettingsIDNames);
@@ -960,6 +961,7 @@ Zon.Settings.createAllSettings = () => {
         new Zon.BoolSetting(Zon.PreferenceSettingsID.ShuffleSongs, Zon.SettingTypeID.PREFERENCE, false),
         new Zon.NumberSetting(Zon.PreferenceSettingsID.MicrophoneGain, Zon.SettingTypeID.PREFERENCE, 1, 0, 10),
         new Zon.NumberSetting(Zon.PreferenceSettingsID.MicrophoneNoiseThreshold, Zon.SettingTypeID.PREFERENCE, 0.01, 0, 1),
+        new Zon.NumberSetting(Zon.PreferenceSettingsID.BeatLoudnessChange, Zon.SettingTypeID.PREFERENCE, 1.5, 1, 100),
     ];
 
     Zon.Settings.ScientificNotation = Zon.Settings.getDisplayVariable(Zon.DisplaySettingsID.ScientificNotation);

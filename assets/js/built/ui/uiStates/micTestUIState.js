@@ -10,6 +10,7 @@ Zon.UI.MicTestUIState = class MicTestUIState extends Zon.UI.CloseButtonLinkedUIS
         this._settingIDs = [
             Zon.PreferenceSettingsID.MicrophoneGain,
             Zon.PreferenceSettingsID.MicrophoneNoiseThreshold,
+            Zon.PreferenceSettingsID.BeatLoudnessChange,
         ];
     }
     static _postConstructorFunc(d) {

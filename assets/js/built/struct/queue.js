@@ -29,6 +29,14 @@ Struct.Queue = class Queue {
         return this._head ? this._head.value : undefined;
     }
 
+    get second() {
+        return this._head && this._head.next ? this._head.next.value : undefined;
+    }
+
+    get last() {
+        return this._tail ? this._tail.value : undefined;
+    }
+
     //Returns true if Queue is not empty.
     next() {
         if (!this._head)
@@ -40,6 +48,14 @@ Struct.Queue = class Queue {
             this._tail = null;
 
         return this.size > 0;
+    }
+
+    *[Symbol.iterator]() {
+        let current = this._head;
+        while (current) {
+            yield current.value;
+            current = current.next;
+        }
     }
 }
 
@@ -85,6 +101,10 @@ Struct.Deque = class Deque {
 
     get first() {
         return this._head ? this._head.value : undefined;
+    }
+
+    get second() {
+        return this._head && this._head.next ? this._head.next.value : undefined;
     }
 
     get last() {
@@ -159,6 +179,22 @@ Struct.Deque = class Deque {
         }
 
         return removed;
+    }
+
+    *[Symbol.iterator]() {
+        let current = this._head;
+        while (current) {
+            yield current.value;
+            current = current.next;
+        }
+    }
+
+    *reverseIterator() {
+        let current = this._tail;
+        while (current) {
+            yield current.value;
+            current = current.prev;
+        }
     }
 }
 
