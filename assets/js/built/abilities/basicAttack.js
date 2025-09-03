@@ -21,7 +21,7 @@ Zon.BasicAttack = class BasicAttack extends Zon.Ability {
                     throw new Error(`distanceMult is less than or equal to 0: ${distanceMult}`);
 
                 const damage = this.baseDamage.multiply(Struct.BigNumber.create(distanceMult));
-                block.hit(damage, this);
+                block.hit(damage, this, distanceMult);
             }
         }
     }

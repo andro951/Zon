@@ -49,6 +49,7 @@ Zon.Block = class extends Struct.Rectangle {
         if (this.hitColorTimer > 0) {
             this.hitColorTimer -= Zon.timeController.deltaTimeSeconds * Zon.blocksManager.blockDamagedFadeTimeSettingInv.value;
             if (this.hitColorTimer <= 0) {
+                normalColor = this.normalColorString;
                 this.ctx.fillStyle = this.normalColorString;
                 this.hitColorTimer = 0;
             }
@@ -272,10 +273,20 @@ Zon.Block = class extends Struct.Rectangle {
         ctx.fill();
     }
 
-    hit = (damage, source) => {
+    hit = (damage, source, timerDurationMultiplier = 1) => {
         const damageReceived = this.health.damage(damage, source);
         if (Zon.blocksManager.blockDamagedFadeTimeSetting.value > 0 && damageReceived.isPositive) {
-            this.hitColorTimer = 1;
+            this.hitColorTimer = timerDurationMultiplier + this.hitColorTimer * (1 - timerDurationMultiplier);
+            if (this.hitColorTimer > 1)
+                throw new Error(`hitColorTimer is greater than 1: ${this.hitColorTimer}`);
+            
+            //Example:
+            //old hitColorTimer: 0.2
+            //new hitColorTimerBase: 0.6
+            //new hitColorTimer: 0.6 + 0.2 * (1 - 0.6)
+            //new hitColorTimer: 0.6 + 0.2 * 0.4
+            //new hitColorTimer: 0.6 + 0.08
+            //new hitColorTimer: 0.68
         }
             
         return damageReceived;
