@@ -771,11 +771,12 @@ Zon.UI.UIElementZID = {
     COMBAT_UI: 0,
     MAIN_UI: 1,
     MENU: 2,
-    SIDE_BAR: 3,
-    CLOSE_BUTTON_MENU: 4,
-    CBM_SUB_MENU: 5,
-    CLOSE_BUTTON: 6,
-    POPUP: 7,
+    BOTTOM_BUTTONS: 3,
+    SIDE_BAR: 4,
+    CLOSE_BUTTON_MENU: 5,
+    CBM_SUB_MENU: 6,
+    CLOSE_BUTTON: 7,
+    POPUP: 8,
 };
 Zon.UI.UIElementZIDNames = [];
 Enum.createEnum(Zon.UI.UIElementZID, Zon.UI.UIElementZIDNames, false);

@@ -1,20 +1,18 @@
 "use strict";
 
-Zon.AbilityUIState = class extends Zon.MainDisplayUIState {
+Zon.UI.AbilityUIState = class extends Zon.MainDisplayUIState {
     constructor() {
-        super();
+        super('abilityUI', Zon.UI.UIElementZID.MENU, Zon.device, {
+            postConstructorFunc: Zon.UI.AbilityUIState._postConstructorFunc,
+        });
+        this.element.style.backgroundColor = Struct.Color.fromUInt(0x404040FF).cssString;
+    }
+    static _postConstructorFunc(d) {
+        
     }
     postLoadSetup() {
         
     }
-    setup() {
-        super.setup();
-
-        this.replaceLeft(() => 0);
-        this.replaceTop(() => 0);
-        this.replaceWidth(() => 0);
-        this.replaceHeight(() => 0);
-    }
 }
 
-Zon.abilityUIState = Zon.AbilityUIState.create();
+Zon.UI.abilityUIState = Zon.UI.AbilityUIState.create();

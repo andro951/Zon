@@ -85,7 +85,7 @@ Zon.Setup.postLoadSetup = () => {
     Zon.staminaBar.postLoadSetup();
     Zon.coreManager.postLoadSetup();
     Zon.abilityController.postLoadSetup();
-    Zon.abilityUIState.postLoadSetup();//After abilityController
+    Zon.UI.abilityUIState.postLoadSetup();//After abilityController
     Zon.inventoryUIState.postLoadSetup();
     Zon.UI.stageUIState.postLoadSetup();
     Zon.timeController.postLoadSetup();

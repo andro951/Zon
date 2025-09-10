@@ -1,11 +1,11 @@
 "use strict";
 
-Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal {
-    constructor(uiState, fromLeft = true, { slideInTime = 0.25, slideOutTime = 0.1 } = {}) {
+Zon.UI.SlideAnimationVertical = class SlideAnimationVertical {
+    constructor(uiState, fromTop = true, { slideInTime = 0.25, slideOutTime = 0.1 } = {}) {
         this.uiState = uiState;
         this.slideInTime = slideInTime * 1000;
         this.slideOutTime = slideOutTime * 1000;
-        this.fromLeft = fromLeft;
+        this.fromTop = fromTop;
         this.hiding = false;
         this.bindAll();
         Zon.Setup.postLinkAndFinalizeUiSetupActions.add(this._moveToInitialPosition);
@@ -13,10 +13,10 @@ Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal {
 
     _moveToInitialPosition() {
         if (this.uiState.shown.value) {
-            this.uiState.leftOffset = 0;
+            this.uiState.topOffset = 0;
         }
         else {
-            this.uiState.leftOffset = this.fromLeft ? -this.uiState.width : this.uiState.width;
+            this.uiState.topOffset = this.fromTop ? -this.uiState.height : this.uiState.height;
         }
     }
 
@@ -36,27 +36,27 @@ Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal {
     }
 
     _updateShowPosition = () => {
-        const leftOffset = this.uiState.leftOffset;
-        const amountToMove = Zon.timeController.deltaTimeMilliseconds / this.slideInTime * this.uiState.width;
-        if (Math.abs(leftOffset) < amountToMove) {
-            this.uiState.leftOffset = 0;
+        const topOffset = this.uiState.topOffset;
+        const amountToMove = Zon.timeController.deltaTimeMilliseconds / this.slideInTime * this.uiState.height;
+        if (Math.abs(topOffset) < amountToMove) {
+            this.uiState.topOffset = 0;
             Zon.game.preDrawActions.remove(this._updateShowPosition);
         } else {
-            this.uiState.leftOffset += leftOffset > 0 ? -amountToMove : amountToMove;
+            this.uiState.topOffset += topOffset > 0 ? -amountToMove : amountToMove;
         }
     }
 
     _updateHidePosition = () => {
-        const hiddenPosition = this.fromLeft ? -this.uiState.width : this.uiState.width;
-        const diff = hiddenPosition - this.uiState.leftOffset;
-        const amountToMove = Zon.timeController.deltaTimeMilliseconds / this.slideOutTime * this.uiState.width;
+        const hiddenPosition = this.fromTop ? -this.uiState.height : this.uiState.height;
+        const diff = hiddenPosition - this.uiState.topOffset;
+        const amountToMove = Zon.timeController.deltaTimeMilliseconds / this.slideOutTime * this.uiState.height;
         if (Math.abs(diff) < amountToMove) {
-            this.uiState.leftOffset = hiddenPosition;
+            this.uiState.topOffset = hiddenPosition;
             Zon.game.preDrawActions.remove(this._updateHidePosition);
             this.hiding = false;
             this.uiState.forceHide();
         } else {
-            this.uiState.leftOffset += diff > 0 ? amountToMove : -amountToMove;
+            this.uiState.topOffset += diff > 0 ? amountToMove : -amountToMove;
         }
     }
 }

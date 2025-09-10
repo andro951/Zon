@@ -14,12 +14,14 @@ Zon.showCombatUI = () => {
     Zon.topUI.show();
     Zon.combatUI.show();
     Zon.bottomUI.show();
+    Zon.bottomUI.bottomBar.show();
 }
 
 Zon.hideCombatUI = () => {
     Zon.topUI.hide();
     Zon.combatUI.hide();
     Zon.bottomUI.hide();
+    Zon.bottomUI.bottomBar.hide();
 }
 
 Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
@@ -150,11 +152,16 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
 }
 Zon.combatUI = Zon.CombatUI.create();
 
-Zon.BottomUI = class BottomUI extends Zon.UI.UIElementCanvas {
+Zon.BottomUI = class BottomUI extends Zon.UI.UIElementDiv {
     constructor() {
-        super('bottomUI', 960, 420, Zon.UI.UIElementZID.MAIN_UI);
+        super('bottomUI', Zon.UI.UIElementZID.MAIN_UI);
         this.bottomUIPercentOfHeight = 0.2;
         this.bottomUIAspectRatio = 3;
+    }
+    postConstructor() {
+        super.postConstructor();
+
+        this.bottomBar = Zon.UI.BottomBar.create();//Parent is Zon.device because of different zIndex.
     }
     setup() {
         this.replaceLeft(() => 0);
