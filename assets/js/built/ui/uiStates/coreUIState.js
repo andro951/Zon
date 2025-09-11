@@ -1,20 +1,18 @@
 "use strict";
 
-Zon.CoreUIState = class extends Zon.MainDisplayUIState {
+Zon.UI.CoreUIState = class extends Zon.MainDisplayUIState {
     constructor() {
-        super();
+        super('coreUI', {
+            postConstructorFunc: Zon.UI.CoreUIState._postConstructorFunc,
+        });
+        this.element.style.backgroundColor = Struct.Color.fromUInt(0xFF7130FF).cssString;
+    }
+    static _postConstructorFunc(d) {
+        
     }
     postLoadSetup() {
         
     }
-    setup() {
-        super.setup();
-
-        this.replaceLeft(() => 0);
-        this.replaceTop(() => 0);
-        this.replaceWidth(() => 0);
-        this.replaceHeight(() => 0);
-    }
 }
 
-Zon.coreUIState = Zon.CoreUIState.create();
+Zon.UI.coreUIState = Zon.UI.CoreUIState.create();

@@ -1,8 +1,8 @@
 "use strict";
 
 Zon.MainDisplayUIState = class MainDisplayUIState extends Zon.UI.UIElementDiv {
-    constructor(divId, zIndex = Zon.UI.UIElementZID.MENU, parent = Zon.device, args = {}) {
-        super(divId, zIndex, parent);
+    constructor(divId, args = {}) {
+        super(divId, Zon.UI.UIElementZID.MENU, Zon.device);
         this.outerBorderWidth = new Variable.Value(8, `${divId}OuterBorderWidth`);
         this._args = args;
         this.animation = new Zon.UI.SlideAnimationVertical(this, false);

@@ -2,7 +2,7 @@
 
 Zon.UI.AbilityUIState = class extends Zon.MainDisplayUIState {
     constructor() {
-        super('abilityUI', Zon.UI.UIElementZID.MENU, Zon.device, {
+        super('abilityUI', {
             postConstructorFunc: Zon.UI.AbilityUIState._postConstructorFunc,
         });
         this.element.style.backgroundColor = Struct.Color.fromUInt(0x404040FF).cssString;

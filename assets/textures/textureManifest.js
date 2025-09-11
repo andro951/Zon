@@ -180,6 +180,7 @@
 				"CheckMarkIcon": "assets/textures/ui/Icons/CheckMarkIcon.png",
 				"CloseIcon": "assets/textures/ui/Icons/CloseIcon.png",
 				"CombatIcon": "assets/textures/ui/Icons/CombatIcon.png",
+				"CoreIcon": "assets/textures/ui/Icons/CoreIcon.png",
 				"CraftingIcon": "assets/textures/ui/Icons/CraftingIcon.png",
 				"CreditsIcon": "assets/textures/ui/Icons/CreditsIcon.png",
 				"CritIcon": "assets/textures/ui/Icons/CritIcon.png",
