@@ -65,6 +65,9 @@ Zon.MicManager = class MicManager {
         return Math.max(-1, Math.min(1, value));
     }
     getDominantFrequency() {
+        //TODO: This isn't detecting below 90 hz well.  I can sing to about 75 hz. and notes should be registered down to and including 27.5 hz
+        
+
         // Get the time-domain waveform
         const buffer = new Float32Array(this.analyserNotes.fftSize);
         this.analyserNotes.getFloatTimeDomainData(buffer);

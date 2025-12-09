@@ -18,11 +18,11 @@ Zon.UI.BottomBar = class BottomBar extends Zon.UI.UIElementDiv {
 
         this.createButtonFunctions = [
             (i) => this._addButton(i, 'abilitiesButton', Zon.UI.abilityUIState.toggle, 'TargetIcon'),
-            (i) => this._addButton(i, 'slottedAbilitiesButton', () => console.log("Slotted Abilities button pressed"), 'CombatIcon'),
+            (i) => this._addButton(i, 'slottedAbilitiesButton', Zon.UI.slottedAbilitiesUIState.toggle, 'CombatIcon'),
             (i) => this._addButton(i, 'coreButton', Zon.UI.coreUIState.toggle, 'CoreIcon'),
-            (i) => this._addButton(i, 'craftingButton', () => console.log("Crafting button pressed"), 'CraftingIcon'),
-            (i) => this._addButton(i, 'upgradesButton', () => console.log("Upgrades button pressed"), 'UpgradeIcon'),
-            (i) => this._addButton(i, 'navigationButton', () => console.log("Navigation button pressed"), 'NavigationIcon'),
+            (i) => this._addButton(i, 'craftingButton', Zon.UI.craftingUIState.toggle, 'CraftingIcon'),
+            (i) => this._addButton(i, 'upgradesButton', Zon.UI.upgradesUIState.toggle, 'UpgradeIcon'),
+            (i) => this._addButton(i, 'navigationButton', Zon.UI.navigationUIState.toggle, 'NavigationIcon'),
         ];
 
         //this.children = Variable.createArray();

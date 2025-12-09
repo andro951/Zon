@@ -1,5 +1,12 @@
 "use strict";
 
+/*
+_significand is just a Number (a 64-bit floating point number)
+_exponent is a Number, but forced to be an integer with a max value of 2^53 − 1 = 9,007,199,254,740,991
+The value of the BigNumber is: _significand * (2^_exponent)
+The max value of a BigNumber is roughly 10e2,711,437,153,777,064
+*/
+
 Struct.BigNumber = class BigNumber {
     constructor(significand, exponent) {
         //Only use this constructor if you know for certain that the values are already normalized.
@@ -481,7 +488,7 @@ Struct.BigNumber = class BigNumber {
 
         const sign = this._significand < 0 ? -1 : 1;
         const base10Exp = Math.log10(this._significand * sign) + this._exponent * Struct.BigNumber.LOG10_OF_2;//log(2) + 9007199254740991 * 0.301029995664 = 2711437152600000
-        const exponent = Math.floor(base10Exp);//roughly 2e2,711,437,153,777,064  Point being, there is no reason to use BigInt for the exponent.
+        const exponent = Math.floor(base10Exp);//roughly 10e2,711,437,153,777,064  Point being, there is no reason to use BigInt for the exponent.
         const significand = Math.pow(10, base10Exp - exponent) * sign;
         return {
             significand,

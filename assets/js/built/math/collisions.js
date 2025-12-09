@@ -119,9 +119,16 @@ Collision.getCrossTime = function (start, end, crossPoint) {
 
     return (crossPoint - start) / diff;
 }
+//TODO: add a check for does colide first
+//Use dot product of normalized dx/dy vector on the vector from circle center to the point on the dx/dy vector that is perpendicualr to the corner
+//Then solve for the distance between the circle center at that point and the corner.
+//Then can eliminate the need for negative checks.
+// Collision.distanceToLine = (lx0, ly0, lx1, ly1, x, y) => {
+//     //
+// }
 
-Collision.solveCornerT = function (x0, y0, dx, dy, cornerX, cornerY, r) {
-    // r = ((t0 + dx * t - cornerX)^2 + (y0 + dy * t - cornerY)^2)^0.5
+Collision.solveCornerT = (x0, y0, dx, dy, cornerX, cornerY, r) => {
+    // r = ((x0 + dx * t - cornerX)^2 + (y0 + dy * t - cornerY)^2)^0.5
     // r^2 = (dx * t + x0 - cornerX)^2 + (dy * t + y0 - cornerY)^2
     // r^2 = (dx * t + (x0 - cornerX))^2 + (dy * t + (y0 - cornerY))^2
     // r^2 = dx^2 * t^2 + 2 * dx * t * (x0 - cornerX) + (x0 - cornerX)^2 + dy^2 * t^2 + dy * t * (y0 - cornerY) + (y0 - cornerY)^2
@@ -130,22 +137,25 @@ Collision.solveCornerT = function (x0, y0, dx, dy, cornerX, cornerY, r) {
     // b = 2 * (dx * (x0 - cornerX) + dy * (y0 - cornerY))
     // c = (x0 - cornerX)^2 + (y0 - cornerY)^2 - r^2
     // t = (-b +/- (b^2 - 4 * a * c)^0.5)/(2 * a)
-    const a = dx * dx + dy * dy;
-    const b = 2 * (dx * (x0 - cornerX) + dy * (y0 - cornerY));
-    const c = (x0 - cornerX)**2 + (y0 - cornerY)**2 - r**2;
-    const discriminant = b * b - 4 * a * c;
+    //const a = dx * dx + dy * dy;
+    const denom = 2 * (dx * dx + dy * dy);
+    const cX = x0 - cornerX;
+    const cY = y0 - cornerY;
+    const b = 2 * (dx * cX + dy * cY);
+    const c = cX * cX + cY * cY - r * r;
+    const discriminant = b * b - 2 * denom * c;//b^2 - 4 * a * c
     let thisT = null;
     if (discriminant < 0) {
         // No real roots
     }
     else if (discriminant === 0) {
         // One real root
-        thisT = -b / (2 * a);
+        thisT = -b / denom;//(-b +/- 0) / (2 * a)
     }
     else {
         const sqrtDisc = Math.sqrt(discriminant);
-        const root1 = (-b + sqrtDisc) / (2 * a);
-        const root2 = (-b - sqrtDisc) / (2 * a);
+        const root1 = (-b + sqrtDisc) / denom;//(-b + sqrt(b^2 - 4ac)) / (2 * a)
+        const root2 = (-b - sqrtDisc) / denom;//(-b - sqrt(b^2 - 4ac)) / (2 * a)
         if (root1 < 0) {
             if (root2 < 0) {
                 //Both roots are negative
@@ -296,6 +306,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     let shortestCornerX = null;//Debug
     let shortestCornerY = null;//Debug
 
+    //tDeltaX is what portion of t it takes to cross 1 full tile in the x direction.
     const tDeltaX = dx === 0 ? Infinity : tileWidth / dx * xDir;
     const tDeltaXCenterToCrossWall = tDeltaX * (r * 2) * invTileWidth;
     if (tDeltaX < 0) {
@@ -308,6 +319,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
         return null;
     }
 
+    //tDeltaY is what portion of t it takes to cross 1 full tile in the y direction.
     const tDeltaY = dy === 0 ? Infinity : tileHeight / dy * yDir;
     const tDeltaYCenterToCrossWall = tDeltaY * (r * 2) * invTileHeight;
     if (tDeltaY < 0) {
