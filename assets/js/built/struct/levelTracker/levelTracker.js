@@ -17,14 +17,14 @@ Struct.LevelTracker = class LevelTracker {
     get hasMaxLevel() {
         return this.maxLevel.value !== Number.MAX_SAFE_INTEGER;
     }
-    reset() {
+    reset = () => {
         this.level.reset();
     }
 
-    toString() {
+    toString = () => {
         return this.hasMaxLevel ? `${this.level.value}/${this.maxLevel.value}` : `${this.level.value}`;
     }
-    saveLoadHelper() {
+    saveLoadHelper = () => {
         return Zon.SaveLoadHelper_UI53_AL.fromVariable(this.level);
     }
 }

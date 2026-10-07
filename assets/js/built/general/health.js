@@ -1,12 +1,12 @@
 "use strict";
 
 Zon.Health = class {
-    onHPChanged = new Actions.Action();
-    onDamaged = new Actions.Action();
-    onHealed = new Actions.Action();
-    onHPZero = new Actions.Action();
-    onHPFull = new Actions.Action();
-    onMaxHPChanged = new Actions.Action();
+    onHPChanged = new Actions.Action(`${this.constructor.name} onHPChanged`);
+    onDamaged = new Actions.Action(`${this.constructor.name} onDamaged`);
+    onHealed = new Actions.Action(`${this.constructor.name} onHealed`);
+    onHPZero = new Actions.Action(`${this.constructor.name} onHPZero`);
+    onHPFull = new Actions.Action(`${this.constructor.name} onHPFull`);
+    onMaxHPChanged = new Actions.Action(`${this.constructor.name} onMaxHPChanged`);
 
     constructor(maxHP, owner, hp = null) {
         this._maxHP = maxHP;

@@ -1,0 +1,6 @@
+Title: Shadowing a Variable
+Description: 
+Triggers: OnGainAether
+---
+
+let AetherGained = 10;//AetherGained is a variable passed in by the OnGainAether action.

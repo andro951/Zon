@@ -1,0 +1,5 @@
+Title: Shadowing a Getter
+Description: 
+Triggers: OnGainAether
+---
+let Aether = 10;//Aether is a getter.

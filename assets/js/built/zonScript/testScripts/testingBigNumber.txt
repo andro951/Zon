@@ -1,0 +1,224 @@
+Title: Testing BigNumber printing
+Description: Print some Numbers and BigNumbers for comparison.
+Triggers: Manual
+---
+print("BigNumber, Expected: 1e1000, Actual: ")
+print(1e1000)
+print("")
+
+print("Number, Expected: 100000000000000000000, Actual: ")
+print(1e20)
+print("")
+
+print("Number, Expected: 1230, Actual: ")
+print(1.23k)
+print("")
+
+print("Number, Expected: 1.2345e+308, Actual: ")
+print(1.2345e308)
+print("")
+
+print("Number, Expected: 1.2345e+308, Actual: ")
+print(12.345e307)
+print("")
+
+print("BigNumber, Expected: 1.23e309, Actual: ")
+print(12.3e308)
+print("")
+
+print("1 + 4 = ")
+print(1 + 4)
+print("")
+
+print("7e307 + 7e307 = ")
+print(7e307 + 7e307)
+print("")
+
+print("1e308 + 1e308 = ")
+print(1e308 + 1e308)
+print("")
+
+print("1e309 + 1e308 = ")
+print(1e309 + 1e308)
+print("")
+
+print("1e308 + 1e309 = ")
+print(1e308 + 1e309)
+print("")
+
+print("1e309 + 1e309 = ")
+print(1e309 + 1e309)
+print("")
+
+a = 1e1000
+print("a: " + a)
+b = a + 2e1000
+print("a: " + a + ", b: " + b)
+
+print("ADD Number: 2 + 3 = ")
+print(2 + 3)
+print("")
+
+print("ADD Big + Number: 1e309 + 5 = ")
+print(1e309 + 5)
+print("")
+
+print("ADD Big + Big: 1e309 + 1e309 = ")
+print(1e309 + 1e309)
+print("")
+
+print("ADD Big + Big: 1.5e308 + 1.5e308 = ")
+print(1.5e308 + 1.5e308)
+print("")
+
+print("SUB Number: 10 - 3 = ")
+print(10 - 3)
+print("")
+
+print("SUB Big - Number: 1e309 - 1 = ")
+print(1e309 - 1)
+print("")
+
+print("SUB Number - Big: 5 - 1e309 = ")
+print(5 - 1e309)
+print("")
+
+print("SUB Big - Big: 2e309 - 1e309 = ")
+print(2e309 - 1e309)
+print("")
+
+print("MUL Number: 6 * 7 = ")
+print(6 * 7)
+print("")
+
+print("MUL Big * Number: 1e309 * 2 = ")
+print(1e309 * 2)
+print("")
+
+print("MUL Big * Big: 1e309 * 1e309 = ")
+print(1e309 * 1e309)
+print("")
+
+print("DIV Number: 10 / 2 = ")
+print(10 / 2)
+print("")
+
+print("DIV Big / Number: 1e309 / 2 = ")
+print(1e309 / 2)
+print("")
+
+print("DIV Number / Big: 10 / 1e309 = ")
+print(10 / 1e309)
+print("")
+
+print("DIV Big / Big: 1e308 / 1e307 = ")
+print(1e308 / 1e307)
+print("")
+
+print("DIV Big / Big: 1e310 / 1e309 = ")
+print(1e310 / 1e309)
+print("")
+
+print("MOD Number: 10 % 3 = ")
+print(10 % 3)
+print("")
+
+print("MOD Big % Number: 1e309 % 3 = ")
+print(1e309 % 3)
+print("")
+
+print("MOD Big % Big: 5e309 % 2e309 = ")
+print(5e309 % 2e309)
+print("")
+
+print("POW Number: 2 ^ 10 = ")
+print(2 ^ 10)
+print("")
+
+print("POW Big ^ Number: 1e309 ^ 2 = ")
+print(1e309 ^ 2)
+print("")
+
+print("POW Big ^ Big: 1e309 ^ 2e1 = ")
+print(1e309 ^ 2e1)
+print("")
+
+print("EQ Number: 5 == 5 = ")
+print(5 == 5)
+print("")
+
+print("EQ Big: 1e309 == 1e309 = ")
+print(1e309 == 1e309)
+print("")
+
+print("NEQ Big: 1e309 != 2e309 = ")
+print(1e309 != 2e309)
+print("")
+
+print("LT Big: 1e309 < 2e309 = ")
+print(1e309 < 2e309)
+print("")
+
+print("LTE Big: 1e309 <= 1e309 = ")
+print(1e309 <= 1e309)
+print("")
+
+print("GT Big: 2e309 > 1e309 = ")
+print(2e309 > 1e309)
+print("")
+
+print("GTE Big: 2e309 >= 2e309 = ")
+print(2e309 >= 2e309)
+print("")
+
+print("Unary - Number: -5 = ")
+print(-5)
+print("")
+
+print("Unary - Big: -1e309 = ")
+print(-1e309)
+print("")
+
+print("Unary + Big: +1e309 = ")
+print(+1e309)
+print("")
+
+a = 1e309
+b = a + 1e309
+print("Integrity Test: a should still be 1e309")
+print("a: " + a)
+print("b: " + b)
+print("")
+
+print("Mixed order add:")
+print(5 + 1e309)
+print(1e309 + 5)
+print("")
+
+print("2^100000:")
+print(2^100000)
+print("")
+
+print("log2(2^100000):")
+print(log2(2^100000))
+print("")
+
+print("ln(1e1000):")
+print(ln(1e1000))
+print("")
+
+print("log(2^100000, 2):")
+print(log(2^100000, 2))
+print("")
+
+a = 1.5
+print("floor: " + a + " -> " + floor(a) + ", " + -a + " -> " + floor(-a))
+print("ceil: " + a + " -> " + ceil(a) + ", " + -a + " -> " + ceil(-a))
+print("trunc: " + a + " -> " + trunc(a) + ", " + -a + " -> " + trunc(-a))
+print("round: " + a + " -> " + round(a) + ", " + -a + " -> " + round(-a))
+
+a = 2^2^2^2^2
+print("floor: " + a + " -> " + floor(a) + ", " + -a + " -> " + floor(-a))
+print("ceil: " + a + " -> " + ceil(a) + ", " + -a + " -> " + ceil(-a))
+print("trunc: " + a + " -> " + trunc(a) + ", " + -a + " -> " + trunc(-a))
+print("round: " + a + " -> " + round(a) + ", " + -a + " -> " + round(-a))

@@ -55,7 +55,8 @@ Zon.UI.PlayerLevelBar = class PlayerLevelBar extends Zon.UI.UIElementDiv {
         super.setup();
         
         const widthPercent = 0.3;
-        this.replaceLeft(() => Zon.topUI.width * (1 - widthPercent) * 0.5);
+        this.replaceLeft(() => 
+            Zon.topUI.width * (1 - widthPercent) * 0.5);
         this.replaceTop(() => 5);
         this.replaceWidth(() => Zon.topUI.width * widthPercent);
         this.replaceHeight(() => Zon.topUI.height * 0.2);

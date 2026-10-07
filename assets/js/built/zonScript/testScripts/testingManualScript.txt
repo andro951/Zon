@@ -1,0 +1,27 @@
+Title: Testing Manual Trigger
+Description: Print the total aether.
+Triggers: Manual
+MaxExecutionTime: 166.6666666667
+---
+print("total Aether: " + Aether)
+
+@TryResetCoreEnhancementPoints("Combat")
+
+print
+print "Testing increment and decrement operators"
+
+a = 5
+b = a++
+print("a: " + a + ", b: " + b)
+
+a = 5
+b = ++a
+print("a: " + a + ", b: " + b)
+
+a = 5
+b = a--
+print("a: " + a + ", b: " + b)
+
+a = 5
+b = --a
+print("a: " + a + ", b: " + b)

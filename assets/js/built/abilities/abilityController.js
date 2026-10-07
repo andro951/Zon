@@ -24,6 +24,7 @@ Zon.AbilityController = class {
     }
 
     onBeatDetected = () => {
+        return;//TODO: remove this line when ready to test
         const blockArea = Zon.blocksManager.blockArea;
         const clickPos = new Vectors.Vector(blockArea.left + Math.random() * blockArea.width, blockArea.top + Math.random() * blockArea.height);
         Zon.basicAttack.onLeftClick(clickPos);

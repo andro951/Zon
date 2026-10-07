@@ -6,7 +6,7 @@ Zon.SongData = class SongData {
         this.name = new Variable.Value(name, `${name}_Name`);
         this._weightExpMult = new Variable.Value(weight, `${name}_WeightExpMult`);
         this.weight = new Variable.Dependent(() => Math.pow(2, this._weightExpMult.value * Zon.SongData._expBase), `${name}_Weight`, { this: this });
-        this.weight.onChangedAction.add(() => this.totalSongWeight.onChanged());
+        //this.weight.onChangedAction.add(() => this.totalSongWeight.onChanged());//FIX THIS.  Change to using a dependent list
         //this._playChance = new Variable.Dependent(() => this.weight.value / Zon.musicManager.totalSongWeight.value, `${name}_PlayChance`, { this: this }, { linkDependentActions: false });//Not linked
 
         this._playChance = -1;
@@ -35,7 +35,7 @@ Zon.Song = class Song {
         this.songData = songData;
         this.songReferences = new Set();
         this.songBuffer = null;
-        this.onLoadBuffer = new Actions.Action();
+        this.onLoadBuffer = new Actions.Action(`${this.constructor.name} onLoadBuffer`);
         this._songBufferPromise = Zon.musicManager._loadSong(songData.name.value).then((buffer) => {
             this.bufferReady = true;
             this.songBuffer = buffer;

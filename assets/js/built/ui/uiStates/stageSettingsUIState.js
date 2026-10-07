@@ -22,7 +22,7 @@ Zon.UI.StageSettingsUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                 d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
                 d.element.style.borderWidth = `${borderWidth}px`;
                 d.element.style.borderStyle = 'solid';
-                d.element.style.borderColor = `#AAA`;
+                d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                 d.element.style.fontWeight = `bold`;
                 d.element.textContent = `Stage Select Settings`;
                 d.element.style.display = 'flex';
@@ -38,7 +38,7 @@ Zon.UI.StageSettingsUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             }
         });
 
-        d.settingsContainer = Zon.UI.UIElementDiv2.create('settingsContainer', d.element.style.zIndex, d, {
+        d.settingsContainer = Zon.UI.UIElementDiv2.create('stageSettingsContainer', d.element.style.zIndex, d, {
             constructorFunc: (d) => {
                 d.element.style.backgroundColor = Struct.Color.fromUInt(0x080808FF).cssString;
                 d.makeScrollableColumn();
@@ -46,7 +46,7 @@ Zon.UI.StageSettingsUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             setupFunc: (d) => {
                 for (const settingID of d.parent.parent._stageSettingIDs) {
                     const setting = Zon.Settings.getGameSetting(settingID);
-                    d.addChild(setting.constructor.SettingUIPanelClass, setting);
+                    d.addChildByClass(setting.constructor.SettingUIPanelClass, setting);
                 }
 
                 d.replaceLeft(() => d.parent.label.left, { d });

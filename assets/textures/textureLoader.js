@@ -24,7 +24,7 @@ Zon.TextureLoader.startAsyncLoading = () => {
     Zon.TextureLoader.allTexturesLoadedPromise = Zon.TextureLoader.loadTextures();
 }
 
-Zon.TextureLoader.addTextureActions = new Actions.Action();
+Zon.TextureLoader.addTextureActions = new Actions.Action(`Zon.TextureLoader addTextureActions`);
 
 Zon.TextureLoader.loadTextures = async () => {
     console.log("Loading all textures...");

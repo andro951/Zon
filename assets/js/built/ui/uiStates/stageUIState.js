@@ -16,7 +16,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                 d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
                 d.element.style.borderWidth = `${borderWidth}px`;
                 d.element.style.borderStyle = 'solid';
-                d.element.style.borderColor = `#AAA`;
+                d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                 d.element.style.fontWeight = `bold`;
                 d.element.textContent = `Stage Select`;
                 d.element.style.display = 'flex';
@@ -46,7 +46,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                         d.element.style.backgroundColor = Struct.Color.fromUInt(0x202020FF).cssString;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                     },
                     setupFunc: (d) => {
                         d.replaceLeft(() => 0, { d });
@@ -63,7 +63,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                         d.element.style.color = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.textContent = `Stage Settings`;
                         d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
                         d.element.style.display = 'flex';
@@ -94,7 +94,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
 
         //Stages
         class StageButton extends Zon.UI.UIElementDiv {
-            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, stageID, stageNum) {
+            constructor(parent, lastChild, padding, stageID, stageNum) {
                 const displayedStageNum = Zon.LevelData.getDisplayedStageNum(stageID, stageNum);
                 super(`stageButton_${displayedStageNum}`, Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, parent);
                 this.stageID = stageID;
@@ -103,29 +103,25 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                 this.element.style.backgroundColor = Struct.Color.fromUInt(0x303030FF).cssString;
                 this.element.style.borderWidth = `1px`;
                 this.element.style.borderStyle = 'solid';
-                this.element.style.borderColor = `#AAA`;
+                this.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                 this.element.textContent = `${this.displayedStageNum}`;
                 this.element.style.display = 'flex';
                 this.element.style.justifyContent = 'center';
                 this.element.style.alignItems = 'center';
                 this.element.style.whiteSpace = 'nowrap';
                 this.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
-                this._applyDefaultTopOrLeft = applyDefaultTopOrLeft;
-            }
-            postConstructor() {
-                super.postConstructor();
-                
-                this.shown.replaceEquation(() => {
-                    return this.parent.shown.value && Zon.LevelData.getDisplayedStageNum(Zon.game.highestStageAvailable, Zon.game.highestStageNumAvailable) >= this.displayedStageNum;
+
+                this.isChild = true;
+
+                this.newShownEquation = new Variable.DependentFunction(() => {
+                    return this.parent.shown.value && Zon.game.highestDisplayedStageAvailable.value >= this.displayedStageNum;
                 }, { this: this });
             }
             setup() {
                 super.setup();
                 
                 this.replaceLeft(() => this.parent.childrenPadding.value);
-                this._applyDefaultTopOrLeft(this);
-                delete this._applyDefaultTopOrLeft;
-                this.replaceWidth(() => this.parent.innerWidth - 2 * this.parent.childrenPadding.value - Zon.UI.UIElementBase.expectedScrollBarWidth);
+                this.replaceWidth(() => this.parent.innerWidth);
                 this.replaceHeight(() => this.parent.innerHeight * 0.1);
 
                 this.element.addOnClick(this.onClick);
@@ -144,6 +140,8 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                 }
             }
         }
+
+        //Stage buttons container
         d.stagesContainer = Zon.UI.UIElementDiv2.create('stagesContainer', Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, d, {
             constructorFunc: (d) => {
                 d.element.style.backgroundColor = Struct.Color.fromUInt(0x080808FF).cssString;
@@ -152,7 +150,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
             postConstructorFunc: (d) => {
                 for (let stageID = Zon.LevelData.startingStage; stageID <= Zon.LevelData.maxStage; stageID++) {
                     for (let stageNum = Zon.LevelData.startingStageNum; stageNum <= Zon.LevelData.maxStageNum; stageNum++) {
-                        d.addChild(StageButton, stageID, stageNum);
+                        d.addChildByClass(StageButton, stageID, stageNum);
                     }
                 }
             },
@@ -171,7 +169,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                 d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
                 d.element.style.borderWidth = `${borderWidth}px`;
                 d.element.style.borderStyle = 'solid';
-                d.element.style.borderColor = `#AAA`;
+                d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                 d.element.style.display = 'flex';
 
                 d.showPopup = (displayedStageNum, selectStage) => {
@@ -190,7 +188,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                         d.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
                         d.element.textContent = `X`;
                         d.element.style.display = 'flex';
@@ -198,10 +196,8 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                         d.element.style.alignItems = 'center';
                         d.element.style.whiteSpace = 'nowrap';
                     },
-                    postConstructorFunc: (d) => {
-                        d.element.addOnClick(() => {
-                            d.parent.hide();
-                        });
+                    onClickFunc: (d) => {
+                        d.parent.hide();
                     },
                     setupFunc: (d) => {
                         d.replaceLeft(() => d.parent.innerWidth - d.width - padding, { d });
@@ -242,7 +238,7 @@ Zon.UI.StageUIState = class extends Zon.UI.CloseButtonLinkedUIState {
                         d.element.style.backgroundColor = Struct.Color.fromUInt(0x303030FF).cssString;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
                         d.element.textContent = `Swap To Stage`;
                         d.element.style.display = 'flex';

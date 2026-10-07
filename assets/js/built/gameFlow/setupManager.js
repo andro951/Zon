@@ -1,7 +1,7 @@
 "use strict";
 
 Zon.Setup.setupAndStartGame = () => {
-    Variable.Base.pause();
+    Variable.Base.pause(Zon.Setup);
     Zon.Setup.startAsyncLoading();
     Zon.Setup.preLoadSetup();
     //Zon.Setup.loadOrNewGame(true);//true for new game
@@ -16,10 +16,11 @@ Zon.Setup.postLoadSetValuesStartGame = async () => {
     await Zon.TextureLoader.allTexturesLoadedPromise;
     Zon.Setup.postLoadSetup();
     Zon.Setup.finalizeUI();
-    Variable.Base.resume();
+    Variable.Base.resume(Zon.Setup);
+    Zon.device.setDefaultSizeAndShow();
 }
 
-Zon.Setup.preLoadSetupActions = new Actions.Action();
+Zon.Setup.preLoadSetupActions = new Actions.Action(`Zon.Setup preLoadSetupActions`);
 
 Zon.Setup.preLoadSetup = () => {
     Zon.IOManager.preLoadSetup();
@@ -32,6 +33,7 @@ Zon.Setup.preLoadSetup = () => {
     Zon.StageBonusManager.preLoadSetup();
     Zon.StageSmartReset.preLoadSetup();
     Zon.Blueprint.preLoadSetup();
+    Zon.coreManager.preLoadSetup();
     Zon.ProgressionManager.preLoadSetup();
     Zon.Setup.preLoadSetupActions.call();
     Zon.talentManager.preLoadSetup();
@@ -46,7 +48,7 @@ Zon.Setup.finishedLoading = () => {
     Zon.Setup.setLoadedValuesAndStartGame();
 }
 
-Zon.Setup.preSetLoadedValuesSetupActions = new Actions.Action();
+Zon.Setup.preSetLoadedValuesSetupActions = new Actions.Action(`Zon.Setup preSetLoadedValuesSetupActions`);
 
 Zon.Setup.preSetLoadedValuesSetup = () => {
     Zon.game.preSetLoadedValuesSetup();
@@ -63,7 +65,7 @@ Zon.Setup.preSetLoadedValuesSetup = () => {
     Zon.Setup.preSetLoadedValuesUISetup();
 }
 
-Zon.Setup.preSetLoadedValuesSetupUIActions = new Actions.Action();
+Zon.Setup.preSetLoadedValuesSetupUIActions = new Actions.Action(`Zon.Setup preSetLoadedValuesSetupUIActions`);
 
 Zon.Setup.preSetLoadedValuesUISetup = () => {
     Zon.Setup.preSetLoadedValuesSetupUIActions.call();
@@ -76,7 +78,7 @@ Zon.Setup.setLoadedValuesAndStartGame = async () => {
     Zon.GameManager.start();
 }
 
-Zon.Setup.postLoadSetupActions = new Actions.Action();
+Zon.Setup.postLoadSetupActions = new Actions.Action(`Zon.Setup postLoadSetupActions`);
 
 Zon.Setup.postLoadSetup = () => {
     Zon.Settings.postLoadSetup();
@@ -96,11 +98,13 @@ Zon.Setup.postLoadSetup = () => {
     Zon.coreSelectButton.postLoadSetup();
     Zon.Setup.postLoadSetupActions.call();
 
+    Zon.scriptManager.postLoadSetup();
+
     Zon.DevCheats.postLoadSetup();
 }
 
-Zon.Setup.linkAndFinalizeUISetupActions = new Actions.Action();
-Zon.Setup.postLinkAndFinalizeUiSetupActions = new Actions.Action();
+Zon.Setup.linkAndFinalizeUISetupActions = new Actions.Action(`Zon.Setup linkAndFinalizeUISetupActions`);
+Zon.Setup.postLinkAndFinalizeUiSetupActions = new Actions.Action(`Zon.Setup postLinkAndFinalizeUiSetupActions`);
 Zon.Setup.startedLinkAndFinalizeUISetupActions = false;
 
 Zon.Setup.finalizeUI = () => {

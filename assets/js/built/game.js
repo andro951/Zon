@@ -3,21 +3,23 @@
 Zon.Game = class Game {
     constructor() {
         this.loopStarted = false;
-        this.lateUpdate = new Actions.Action();
-        this.lateDraw = new Actions.Action();
-        this.onCompleteStageActions = new Actions.Action();
-        this.onLevelReadyActions = new Actions.Action();
+        this.lateUpdate = new Actions.Action(`${this.constructor.name} lateUpdate`);
+        this.lateDraw = new Actions.Action(`${this.constructor.name} lateDraw`);
+        this.onCompleteStageActions = new Actions.Action(`${this.constructor.name} onCompleteStageActions`);
+
+        this.onLevelReadyActions = new Actions.Action(`${this.constructor.name} onLevelReadyActions`);
         this.levelIsReady = false;
-        this.levelDatas = new Array(Zon.LevelData.stageCount).fill(null);
+        this.levelDatas = new Array(Zon.LevelData.stageCount.value).fill(null);
         this.stageID = new Variable.Value(Zon.LevelData.startingStage, `CurrentStage`);
         this.stageNum = new Variable.Value(Zon.LevelData.startingStageNum, `CurrentStageNumber`);
         this.highestStageAvailable = new Variable.Value(Zon.LevelData.startingStage, `HighestStageAvailable`);
         this.highestStageNumAvailable = new Variable.Value(Zon.LevelData.startingStageNum, `HighestStageNumberAvailable`);
-        this.prestigeCount = new Variable.Value(0, Zon.GlobalVarNames.PRESTIGE_COUNT).makeGlobal();
+        this.highestDisplayedStageAvailable = new Variable.Dependent(() => Zon.LevelData.getDisplayedStageNum(this.highestStageAvailable, this.highestStageNumAvailable), `HighestDisplayedStageAvailable`, { this: this });
+        this.prestigeCount = new Variable.Value(0, Zon.GlobalVarNames.PRESTIGE_COUNT).makeGlobal(`The number of times the player has reached the max stage and prestiged.`);
         this.tickRemainder = 0;
-        this.lastTickStart = performance.now();
         this.timePerTick = 0.00000000001;
-        this.lastPerSecondUpdate = this.lastTickStart - 1000;
+        this.lastTickStart = 0;//Set when game is started
+        this.lastPerSecondUpdate = 0;//Set when game is started
         this.autoSavedThisSecond = false;
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
     }
@@ -51,6 +53,9 @@ Zon.Game = class Game {
 
     start = () => {
         console.log("Game started");
+        Zon.timeController.onMaximizedWindowActions.add(this.realTimeUpdate);
+        this.lastTickStart = performance.now();
+        this.lastPerSecondUpdate = this.lastTickStart - 1000;
         requestAnimationFrame(this.loop);
     }
 
@@ -150,11 +155,12 @@ Zon.Game = class Game {
         return ticks;
     }
 
-    realTimeUpdateActions = new Actions.Action();
-    oncePerSecondUpdateActions = new Actions.Action();
+    realTimeUpdateActions = new Actions.Action(`${this.constructor.name} realTimeUpdateActions`);
+    oncePerSecondUpdateActions = new Actions.Action(`${this.constructor.name} oncePerSecondUpdateActions`);
 
     realTimeUpdate = () => {
-        const timeSinceLastPerSecondUpdate = Zon.timeController.timeMilliseconds - this.lastPerSecondUpdate;
+        const currentTime = performance.now();
+        const timeSinceLastPerSecondUpdate = currentTime - this.lastPerSecondUpdate;
         this.realTimeUpdateActions.call();
         if (!this.autoSavedThisSecond && timeSinceLastPerSecondUpdate >= 100) {
             this.autoSavedThisSecond = true;
@@ -165,8 +171,10 @@ Zon.Game = class Game {
             return;
 
         if (timeSinceLastPerSecondUpdate >= 2000) {
-            console.error(`Game realTimeUpdate: More than 2 seconds since last per second update! (${timeSinceLastPerSecondUpdate} ms)`);
-            this.lastPerSecondUpdate = Zon.timeController.timeMilliseconds;
+            if (!Zon.timeController.pausedByMinimizingGame)
+                console.error(`Game realTimeUpdate: More than 2 seconds since last per second update! (${timeSinceLastPerSecondUpdate} ms)`);
+
+            this.lastPerSecondUpdate = currentTime;
         }
         else {
             this.lastPerSecondUpdate += 1000;
@@ -256,8 +264,8 @@ Zon.Game = class Game {
         this.draw();
     }
 
-    onNextDrawActions = new Actions.Action();
-    preDrawActions = new Actions.Action();
+    onNextDrawActions = new Actions.Action(`${this.constructor.name} onNextDrawActions`);
+    preDrawActions = new Actions.Action(`${this.constructor.name} preDrawActions`);
     draw = () => {
         Zon.combatUI.clearCanvas();
         Zon.musicManager.preDraw();
@@ -272,6 +280,8 @@ Zon.Game = class Game {
         this.stopStage();
         this.giveLevelRewards(levelData);
         this.onCompleteStageActions.call(levelData);
+        Zon.ScriptTriggers.onCompleteStage(levelData);
+        
         Zon.timeController.onLevelCompleted(levelData);
 
         this.updateAvailableStageIDAndNum();
@@ -345,11 +355,12 @@ Zon.Game = class Game {
             let stageSelected = false;
             if (Zon.Settings.getGame(Zon.GameSettingsID.AutomaticallyReturnToStage1)) {
                 if (Zon.Settings.getGame(Zon.GameSettingsID.StageToReturnToStage1) <= completedLevelData.displayedStageNum) {
-                    Variable.Base.pause();
+                    const paused = Variable.Base.tryPause(Zon.Game);
                     this.stageID.value = Zon.LevelData.startingStage;
                     this.stageNum.value = Zon.LevelData.startingStageNum;
                     stageSelected = true;
-                    Variable.Base.resume();
+                    if (paused)
+                        Variable.Base.resume(Zon.Game);
                 }
             }
 

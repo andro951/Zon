@@ -11,6 +11,7 @@ const Enum = {};
 Zon.Util = {};
 
 Zon.name = "Zon";
+Zon.version = "0.1.0";
 
 document.body.style.overflowX = 'hidden';
 document.body.style.overflowY = 'hidden';

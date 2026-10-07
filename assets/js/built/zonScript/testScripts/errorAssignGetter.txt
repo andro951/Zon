@@ -1,0 +1,13 @@
+Title: Error Assigning Getter
+Description: 
+Triggers: OnGainAether
+---
+//AetherGained = 1//Not an error, All args are copies even for BigNumber, so setting args only affects them locally.
+
+print("AetherGained: " + AetherGained + ", total Aether: " + Aether + " Trying to empower combat core...")
+if (@TryEmpowerCore("Combat")?)
+    @TryEmpowerCore("Combat", 1)
+
+Aether = 1//Error, can't set DataGetters
+
+print("total Aether after trying to empower: " + Aether)

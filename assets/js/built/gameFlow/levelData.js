@@ -32,7 +32,8 @@ Zon.LevelData = class LevelData {
         this.maxStageDisplayedNum = this.getDisplayedStageNum(this.maxStage, this.maxStageNum);
         this.stageCompletionAetherBonusPerPrestige = this.maxStageDisplayedNum;
         this.maxStageIndex = this.getStageIndex(this.maxStage, this.maxStageNum);
-        this.stageCount = this.maxStageIndex + 1;
+        this.stageCount = new Variable.Value(this.maxStageIndex + 1, Zon.GlobalVarNames.STAGE_COUNT);
+        this.stageCount.makeGlobal(`The total number of stages in the game.`);
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup.bind(this));
     }
     
@@ -70,15 +71,18 @@ Zon.LevelData = class LevelData {
             new Zon.Type_N(stageNum),
         ];
         const effStageNum = `effStageNum`;
-        this.effStageNumEquation = Zon.Equation_N.create(effStageNum, `${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, [], args, constants);
+        this.effStageNumEquation = Zon.Equation_N.create(effStageNum, `${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, [], args, constants);//TODO: this should just be a dependent variable.
         const healthPow = `healthPow`;
-        this.blockHealthPowEquation = Zon.Equation_N.create(healthPow, `3 * (2^(${effStageNum} / 10) - 1)`, [], args, constants, [this.effStageNumEquation]);
+        this.blockHealthPowEquation = Zon.Equation_N.create(healthPow, `2^(${effStageNum} / 10)`, [], args, constants, [this.effStageNumEquation]);
+        //10^(2^(stageNum / 10))
+        //At stageNum 100, 10^1024;
         this.blockMaxHealthEquation = Zon.Equation_BN.create(`baseBlockHealth`, `10^${healthPow}`, [], args, constants, [this.effStageNumEquation, this.blockHealthPowEquation]);
         this.getBlockMaxHealth = this.blockMaxHealthEquation.getValue;
 
         const aetherBonusPow = `stageCompletionAetherBonusPow`;
-        this.stageCompletionAetherBonusPowEquation = Zon.Equation_N.create(aetherBonusPow, `3 * (2^(${effStageNum} / 10) - 1) + ${effStageNum} / 10`, [], args, constants, [this.effStageNumEquation]);
-
+        this.stageCompletionAetherBonusPowEquation = Zon.Equation_N.create(aetherBonusPow, `2^(${effStageNum} / 10) + ${effStageNum} / 10`, [], args, constants, [this.effStageNumEquation]);
+        //10^(2^(stageNum / 10) + stageNum / 10)
+        //At stageNum 100, 10^)(1024 + 10) = 10^1034;
         this.stageCompletionAetherBonusEquation = Zon.Equation_BN.create(`stageCompletionAetherBonus`, `10^${aetherBonusPow}`, [], args, constants, [this.effStageNumEquation, this.stageCompletionAetherBonusPowEquation]);
         this.getStageCompletionBaseAetherReward = this.stageCompletionAetherBonusEquation.getValue
     }
@@ -144,6 +148,7 @@ Zon.LevelData = class LevelData {
     static getStageCompletionAetherReward(displayedStageIndex, prestigeCount) {
         const stageCompletionAetherBonus = Zon.LevelData.getStageCompletionBaseAetherReward(displayedStageIndex, prestigeCount);
         const finalStageCompletionAetherBonus = stageCompletionAetherBonus.multiply(Zon.AetherBonusManager.aetherBonus.value);
+        console.log(`Zon.AetherBonusManager.aetherBonus.value: ${Zon.AetherBonusManager.aetherBonus.value}, `);
         if (finalStageCompletionAetherBonus.isNegative) {
             throw new Error(`finalStageCompletionAetherBonus is negative: ${finalStageCompletionAetherBonus}`);
         }
@@ -182,7 +187,7 @@ Zon.LevelData = class LevelData {
     }
 
     static allLevelTextures;
-    static _postLoadTexturesActions = new Actions.Action();
+    static _postLoadTexturesActions = new Actions.Action(`Zon.LevelData postLoadTextures`);
     static postLoadTextures() {
         Zon.LevelData.allLevelTextures = Zon.allTextures[Zon.TextureFolders.levels];
         this._postLoadTexturesActions.callAndClear();
@@ -196,7 +201,7 @@ Zon.LevelData = class LevelData {
         constructor() {
             this.levelDataCount = Number.MAX_SAFE_INTEGER;
             this.levelDataSaveLoadHelpers = [];
-            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+            for (let i = 0; i < Zon.LevelData.stageCount.value; i++) {
                 this.levelDataSaveLoadHelpers.push(new Zon.LevelData.LevelDataSaveLoadHelper(i));
             }
         }
@@ -204,7 +209,7 @@ Zon.LevelData = class LevelData {
             if (this.levelDataCount !== Number.MAX_SAFE_INTEGER)
                 throw new Error(`AllLevelDataSaveLoadHelper.Get(); Failed because levelDataCount != uint.MaxValue; end: ${this.levelDataCount}`);
 
-            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+            for (let i = 0; i < Zon.LevelData.stageCount.value; i++) {
                 this.levelDataSaveLoadHelpers[i].get();
             }
         }
@@ -214,7 +219,7 @@ Zon.LevelData = class LevelData {
                 return;
             }
 
-            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+            for (let i = 0; i < Zon.LevelData.stageCount.value; i++) {
                 this.levelDataSaveLoadHelpers[i].set();
             }
 
@@ -228,7 +233,7 @@ Zon.LevelData = class LevelData {
             const stageIndexBits = Zon.IOManager.commonDataHelper.stageIndexBits.value;
             writer.writeUInt32(this.levelDataCount, stageIndexBits);
             let writtenCount = 0;
-            for (let i = 0; i < Zon.LevelData.stageCount; i++) {
+            for (let i = 0; i < Zon.LevelData.stageCount.value; i++) {
                 const helper = this.levelDataSaveLoadHelpers[i];
                 if (!helper.hasData)
                     continue;

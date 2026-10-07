@@ -2,8 +2,10 @@
 
 Zon.PlayerInventory = class {
     constructor() {
-        this.aether = Variable.BigNumberVar.ZERO(`Aether`);
-        this.totalAetherEarned = Variable.BigNumberVar.ZERO(`TotalAetherEarned`);
+        this.aether = Variable.BigNumberVar.ZERO(Zon.GlobalVarNames.AETHER);
+        this.aether.makeGlobal('Aether the player has.');
+        this.totalAetherEarned = Variable.BigNumberVar.ZERO(Zon.GlobalVarNames.TOTAL_AETHER_EARNED);
+        this.totalAetherEarned.makeGlobal('Total Aether the player has ever earned since the start of this incarnation.');
         this.aetherNodes = new Zon.Item(Zon.ItemType.AetherNode, Struct.BigNumber.ZERO);
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
     }
@@ -87,23 +89,24 @@ Zon.PlayerInventory = class {
     //#region Aether
 
     hasEnoughAether = (qty) => {
-        return this.aether.greaterThanOrEqual(qty);
+        return this.aether.value.greaterThanOrEqual(qty);
     }
     trySpendAether = (qty) => {
         if (this.hasEnoughAether(qty)) {
-            this.aether.value = this.aether.value.subtract(qty);
+            this.aether.value.subtractI(qty);
             return true;
         }
 
         return false;
     }
     receiveAether = (qty) => {
-        this.aether.value = this.aether.value.add(qty);
-        this.totalAetherEarned.value = this.totalAetherEarned.value.add(qty);
+        this.aether.value.addI(qty);
+        this.totalAetherEarned.value.addI(qty);
         this.onGainAether.call(qty);
+        Zon.ScriptTriggers.onGainAether(qty);
         //console.log(`Received Aether: ${qty}, Total Aether: ${this.aether.value}`);
     }
-    onGainAether = new Actions.Action();
+    onGainAether = new Actions.Action(`${this.constructor.name} onGainAether`);
     spendAsMuchAetherAsPossible = (aetherToConsume) => {
         if (this.aether.value.lessThanOrEqual(Struct.BigNumber.ZERO))
             return Struct.BigNumber.ZERO;
@@ -117,7 +120,7 @@ Zon.PlayerInventory = class {
             return spent;
         }
 
-        this.aether.value = this.aether.value.subtract(aetherToConsume);
+        this.aether.value.subtractI(aetherToConsume);
         return aetherToConsume;
     }
     trySpendAetherLevelTracker = (levels, costLevelTracker) => {
@@ -164,10 +167,10 @@ Zon.PlayerInventory = class {
 
     constructAetherNodeProductionRate = () => {
         this.aetherNodeProductionRate = new Variable.Dependent(() => 
-            this.aetherNodes.quantity.value * 
-            Zon.AetherBonusManager.aetherBonus.value * 
-            Zon.AetherNodePower.totalMultiplier.value *
-            Zon.CreationPower.totalMultiplier.value
+            this.aetherNodes.quantity.value.clone.multiplyI( 
+            Zon.AetherBonusManager.aetherBonus.value).multiplyI( 
+            Zon.AetherNodePower.totalMultiplier.value).multiplyI(
+            Zon.CreationPower.totalMultiplier.value)
         , `AetherNodeProductionRate`, { this: this });
     }
 
@@ -206,7 +209,7 @@ Zon.PlayerInventory = class {
 
         return item;
     }
-    onReceiveItem = new Actions.Action();
+    onReceiveItem = new Actions.Action(`${this.constructor.name} onReceiveItem`);
     reiceveItemToInventory = (itemType, qty, dict, item) => {
         item = dict.get(itemType);
         if (item !== undefined && item !== null) {
@@ -219,7 +222,7 @@ Zon.PlayerInventory = class {
             return true;
         }
     }
-    onCraftItem = new Actions.Action();
+    onCraftItem = new Actions.Action(`${this.constructor.name} onCraftItem`);
     craftItem = (itemType, quantity) => {
         const item = this.receiveItem(itemType, quantity);
         this.onCraftItem.call(item, quantity);

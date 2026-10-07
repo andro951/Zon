@@ -3,7 +3,7 @@
 Zon.UI.BottomBar = class BottomBar extends Zon.UI.UIElementDiv {
     constructor() {
         super('bottomBar', Zon.UI.UIElementZID.BOTTOM_BUTTONS, Zon.device);
-        //this.element.style.backgroundColor = Struct.Color.fromUInt(0x101010FF).cssString;
+        //this.element.style.backgroundColor = Struct.Color.fromUInt(0xFF0000FF).cssString;
         this.element.style.backgroundColor = Struct.Color.fromUInt(0xFFFFFFFF).cssString;
         this.makeScrollableRow(false);
     }
@@ -17,51 +17,24 @@ Zon.UI.BottomBar = class BottomBar extends Zon.UI.UIElementDiv {
         this.replaceHeight(() => Zon.bottomUI.height - (this.top - Zon.bottomUI.top));
 
         this.createButtonFunctions = [
-            (i) => this._addButton(i, 'abilitiesButton', Zon.UI.abilityUIState.toggle, 'TargetIcon'),
-            (i) => this._addButton(i, 'slottedAbilitiesButton', Zon.UI.slottedAbilitiesUIState.toggle, 'CombatIcon'),
-            (i) => this._addButton(i, 'coreButton', Zon.UI.coreUIState.toggle, 'CoreIcon'),
-            (i) => this._addButton(i, 'craftingButton', Zon.UI.craftingUIState.toggle, 'CraftingIcon'),
-            (i) => this._addButton(i, 'upgradesButton', Zon.UI.upgradesUIState.toggle, 'UpgradeIcon'),
-            (i) => this._addButton(i, 'navigationButton', Zon.UI.navigationUIState.toggle, 'NavigationIcon'),
+            () => this._addButton('abilitiesButton', Zon.UI.abilityUIState.toggle, 'TargetIcon'),
+            () => this._addButton('slottedAbilitiesButton', Zon.UI.slottedAbilitiesUIState.toggle, 'CombatIcon'),
+            () => this._addButton('coreButton', Zon.UI.coreUIState.toggle, 'CoreIcon'),
+            () => this._addButton('craftingButton', Zon.UI.craftingUIState.toggle, 'CraftingIcon'),
+            () => this._addButton('upgradesButton', Zon.UI.upgradesUIState.toggle, 'UpgradeIcon'),
+            () => this._addButton('navigationButton', Zon.UI.navigationUIState.toggle, 'NavigationIcon'),
         ];
 
-        //this.children = Variable.createArray();
-        let i = 0;
         for (const createButtonFunction of this.createButtonFunctions) {
-            createButtonFunction(i++);
+            createButtonFunction();
         }
-
-        // //Stage Select Button
-        // this._addButton('stageSelectButton', Zon.UI.stageUIState.show, 'StageIcon');
-
-        // //Music Button
-        // this._addButton('musicButton', Zon.UI.musicUIState.show, 'MusicIcon', {
-        //     leftFunc: () => Zon.device.width * 0.01 - 5 * Zon.musicManager.currentSongSmoothedAmplitude.value,
-        //     widthFunc: () => Zon.device.width * 0.1 + 10 * Zon.musicManager.currentSongSmoothedAmplitude.value
-        // });
-
-        // //Pause Button
-        // const pauseButton = this._addButton('sideBarPauseButton', Zon.musicManager.playButtonPressed, Zon.UI.MusicUIState.MusicControls.pauseButtonDefaultIcon);
-        // Zon.musicManager.linkPauseButton(pauseButton);
-
-        // //Delete All Music Button
-        // this._addButton('sideBarDeleteAllMusicButton', Zon.musicManager.deleteAllSongs, 'CloseIcon');
-
-        // //Testing UI button
-        // this._addButton('testingButton', Zon.UI.testingUIState.show, 'UpgradeIcon');
-
-        // //Mic Test Button
-        // this._addButton('micTestButton', Zon.UI.micTestUIState.show, 'InfoIcon');
     }
-    _addButton(i, name, onClick, iconName, options = {}) {
-        const index = i;
+    _addButton(name, onClick, iconName, options = {}) {
         const spacing = 2;
         const count = this.createButtonFunctions.length;
-        options.leftFunc ??= () => index * (Zon.bottomUI.bottomBar.width / count) + spacing;
         options.topFunc ??= () => spacing;
-        options.widthFunc ??= () => Zon.bottomUI.bottomBar.width / count - 2 * spacing;
+        options.widthFunc ??= new Variable.DependentFunction(() => (Zon.bottomUI.bottomBar.width - this.childrenPadding.value * (count + 1)) / count, { this: this });
         options.heightFunc ??= () => Zon.bottomUI.bottomBar.height - 2 * spacing;
-        //onClick = () => console.log(name + ' button clicked');
         const button = this.addIconButton(name, onClick, iconName, options);
         return button;
     }

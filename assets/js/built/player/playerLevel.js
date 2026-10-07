@@ -4,12 +4,12 @@ Zon.PlayerLevel = class PlayerLevel {
     constructor() {
         const levelToXPEquation = this._createLevelToXPEquation();
         const xpToLevelEquation = this._createXPToLevelEquation();
-        this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
+        this._playerLevelTracker = new Struct.ProgressLevelTracker_Sum_BN(Zon.GlobalVarNames.PLAYER_LEVEL, Zon.GlobalVarNames.PLAYER_LEVEL_PROGRESS, this._createXPPerLevelEquation(), levelToXPEquation, xpToLevelEquation, 1, Number.MAX_SAFE_INTEGER, { progressToLevelEquationIsEstimate: true });
         this.levelToXP = this._playerLevelTracker.levelToProgress;
-        this.level = this._playerLevelTracker.level.makeGlobal();
+        this.level = this._playerLevelTracker.level.makeGlobal(`Player Level`);
         this.xpToLevel = this._playerLevelTracker.progressToLevel;
         this.progressToNextLevel = this._playerLevelTracker.progressToNextLevel;
-        this.totalXP = this._playerLevelTracker.totalProgress.makeGlobal();
+        this.totalXP = this._playerLevelTracker.totalProgress.makeGlobal(`Total Player XP (All xp gained, not just xp in the current level)`);
 
         Zon.Setup.preLoadSetupActions.add(this.preLoadSetup);
         Zon.Setup.postLoadSetupActions.add(this.postLoadSetup);
@@ -48,6 +48,15 @@ Zon.PlayerLevel = class PlayerLevel {
         Zon.playerInventory.onGainAether.add((qty) => {
             this.totalXP.value.addI(qty);
         });
+    }
+
+    _createXPPerLevelEquation() {
+        const level = `level`;
+        const xpPerLevelStr = `floor(0.25 * (${level} - 1 + 300 * 2^((${level} - 1) / 7)))`;
+        const args = [
+            new Zon.Type_N(level),
+        ];
+        return Zon.Equation_BN.create(`XPNeededForNextPlayerLevel`, xpPerLevelStr, [], args);
     }
     
     _createLevelToXPEquation() {

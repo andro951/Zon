@@ -160,7 +160,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
             
             this._value = new variableClass(defaultValue, `Setting${this.name}Value`);
             this.onChangedAction = this._value.onChangedAction;
-            this.onChangedByPlayerAction = new Actions.Action();
+            this.onChangedByPlayerAction = new Actions.Action(`${this.constructor.name} ${this.name} onChangedByPlayerAction`);
         }
 
         get value() {
@@ -223,24 +223,25 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
         }
 
         static SettingPanel = class SettingPanel extends Zon.UI.UIElementDiv {
-            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
+            constructor(parent, lastChild, padding, setting) {
                 if (new.target === Zon.Setting.SettingPanel)
                     throw new TypeError("Cannot construct SettingPanel instances directly");
 
-                super(`settingPanel_${setting.id}`, parent.element.style.zIndex, parent);
+                super(`settingPanel_${setting.id}_${parent.element.id}`, parent.element.style.zIndex, parent);
                 if (!setting)
                     throw new Error("SettingPanel must be constructed with a valid setting");
 
                 this.setting = setting;
-                this._applyDefaultTopOrLeft = applyDefaultTopOrLeft;
                 this.element.style.backgroundColor = Struct.Color.fromUInt(0x303030FF).cssString;
                 this.element.style.borderWidth = `1px`;
                 this.element.style.borderStyle = 'solid';
-                this.element.style.borderColor = `#AAA`;
+                this.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                 this.element.style.display = 'flex';
                 this.element.style.justifyContent = 'center';
                 this.element.style.alignItems = 'center';
                 this.element.style.whiteSpace = 'nowrap';
+
+                this.isChild = true;
             }
             static borderWidth = 2;
             static padding = 2;
@@ -254,7 +255,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                     },
                     setupFunc: (d) => {
                         d.replaceLeft(() => d.parent.innerWidth - d.width - padding, { d });
@@ -270,7 +271,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.style.backgroundColor = Struct.Color.fromUInt(0x000000FF).cssString;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.fontWeight = `bold`;
                         d.element.textContent = d.parent.setting.name;
                         d.element.style.display = 'flex';
@@ -290,9 +291,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                 super.setup();
 
                 this.replaceLeft(() => this.parent.childrenPadding.value);
-                this._applyDefaultTopOrLeft(this);
-                delete this._applyDefaultTopOrLeft;
-                this.replaceWidth(() => this.parent.innerWidth - 2 * this.parent.childrenPadding.value - Zon.UI.UIElementBase.expectedScrollBarWidth);
+                this.replaceWidth(() => this.parent.innerWidth);
                 this.replaceHeight(() => this.parent.innerHeight * 0.08);
             }
             _getSettingWidthFunc() {
@@ -307,8 +306,8 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
         }
 
         static SettingUIPanelClass = class BoolSettingPanel extends Zon.Setting.SettingPanel {
-            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
-                super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
+            constructor(parent, lastChild, padding, setting) {
+                super(parent, lastChild, padding, setting);
                 this.element.style.display = 'flex';
                 this.element.style.justifyContent = 'center';
                 this.element.style.alignItems = 'center';
@@ -331,6 +330,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.style.display = 'flex';
                         d.element.style.justifyContent = 'center';
                         d.element.style.alignItems = 'center';
+                        d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
                         d.text.replaceEquation(() => d.parent.parent.setting.value ? "X" : "", { d });
@@ -378,8 +378,8 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
         }
 
         static SettingUIPanelClass = class IntSettingPanel extends Zon.Setting.SettingPanel {
-            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
-                super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
+            constructor(parent, lastChild, padding, setting) {
+                super(parent, lastChild, padding, setting);
             }
             postConstructor() {
                 super.postConstructor();
@@ -398,7 +398,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.textContent = `>`;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
@@ -426,7 +426,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.textContent = `<`;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
@@ -453,7 +453,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         //d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
                         //d.element.style.borderWidth = `${borderWidth}px`;
                         //d.element.style.borderStyle = 'solid';
-                        //d.element.style.borderColor = `#AAA`;
+                        //d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                         d.element.type = 'number';
                     },
@@ -519,8 +519,8 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
         }
 
         static SettingUIPanelClass = class UIntSettingPanel extends Zon.Setting.SettingPanel {
-            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
-                super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
+            constructor(parent, lastChild, padding, setting) {
+                super(parent, lastChild, padding, setting);
             }
             postConstructor() {
                 super.postConstructor();
@@ -539,7 +539,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.textContent = `>`;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
@@ -567,7 +567,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.textContent = `<`;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
@@ -594,7 +594,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         //d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
                         //d.element.style.borderWidth = `${borderWidth}px`;
                         //d.element.style.borderStyle = 'solid';
-                        //d.element.style.borderColor = `#AAA`;
+                        //d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                         d.element.type = 'number';
                     },
@@ -659,8 +659,8 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
         }
 
         static SettingUIPanelClass = class UIntSettingPanel extends Zon.Setting.SettingPanel {
-            constructor(parent, lastChild, padding, applyDefaultTopOrLeft, setting) {
-                super(parent, lastChild, padding, applyDefaultTopOrLeft, setting);
+            constructor(parent, lastChild, padding, setting) {
+                super(parent, lastChild, padding, setting);
             }
             postConstructor() {
                 super.postConstructor();
@@ -679,7 +679,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.textContent = `>`;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
@@ -707,7 +707,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         d.element.textContent = `<`;
                         d.element.style.borderWidth = `${borderWidth}px`;
                         d.element.style.borderStyle = 'solid';
-                        d.element.style.borderColor = `#AAA`;
+                        d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                     },
                     postConstructorFunc: (d) => {
@@ -734,7 +734,7 @@ Zon.Settings.SettingsSaveLoadInfo = class extends Zon.SaveLoadInfo {
                         //d.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
                         //d.element.style.borderWidth = `${borderWidth}px`;
                         //d.element.style.borderStyle = 'solid';
-                        //d.element.style.borderColor = `#AAA`;
+                        //d.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
                         d.element.style.whiteSpace = 'nowrap';
                         d.element.type = 'number';
                     },

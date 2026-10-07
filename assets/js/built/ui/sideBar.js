@@ -59,7 +59,8 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
         this.replaceLeft(() => Zon.device.width - this.width);
         this.replaceTop(() => Zon.topUI.sideBarButton.height + 10);
         this.replaceWidth(() => Zon.device.width * 0.12);
-        this.replaceHeight(() => Zon.bottomUI.top - this.top - 10);
+        //this.replaceHeight(() => Zon.bottomUI.top - this.top - 10);
+        this.replaceHeight(() => Zon.bottomUI.top - this.top - 10 + 500);
 
         //Stage Select Button
         this._addButton('stageSelectButton', Zon.UI.stageUIState.show, 'StageIcon');
@@ -82,6 +83,9 @@ Zon.UI.SideBar = class SideBar extends Zon.UI.UIElementDiv {
 
         //Mic Test Button
         this._addButton('micTestButton', Zon.UI.micTestUIState.show, 'InfoIcon');
+
+        //Scripts UI button
+        this._addButton('scriptsUIButton', Zon.UI.scriptsUIState.show, 'UpgradeIcon');//'ScriptIcon'
     }
     _addButton(name, onClick, iconName, options = {}) {
         options.leftFunc ??= () => Zon.device.width * 0.01;

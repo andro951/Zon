@@ -13,7 +13,7 @@ Zon.Ball = class extends Struct.Circle {
     }
 
     get damage() {
-        return Struct.BigNumber.create(10);
+        return Struct.BigNumber.create(14);
     }
 
     correctVelocity = () => {
@@ -35,6 +35,7 @@ Zon.Ball = class extends Struct.Circle {
         let count = 0;
         do {
             collided = false;
+            //const gridCollision = Collision.traverseGridWithCircleBruteForce(lastPos, this, Zon.blocksManager.tileHasBlock, Zon.blocksManager.blockArea, Zon.blocksManager.tileCount);
             const gridCollision = Collision.traverseGridWithCircle(lastPos, this, Zon.blocksManager.tileHasBlock, Zon.blocksManager.blockArea, Zon.blocksManager.tileCount);
             if (gridCollision) {
                 collided = true;
@@ -43,7 +44,7 @@ Zon.Ball = class extends Struct.Circle {
                     tileY,
                     hitX,
                     hitY,
-                    directionOfHit,
+                    normal,
                 } = gridCollision;
                 
                 lastPos.x = hitX;
@@ -52,7 +53,9 @@ Zon.Ball = class extends Struct.Circle {
                 this.x = 2 * hitX - this.x;
                 this.y = 2 * hitY - this.y;
                 const oldVelocity = this.velocity;
-                this.velocity = this.velocity.reflect(directionOfHit.perpendicular);
+                //this.velocity = this.velocity.reflect(directionOfHit.perpendicular);
+                this.velocity = this.velocity.reflectNormal(normal);
+                const directionOfHit = normal.negate;
                 this.varyReflectionAngle(directionOfHit);
                 if (zonDebug) {
                     //console.log(`Ball hit block ${tileX}, ${tileY}: current: (${this.x}, ${this.y}), old: (${oldX}, ${oldY}), oldVelocity: (${oldVelocity.x}, ${oldVelocity.y}), newVelocity: (${this.velocity.x}, ${this.velocity.y}), count: ${count}, hadBlockCollision: ${hadBlockCollision}`);
@@ -115,6 +118,8 @@ Zon.Ball = class extends Struct.Circle {
                 }
             }
         } while (collided);
+
+        
 
         // const tileWidth = Zon.blocksManager.blockArea.width / Zon.blocksManager.tileCount.x;
         // const tileHeight = Zon.blocksManager.blockArea.height / Zon.blocksManager.tileCount.y;

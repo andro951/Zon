@@ -1,0 +1,7 @@
+Title: Testing Manual Trigger with an error
+Description: Print the total aether.
+Triggers: Manual
+---
+print("total Aether: " + Aether)
+
+Aether = 1//Error, can't set DataGetters

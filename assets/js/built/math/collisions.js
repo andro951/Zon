@@ -2,90 +2,6 @@
 
 const Collision = {}
 
-Collision.liangBarskyClip = function(p, q, t) {
-    if (p === 0)
-        return q >= 0;
-
-    const r = q / p;
-    if (p < 0) {
-        if (r > t[1])
-            return false;
-
-        if (r > t[0])
-            t[0] = r;
-    }
-    else {
-        if (r < t[0])
-            return false;
-
-        if (r < t[1])
-            t[1] = r;
-    }
-
-    return true;
-}
-Collision.lineIntersectsRectPoints = function(x1, y1, x2, y2, rx1, ry1, rx2, ry2) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-
-    const t = [0, 1];
-
-    if (!Collision.liangBarskyClip(-dx, x1 - rx1, t))
-        return null;
-
-    if (!Collision.liangBarskyClip(dx, rx2 - x1, t))
-        return null;
-
-    if (!Collision.liangBarskyClip(-dy, y1 - ry1, t))
-        return null;
-
-    if (!Collision.liangBarskyClip(dy, ry2 - y1, t))
-        return null;
-
-    return t;
-}
-Collision.lineIntersectsRect = function(x1, y1, x2, y2, rect) {
-    const dx = x2 - x1;
-    const dy = y2 - y1;
-
-    const t = [0, 1];
-
-    if (!Collision.liangBarskyClip(-dx, x1 - rect.x, t)) {
-        return null;
-    }
-
-    if (!Collision.liangBarskyClip(dx, rect.x + rect.width - x1, t)) {
-        return null;
-    }
-
-    if (!Collision.liangBarskyClip(-dy, y1 - rect.y, t)) {
-        return null;
-    }
-
-    if (!Collision.liangBarskyClip(dy, rect.y + rect.height - y1, t)) {
-        return null;
-    }
-
-    return {
-        xStart: x1 + t[0] * dx,
-        yStart: y1 + t[0] * dy,
-        xEnd: x1 + t[1] * dx,
-        yEnd: y1 + t[1] * dy,
-        t
-    }
-}
-
-Collision._movingCircleIntersectsRectangle = function(x1, y1, circle, rectangle) {
-    const expandedRectangle = new Struct.Rectangle(
-        rectangle.x - circle.radius,
-        rectangle.y - circle.radius,
-        rectangle.width + circle.radius * 2,
-        rectangle.height + circle.radius * 2
-    );
-
-    return Collision.lineIntersectsRect(x1, y1, circle.x, circle.y, expandedRectangle);
-}
-
 //Returns t [0, 1] if the line crosses the point, null if it does not cross.
 Collision.crosses = function(start, end, crossPoint) {
     const diff = end - start;
@@ -119,68 +35,49 @@ Collision.getCrossTime = function (start, end, crossPoint) {
 
     return (crossPoint - start) / diff;
 }
-//TODO: add a check for does colide first
-//Use dot product of normalized dx/dy vector on the vector from circle center to the point on the dx/dy vector that is perpendicualr to the corner
-//Then solve for the distance between the circle center at that point and the corner.
-//Then can eliminate the need for negative checks.
-// Collision.distanceToLine = (lx0, ly0, lx1, ly1, x, y) => {
-//     //
-// }
 
-Collision.solveCornerT = (x0, y0, dx, dy, cornerX, cornerY, r) => {
-    // r = ((x0 + dx * t - cornerX)^2 + (y0 + dy * t - cornerY)^2)^0.5
-    // r^2 = (dx * t + x0 - cornerX)^2 + (dy * t + y0 - cornerY)^2
-    // r^2 = (dx * t + (x0 - cornerX))^2 + (dy * t + (y0 - cornerY))^2
-    // r^2 = dx^2 * t^2 + 2 * dx * t * (x0 - cornerX) + (x0 - cornerX)^2 + dy^2 * t^2 + dy * t * (y0 - cornerY) + (y0 - cornerY)^2
-    // 0 = (dx^2 + dy^2) * t^2 + (2 * (dx * (x0 - cornerX) + dy * (y0 - cornerY))) * t + (x0 - cornerX)^2 + (y0 - cornerY)^2 - r^2
+Collision.movingCircleHitsPointT = (x0, y0, dx, dy, pX, pY, r) => {
+    // r = ((x0 + dx * t - pX)^2 + (y0 + dy * t - pY)^2)^0.5
+    // r^2 = (dx * t + x0 - pX)^2 + (dy * t + y0 - pY)^2
+    // r^2 = (dx * t + (x0 - pX))^2 + (dy * t + (y0 - pY))^2
+    // r^2 = dx^2 * t^2 + 2 * dx * t * (x0 - pX) + (x0 - pX)^2 + dy^2 * t^2 + dy * t * (y0 - pY) + (y0 - pY)^2
+    // 0 = (dx^2 + dy^2) * t^2 + (2 * (dx * (x0 - pX) + dy * (y0 - pY))) * t + (x0 - pX)^2 + (y0 - pY)^2 - r^2
     // a = (dx^2 + dy^2)
-    // b = 2 * (dx * (x0 - cornerX) + dy * (y0 - cornerY))
-    // c = (x0 - cornerX)^2 + (y0 - cornerY)^2 - r^2
+    // b = 2 * (dx * (x0 - pX) + dy * (y0 - pY))
+    // c = (x0 - pX)^2 + (y0 - pY)^2 - r^2
     // t = (-b +/- (b^2 - 4 * a * c)^0.5)/(2 * a)
-    //const a = dx * dx + dy * dy;
-    const denom = 2 * (dx * dx + dy * dy);
-    const cX = x0 - cornerX;
-    const cY = y0 - cornerY;
-    const b = 2 * (dx * cX + dy * cY);
-    const c = cX * cX + cY * cY - r * r;
-    const discriminant = b * b - 2 * denom * c;//b^2 - 4 * a * c
-    let thisT = null;
-    if (discriminant < 0) {
-        // No real roots
-    }
-    else if (discriminant === 0) {
-        // One real root
-        thisT = -b / denom;//(-b +/- 0) / (2 * a)
-    }
-    else {
-        const sqrtDisc = Math.sqrt(discriminant);
-        const root1 = (-b + sqrtDisc) / denom;//(-b + sqrt(b^2 - 4ac)) / (2 * a)
-        const root2 = (-b - sqrtDisc) / denom;//(-b - sqrt(b^2 - 4ac)) / (2 * a)
-        if (root1 < 0) {
-            if (root2 < 0) {
-                //Both roots are negative
-            }
-            else {
-                //Only the second root is positive
-                thisT = root2;
-            }
-        }
-        else if (root2 < 0) {
-            //Only the first root is positive
-            thisT = root1;
-        }
-        else {
-            //Both roots are positive, take the smaller one.
-            if (root1 < root2) {
-                thisT = root1;
-            }
-            else {
-                thisT = root2;
-            }
-        }
-    }
+    const a = dx * dx + dy * dy;
+    if (a === 0)
+        return null;//Not moving
 
-    return thisT;
+    const invDenom = 1 / a;
+    const cX = x0 - pX;
+    const cY = y0 - pY;
+    const b = dx * cX + dy * cY;
+    const c = cX * cX + cY * cY - r * r;
+    const discriminant = b * b - a * c;
+    if (discriminant < 0)
+        return null;//No real roots, does not hit
+
+    //Correct, but adds an extra branch for 99.99% of cases
+    //Can be accounted for by just calculating both roots
+    // if (discriminant === 0) {
+    //     // One real root
+    //     thisT = -b / denom;//(-b +/- 0) / (2 * a)
+    // }
+
+    const sqrtDisc = Math.sqrt(discriminant);
+    //sqrtDisc is always positive, so root1 is always a smaller positive or negative
+    //If it is >= 0, it is the smaller root.
+    const root1 = (-b - sqrtDisc) * invDenom;//(-b - sqrt(b^2 - 4ac)) / (2 * a)
+    if (root1 >= 0)
+        return root1;
+
+    const root2 = (-b + sqrtDisc) * invDenom;//(-b + sqrt(b^2 - 4ac)) / (2 * a)
+    if (root2 >= 0)
+        return root2;
+
+    return null;
 }
 
 Collision.cornersMap = new Map();//Should never be used outside of Collision.traverseGridWithCircle().
@@ -301,8 +198,10 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     let shortestTileX = -1;
     let shortestTileY = -1;
     let shortestT = Infinity;
-    let directionOfHitX = 0;
-    let directionOfHitY = 0;
+    // let directionOfHitX = 0;
+    // let directionOfHitY = 0;
+    let normalX = 0;
+    let normalY = 0;
     let shortestCornerX = null;//Debug
     let shortestCornerY = null;//Debug
 
@@ -335,12 +234,6 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
     let tileX = xTileStartInc;
     let tileY = yTileStartInc;
 
-    const xTileStartWorld = xDirIsRight ? gridLeft + xTileStartInc * tileWidth : gridLeft + (xTileStartInc + 1) * tileWidth;
-    let xT = Collision.getCrossTime(lineStartX, lineEndX, xTileStartWorld) ?? Infinity;
-
-    const yTileStartWorld = yDirIsDown ? gridTop + yTileStartInc * tileHeight : gridTop + (yTileStartInc + 1) * tileHeight;
-    let yT = Collision.getCrossTime(lineStartY, lineEndY, yTileStartWorld) ?? Infinity;
-
     if (tileX < 0 || tileX >= tileCountX || tileY < 0 || tileY >= tileCountY) {
         const error = `Invalid tile coordinates: (${tileX}, ${tileY})`;
         if (zonDebug) {
@@ -350,6 +243,22 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
         console.error(error);
         return null;
     }
+
+    const xTileStartWorld = xDirIsRight ? gridLeft + xTileStartInc * tileWidth : gridLeft + (xTileStartInc + 1) * tileWidth;
+    let xT = Collision.getCrossTime(lineStartX, lineEndX, xTileStartWorld) ?? Infinity;
+
+    const yTileStartWorld = yDirIsDown ? gridTop + yTileStartInc * tileHeight : gridTop + (yTileStartInc + 1) * tileHeight;
+    let yT = Collision.getCrossTime(lineStartY, lineEndY, yTileStartWorld) ?? Infinity;
+
+    // if (xT < 0 || yT < 0) {
+    //     const error = `xT or yT was < 0; xT: ${xT}, yT: ${yT}`;
+    //     if (zonDebug) {
+    //         throw new Error(error);
+    //     }
+
+    //     console.error(error);
+    //     return null;
+    // }
     
     let t = 0;
     while (t <= 1) {
@@ -363,15 +272,19 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             const directHitTileY = Math.floor((directHitY - gridTop) * invTileHeight);
             let newT = null;
             let newShortestTileY = null;
-            let newDirectionOfHitX;
-            let newDirectionOfHitY;
+            // let newDirectionOfHitX;
+            // let newDirectionOfHitY;
+            let newNormalX;
+            let newNormalY;
             let newShortestCornerX = null;//Debug
             let newShortestCornerY = null;//Debug
             if (xT >= 0 && isSolidTile(tileX, directHitTileY)) {
                 newT = xT;
                 newShortestTileY = directHitTileY;
-                newDirectionOfHitX = xDir;
-                newDirectionOfHitY = 0;
+                // newDirectionOfHitX = xDir;
+                // newDirectionOfHitY = 0;
+                newNormalX = -xDir;
+                newNormalY = 0;
                 if (zonDebug) {
                     newShortestCornerX = null;
                     newShortestCornerY = null;
@@ -380,6 +293,12 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             else {
                 const cornerX = xDirIsRight ? gridLeft + tileX * tileWidth : gridLeft + (tileX + 1) * tileWidth;
                 const tCenterPassedWall = Math.min(xT + tDeltaXCenterToCrossWall, 1);
+                const ballCenterX = x0 + tCenterPassedWall * dx;
+                if (zonDebug) {
+                    // if (ballCenterX !== cornerX)
+                    //     console.error(`ballCenterX !== cornerX; ballCenterX: ${ballCenterX}, cornerX: ${cornerX}`);
+                }
+
                 const ballCenterY = y0 + tCenterPassedWall * dy;
                 const ballTopY = yDirIsDown ? directHitY - r : ballCenterY - r;
                 const ballBottomY = yDirIsDown ? ballCenterY + r : directHitY + r;
@@ -387,6 +306,30 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                 let ballBottomTileY = Math.min(Math.max(Math.floor((ballBottomY - gridTop) * invTileHeight), directHitTileY), tileCountY - 1);
                 if (zonDebug) {
                     //console.log(`tileX: ${tileX}, directHitTileY: ${directHitTileY}, Checking tiles: bottoms - [${directHitTileY - 1}, ${ballTopTileY}] (-1) and tops - [${directHitTileY + 1}, ${ballBottomTileY}] (+1)`);
+
+                    // const prevBottomTileY = ballBottomTileY - 1;
+                    // if (prevBottomTileY >= 0) {
+                    //     if (prevBottomTileY >= tileCountY)
+                    //         throw new Error(`prevBottomTileY is out of bounds: ${prevBottomTileY}`);
+
+                    //     //Don't solid check here.  Just checking if the bounds excluded some tiles
+                    //     const prevBottomY = gridTop + (prevBottomTileY + 1) * tileHeight;
+                    //     const prevBottomT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, prevBottomY, r);
+                    //     if (prevBottomT !== null)
+                    //         console.error(`Excluded a tile due to incorrect bounds calculation.  prevBottomT is not null: ${prevBottomT}`);
+                    // }
+
+                    // const nextTopTileY = ballTopTileY + 1;
+                    // if (nextTopTileY <= tileCountY - 1) {
+                    //     if (nextTopTileY < 0)
+                    //         throw new Error(`nextTopTileY is out of bounds: ${nextTopTileY}`);
+
+                    //     //Don't solid check here.  Just checking if the bounds excluded some tiles
+                    //     const nextTopY = gridTop + nextTopTileY * tileHeight;
+                    //     const nextTopT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, nextTopY, r);
+                    //     if (nextTopT !== null)
+                    //         console.error(`Excluded a tile due to incorrect bounds calculation.  nextTopT is not null: ${nextTopT}`);
+                    // }
                 }
                 
                 for (let y = Math.min(directHitTileY - 1, tileCountY - 1); y >= ballTopTileY; y -= 1) {
@@ -423,15 +366,17 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         continue;
 
                     const cornerY = gridTop + (y + 1) * tileHeight;
-                    const thisT = Collision.solveCornerT(x0, y0, dx, dy, cornerX, cornerY, r);
+                    const thisT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, cornerY, r);
                     if (thisT !== null && thisT > 0) {
                         if ((newT === null || thisT < newT) && thisT < shortestT && thisT <= 1) {
                             newT = thisT;
                             newShortestTileY = y;
                             const newBallCenterY = y0 + newT * dy;
                             const newBallCenterX = x0 + newT * dx;
-                            newDirectionOfHitX = cornerX - newBallCenterX;
-                            newDirectionOfHitY = cornerY - newBallCenterY;
+                            // newDirectionOfHitX = cornerX - newBallCenterX;
+                            // newDirectionOfHitY = cornerY - newBallCenterY;
+                            newNormalX = newBallCenterX - cornerX;
+                            newNormalY = newBallCenterY - cornerY;
                             if (zonDebug) {
                                 newShortestCornerX = cornerX;
                                 newShortestCornerY = cornerY;
@@ -476,15 +421,17 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         continue;
 
                     const cornerY = gridTop + y * tileHeight;
-                    const thisT = Collision.solveCornerT(x0, y0, dx, dy, cornerX, cornerY, r);
+                    const thisT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, cornerY, r);
                     if (thisT !== null && thisT > 0) {
                         if ((newT === null || thisT < newT) && thisT < shortestT && thisT <= 1) {
                             newT = thisT;
                             newShortestTileY = y;
                             const newBallCenterY = y0 + newT * dy;
                             const newBallCenterX = x0 + newT * dx;
-                            newDirectionOfHitX = cornerX - newBallCenterX;
-                            newDirectionOfHitY = cornerY - newBallCenterY;
+                            // newDirectionOfHitX = cornerX - newBallCenterX;
+                            // newDirectionOfHitY = cornerY - newBallCenterY;
+                            newNormalX = newBallCenterX - cornerX;
+                            newNormalY = newBallCenterY - cornerY;
                             if (zonDebug) {
                                 newShortestCornerX = cornerX;
                                 newShortestCornerY = cornerY;
@@ -501,12 +448,14 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                     shortestT = newT;
                     shortestTileX = tileX;
                     shortestTileY = newShortestTileY;
-                    directionOfHitX = newDirectionOfHitX;
-                    directionOfHitY = newDirectionOfHitY;
+                    // directionOfHitX = newDirectionOfHitX;
+                    // directionOfHitY = newDirectionOfHitY;
+                    normalX = newNormalX;
+                    normalY = newNormalY;
                     if (zonDebug) {
                         shortestCornerX = newShortestCornerX;
                         shortestCornerY = newShortestCornerY;
-                        //console.log(`X Hit found: ${tileX}, ${newShortestTileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+                        //console.log(`X Hit found: ${tileX}, ${newShortestTileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, normal: (${normalX}, ${normalY})`);
                     }
                 }
             }
@@ -521,7 +470,11 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                 xT = Infinity;
             }
             else {
-                xT += tDeltaX;
+                //xT += tDeltaX;
+                const nextTileX = xDirIsRight ? gridLeft + tileX * tileWidth : gridLeft + (tileX + 1) * tileWidth;
+                //const xT2 = Collision.getCrossTime(lineStartX, lineEndX, nextTileX) ?? Infinity;
+                xT = Collision.getCrossTime(lineStartX, lineEndX, nextTileX) ?? Infinity;
+                //console.log(`tileX: ${tileX}, xT: ${xT}, xT2: ${xT2}, nextTileX: ${nextTileX}`);
             }
         } else {
             if (yT > 1 || shortestT < yT)
@@ -533,15 +486,19 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             const directHitTileX = Math.floor((directHitX - gridLeft) * invTileWidth);
             let newT = null;
             let newShortestTileX = null;
-            let newDirectionOfHitX;
-            let newDirectionOfHitY;
+            // let newDirectionOfHitX;
+            // let newDirectionOfHitY;
+            let newNormalX;
+            let newNormalY;
             let newShortestCornerX = null;//Debug
             let newShortestCornerY = null;//Debug
             if (yT >= 0 && isSolidTile(directHitTileX, tileY)) {
                 newT = yT;
                 newShortestTileX = directHitTileX;
-                newDirectionOfHitX = 0;
-                newDirectionOfHitY = yDir;
+                // newDirectionOfHitX = 0;
+                // newDirectionOfHitY = yDir;
+                newNormalX = 0;
+                newNormalY = -yDir;
                 if (zonDebug) {
                     newShortestCornerX = null;
                     newShortestCornerY = null;
@@ -593,15 +550,17 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         continue;
 
                     const cornerX = gridLeft + (x + 1) * tileWidth;
-                    const thisT = Collision.solveCornerT(x0, y0, dx, dy, cornerX, cornerY, r);
+                    const thisT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, cornerY, r);
                     if (thisT !== null && thisT >= 0) {
                         if ((newT === null || thisT < newT) && thisT < shortestT && thisT <= 1) {
                             newT = thisT;
                             newShortestTileX = x;
                             const newBallCenterY = y0 + newT * dy;
                             const newBallCenterX = x0 + newT * dx;
-                            newDirectionOfHitX = cornerX - newBallCenterX;
-                            newDirectionOfHitY = cornerY - newBallCenterY;
+                            // newDirectionOfHitX = cornerX - newBallCenterX;
+                            // newDirectionOfHitY = cornerY - newBallCenterY;
+                            newNormalX = newBallCenterX - cornerX;
+                            newNormalY = newBallCenterY - cornerY;
                             if (zonDebug) {
                                 newShortestCornerX = cornerX;
                                 newShortestCornerY = cornerY;
@@ -646,15 +605,17 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         continue;
 
                     const cornerX = gridLeft + x * tileWidth;
-                    const thisT = Collision.solveCornerT(x0, y0, dx, dy, cornerX, cornerY, r);
+                    const thisT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, cornerY, r);
                     if (thisT !== null && thisT >= 0) {
                         if ((newT === null || thisT < newT) && thisT < shortestT && thisT <= 1) {
                             newT = thisT;
                             newShortestTileX = x;
                             const newBallCenterY = y0 + newT * dy;
                             const newBallCenterX = x0 + newT * dx;
-                            newDirectionOfHitX = cornerX - newBallCenterX;
-                            newDirectionOfHitY = cornerY - newBallCenterY;
+                            // newDirectionOfHitX = cornerX - newBallCenterX;
+                            // newDirectionOfHitY = cornerY - newBallCenterY;
+                            newNormalX = newBallCenterX - cornerX;
+                            newNormalY = newBallCenterY - cornerY;
                             if (zonDebug) {
                                 newShortestCornerX = cornerX;
                                 newShortestCornerY = cornerY;
@@ -672,12 +633,14 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                         shortestT = newT;
                         shortestTileX = newShortestTileX;
                         shortestTileY = tileY;
-                        directionOfHitX = newDirectionOfHitX;
-                        directionOfHitY = newDirectionOfHitY;
+                        // directionOfHitX = newDirectionOfHitX;
+                        // directionOfHitY = newDirectionOfHitY;
+                        normalX = newNormalX;
+                        normalY = newNormalY;
                         if (zonDebug) {
                             shortestCornerX = newShortestCornerX;
                             shortestCornerY = newShortestCornerY;
-                            //console.log(`Y Hit found: ${newShortestTileX}, ${tileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+                            //console.log(`Y Hit found: ${newShortestTileX}, ${tileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, normal: (${normalX}, ${normalY})`);
                         }
                     }
                     else {
@@ -702,7 +665,16 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                 yT = Infinity;
             }
             else {
-                yT += tDeltaY;
+                //yT += tDeltaY;
+                const nextTileY = yDirIsDown ? gridTop + tileY * tileHeight : gridTop + (tileY + 1) * tileHeight;
+                //const yT2 = Collision.getCrossTime(lineStartY, lineEndY, nextTileY) ?? Infinity;
+                yT = Collision.getCrossTime(lineStartY, lineEndY, nextTileY) ?? Infinity;
+                //console.log(`tileY: ${tileY}, yT: ${yT}, yT2: ${yT2}, nextTileY: ${nextTileY}`);
+                // //xT += tDeltaX;
+                // const nextTileX = xDirIsRight ? gridLeft + tileX * tileWidth : gridLeft + (tileX + 1) * tileWidth;
+                // //const xT2 = Collision.getCrossTime(lineStartX, lineEndX, nextTileX) ?? Infinity;
+                // xT = Collision.getCrossTime(lineStartX, lineEndX, nextTileX) ?? Infinity;
+                // //console.log(`tileX: ${tileX}, xT: ${xT}, xT2: ${xT2}, nextTileX: ${nextTileX}`);
             }
         }
     }
@@ -757,7 +729,7 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
                     for (let y = 0; y <= 1; y += 1) {
                         const blockWorldX = gridLeft + (tX + x) * tileWidth;
                         const blockWorldY = gridTop + (tY + y) * tileHeight;
-                        const cornerT = Collision.solveCornerT(x0, y0, dx, dy, blockWorldX, blockWorldY, r);
+                        const cornerT = Collision.movingCircleHitsPointT(x0, y0, dx, dy, blockWorldX, blockWorldY, r);
                         if (cornerT !== null && cornerT > 0 && cornerT < thisT && cornerT <= 1) {
                             if (cornerT === undefined)
                                 throw new Error(`cornerT is undefined: ${cornerT}`);
@@ -804,11 +776,11 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
 
     if (shortestT !== Infinity) {
         if (zonDebug) {
-            //console.log(`Final Hit: ${shortestTileX}, ${shortestTileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, lineHitX: ${lineStartX + shortestT * (lineEndX - lineStartX)}, lineHitY: ${lineStartY + shortestT * (lineEndY - lineStartY)}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
+            //console.log(`Final Hit: ${shortestTileX}, ${shortestTileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, lineHitX: ${lineStartX + shortestT * (lineEndX - lineStartX)}, lineHitY: ${lineStartY + shortestT * (lineEndY - lineStartY)}, normal: (${normalX}, ${normalY})`);
         }
 
-        if (directionOfHitX === 0 && directionOfHitY === 0) {
-            const error = `Direction of hit is zero: (${directionOfHitX}, ${directionOfHitY})`;
+        if (normalX === 0 && normalY === 0) {
+            const error = `Normal is zero: (${normalX}, ${normalY})`;
             if (zonDebug) {
                 throw new Error(error);
             }
@@ -827,226 +799,248 @@ Collision.traverseGridWithCircle = function(p0, circle, isSolidTile, gridRect, t
             return null;
         }
 
+        const normalLength = Math.hypot(normalX, normalY);
+        if (normalLength === 0)
+            throw new Error(`Normal length is zero: (${normalX}, ${normalY})`);
+
+        normalX /= normalLength;
+        normalY /= normalLength;
+
         return {
             tileX: shortestTileX,
             tileY: shortestTileY,
             t: shortestT,
             hitX: x0 + shortestT * dx,
             hitY: y0 + shortestT * dy,
-            directionOfHit: new Vectors.Vector(directionOfHitX, directionOfHitY),
+            normal: new Vectors.Vector(normalX, normalY),
         }
     }
 }
 
-Collision.traverseGridWithCircleAlt = function(p0, circle, isSolidTile, gridRect, tilesCount) {
+Collision.movingCircleIntersectsSquare = (x0, y0, dx, dy, radius, squareLeft, squareTop, squareRight, squareBottom) => {
+    const expandedLeft = squareLeft - radius;
+    const expandedTop = squareTop - radius;
+    const expandedRight = squareRight + radius;
+    const expandedBottom = squareBottom + radius;
+
+    if (dx === 0 && dy === 0)
+        return null;
+
+    if (dx === 0 && (x0 < expandedLeft || x0 > expandedRight))
+        return null;
+
+    if (dy === 0 && (y0 < expandedTop || y0 > expandedBottom))
+        return null;
+
+    let txMin, txMax;
+    if (dx === 0) {
+        txMin = -Infinity;
+        txMax = Infinity;
+    } else {
+        const tx1 = (expandedLeft - x0) / dx;
+        const tx2 = (expandedRight - x0) / dx;
+        txMin = Math.min(tx1, tx2);
+        txMax = Math.max(tx1, tx2);
+    }
+    
+    let tyMin, tyMax;
+    if (dy === 0) {
+        tyMin = -Infinity;
+        tyMax = Infinity;
+    }
+    else {
+        const ty1 = (expandedTop - y0) / dy;
+        const ty2 = (expandedBottom - y0) / dy;
+        tyMin = Math.min(ty1, ty2);
+        tyMax = Math.max(ty1, ty2);
+    }
+    
+    let tEntry = Math.max(txMin, tyMin);
+    const tExit = Math.min(txMax, tyMax);
+
+    //console.log(`tEntry: ${tEntry}, tExit: ${tExit}, txMin: ${txMin}, tyMin: ${tyMin}`);
+
+    // if (tEntry < 0 || tEntry > 1 || tEntry > tExit)
+    //     return null;
+    const EPSILON = 1e-12;
+    if (tEntry < -EPSILON || tEntry > 1 + EPSILON || tEntry > tExit)
+        return null;
+
+    // Clamp so the hit position is exactly on the segment
+    tEntry = Math.max(0, Math.min(1, tEntry));
+
+    let hitX = x0 + dx * tEntry;
+    let hitY = y0 + dy * tEntry;
+
+    const isCornerX = hitX < squareLeft || hitX > squareRight;
+    const isCornerY = hitY < squareTop || hitY > squareBottom;
+
+    let normalX;
+    let normalY;
+    if (isCornerX && isCornerY) {
+        const cornerX = hitX < squareLeft ? squareLeft : squareRight;
+        const cornerY = hitY < squareTop ? squareTop : squareBottom;
+        tEntry = Collision.movingCircleHitsPointT(x0, y0, dx, dy, cornerX, cornerY, radius);
+        if (tEntry === null || tEntry < -EPSILON || tEntry > 1 + EPSILON || tEntry > tExit)
+            return null;
+
+        hitX = x0 + dx * tEntry;
+        hitY = y0 + dy * tEntry;
+
+        tEntry = Math.max(0, Math.min(1, tEntry));
+
+        const vecX = hitX - cornerX;
+        const vecY = hitY - cornerY;
+        //Can't be zero unless the center of the circle is on top of the corner.
+        //No need to check if === 0.
+        const invLen = 1 / Math.hypot(vecX, vecY);
+        normalX = vecX * invLen;
+        normalY = vecY * invLen;
+    }
+    else {
+        if (isCornerX) {
+            normalX = hitX < squareLeft ? -1 : 1;
+            normalY = 0;
+        }
+        else {
+            normalX = 0;
+            normalY = hitY < squareTop ? -1 : 1;
+        }
+    }
+
+    return {
+        tEntry,
+        hitX,
+        hitY,
+        normal: new Vectors.Vector(normalX, normalY),
+    };
+}
+
+//p0 has .x and .y
+//circle has .x, .y and .radius
+//isSolidTile(x, y) returns true if the tile at (x, y) is solid
+//gridRect has .left, .top, .right and .bottom representing world coordinates
+//tilesCount has .x and .y, representing how many tiles there are in each direction
+Collision.traverseGridWithCircleBruteForce = (p0, circle, isSolidTile, gridRect, tilesCount) => {
+    const squareHeight = gridRect.height / tilesCount.y;
+    const squareWidth = gridRect.width / tilesCount.x;
+    let squareTop = gridRect.top;
+    let squareBottom = squareTop + squareHeight;
+    let squareLeft;
+    let squareRight;
+    let shortestCollision = null;
+    const x0 = p0.x;
+    const y0 = p0.y;
+    const dx = circle.x - x0;
+    const dy = circle.y - y0;
+    const r = circle.radius;
+    for (let tileY = 0; tileY < tilesCount.y; tileY += 1) {
+        squareLeft = gridRect.left;
+        squareRight = squareLeft + squareWidth;
+        for (let tileX = 0; tileX < tilesCount.x; tileX += 1) {
+            if (isSolidTile(tileX, tileY)) {
+                const collision = Collision.movingCircleIntersectsSquare(x0, y0, dx, dy, r, squareLeft, squareTop, squareRight, squareBottom);
+                if (collision && (shortestCollision === null || collision.tEntry < shortestCollision.tEntry)) {
+                    shortestCollision = collision;
+                    shortestCollision.tileX = tileX;
+                    shortestCollision.tileY = tileY;
+                }
+            }
+
+            squareLeft = squareRight;
+            squareRight += squareWidth;
+        }
+
+        squareTop = squareBottom;
+        squareBottom += squareHeight;
+    }
+
+    return shortestCollision;
+}
+
+//p0 has .x and .y
+//circle has .x, .y and .radius
+//isSolidTile(x, y) returns true if the tile at (x, y) is solid
+//gridRect has .left, .top, .right and .bottom representing world coordinates
+//tilesCount has .x and .y, representing how many tiles there are in each direction
+Collision.traverseGridWithCircleDDA = (p0, circle, isSolidTile, gridRect, tilesCount) => {
+    const squareHeight = gridRect.height / tilesCount.y;
+    const squareWidth = gridRect.width / tilesCount.x;
     const x0 = p0.x;
     const y0 = p0.y;
     const x1 = circle.x;
     const y1 = circle.y;
-    const r = circle.radius;
-    const gridLeft = gridRect.left;
-    const gridTop = gridRect.top;
-    const gridRight = gridRect.right;
-    const gridBottom = gridRect.bottom;
-    const tileCountX = tilesCount.x;
-    const tileCountY = tilesCount.y;
-
     const dx = x1 - x0;
     const dy = y1 - y0;
-    if (dx === 0 && dy === 0)
-        return null;
+    const r = circle.radius;
 
-    const tileWidth = gridRect.width / tileCountX;
-    const tileHeight = gridRect.height / tileCountY;
+    let startTileX = Math.floor((x0 - gridRect.left) / squareWidth);
+    let startTileY = Math.floor((y0 - gridRect.top) / squareHeight);
 
-    const xDir = dx < 0 ? -1 : dx > 0 ? 1 : 0;
-    const yDir = dy < 0 ? -1 : dy > 0 ? 1 : 0;
-    const xDirIsRight = xDir !== -1;
-    const yDirIsDown = yDir !== -1;
+    let endTileX = Math.floor((x1 - gridRect.left) / squareWidth);
+    let endTileY = Math.floor((y1 - gridRect.top) / squareHeight);
 
-    const lineStartX = x0 + r * xDir;
-    const lineStartY = y0 + r * yDir;
-    const lineEndX = x1 + r * xDir;
-    const lineEndY = y1 + r * yDir;
+    startTileX = Math.max(0, Math.min(startTileX, tilesCount.x-1));
+    startTileY = Math.max(0, Math.min(startTileY, tilesCount.y-1));
+    endTileX   = Math.max(0, Math.min(endTileX, tilesCount.x-1));
+    endTileY   = Math.max(0, Math.min(endTileY, tilesCount.y-1));
 
-    if (xDirIsRight ? lineStartX < gridLeft && lineEndX < gridLeft : lineStartX < gridLeft + tileWidth && lineEndX < gridLeft + tileWidth)
-        return null;
+    let stepX = dx > 0 ? 1 : dx < 0 ? -1 : 0;
+    let stepY = dy > 0 ? 1 : dy < 0 ? -1 : 0;
 
-    if (xDirIsRight ? lineStartX > gridRight - tileWidth && lineEndX > gridRight - tileWidth : lineStartX > gridRight && lineEndX > gridRight)
-        return null;
+    // How far along the ray until next tile boundary
+    let tMaxX = stepX !== 0 ? ((stepX > 0 ? (startTileX + 1) * squareWidth + gridRect.left : startTileX * squareWidth + gridRect.left) - x0) / dx : Infinity;
+    let tMaxY = stepY !== 0 ? ((stepY > 0 ? (startTileY + 1) * squareHeight + gridRect.top : startTileY * squareHeight + gridRect.top) - y0) / dy : Infinity;
 
-    if (yDirIsDown ? lineStartY < gridTop && lineEndY < gridTop : lineStartY < gridTop + tileHeight && lineEndY < gridTop + tileHeight)
-        return null;
+    // How far we must move to cross one whole tile in x/y
+    let tDeltaX = stepX !== 0 ? squareWidth / Math.abs(dx) : Infinity;
+    let tDeltaY = stepY !== 0 ? squareHeight / Math.abs(dy) : Infinity;
 
-    if (yDirIsDown ? lineStartY > gridBottom - tileHeight && lineEndY > gridBottom - tileHeight : lineStartY > gridBottom && lineEndY > gridBottom)
-        return null;
+    let tileX = startTileX;
+    let tileY = startTileY;
 
-    const invTileWidth = 1 / tileWidth;
-    const invTileHeight = 1 / tileHeight;
-
-    //start needs to be inclusive.
-    //end needs to be exclusive (1 more in the direction)
-
-    //Right:
-    //start: 200;  (200 - 100) / 100 = 1, needs to be 1.  floor OR ceil
-    //end 350;  (350 - 100) / 100 = 2.5, needs to be 3.  floor + 1 OR ceil
-
-    //start: 220;  (220 - 100) / 100 = 1.2, needs to be 2.  floor + 1 OR ceil
-    //end 370;  (370 - 100) / 100 = 2.7, needs to be 3.  floor + 1 OR ceil
-
-    //start: 250;  (250 - 100) / 100 = 1.5, needs to be 2.  floor + 1 OR ceil
-    //end 400;  (400 - 100) / 100 = 3, needs to be 4.  floor + 1 OR ceil + 1
-
-    //Right conclusion:
-    //start should be ceil
-    //end should be floor + 1
-
-    //Left:
-    //start: 500;  (500 - 100) / 100 = 4, needs to be 3.  floor - 1 OR ceil - 1
-    //end: 350;  (350 - 100) / 100 = 2.5, needs to be 1.  floor - 1 or ceil - 2
-
-    //start: 480;  (480 - 100) / 100 = 3.8, needs to be 2.  floor - 1 OR ceil - 2
-    //end: 330;  (330 - 100) / 100 = 2.3, needs to be 1.  floor - 1 or ceil - 2
-
-    //start: 450;  (450 - 100) / 100 = 3.5, needs to be 2.  floor - 1 OR ceil - 2
-    //end: 300;  (300 - 100) / 100 = 2, needs to be 0.  floor - 2 or ceil - 2
-
-    //Left conclusion:
-    //start should be floor - 1
-    //end should be ceil - 2
-
-
-    let xTileStartInc = xDirIsRight ? Math.ceil((lineStartX - gridLeft) * invTileWidth) : Math.floor((lineStartX - gridLeft) * invTileWidth) - 1;
-    let xTileEndNonInc = xDirIsRight ? Math.floor((lineEndX - gridLeft) * invTileWidth) + 1 : Math.ceil((lineEndX - gridLeft) * invTileWidth) - 2;
-    let yTileStartInc = yDirIsDown ? Math.ceil((lineStartY - gridTop) * invTileHeight) : Math.floor((lineStartY - gridTop) * invTileHeight) - 1;
-    let yTileEndNonInc = yDirIsDown ? Math.floor((lineEndY - gridTop) * invTileHeight) + 1 : Math.ceil((lineEndY - gridTop) * invTileHeight) - 2;
-
-    xTileStartInc = Math.min(Math.max(xTileStartInc, 0), tileCountX - 1);
-    xTileEndNonInc = Math.min(Math.max(xTileEndNonInc, -1), tileCountX);
-    yTileStartInc = Math.min(Math.max(yTileStartInc, 0), tileCountY - 1);
-    yTileEndNonInc = Math.min(Math.max(yTileEndNonInc, -1), tileCountY);
-
-    //console.log(`Checking line: ${lineStartX}, ${lineStartY} -> ${lineEndX}, ${lineEndY}, (x0: ${x0}, y0: ${y0}), (x1: ${x1}, y1: ${y1}), (dx: ${dx}, dy: ${dy}), (xTileStartInc: ${xTileStartInc}, xTileEndNonInc: ${xTileEndNonInc}), (yTileStartInc: ${yTileStartInc}, yTileEndNonInc: ${yTileEndNonInc})`);
-
-    //Currently does: If circle passes an x or y wall, check if any tile in that wall is solid, and reflect off the wall.
-    let shortestTileX = -1;
-    let shortestTileY = -1;
     let shortestT = Infinity;
-    let directionOfHitX = 0;
-    let directionOfHitY = 0;
 
-    const tDeltaX = dx === 0 ? Infinity : Math.abs(tileWidth / dx);//Can probably replace with tileWidth / dx * xDir;
-    if (tDeltaX < 0)
-        throw new Error(`tDeltaX is negative: ${tDeltaX}`);
+    while (tileX !== endTileX || tileY !== endTileY) {
+        // Test the current tile if solid
+        if (isSolidTile(tileX, tileY)) {
+            // Compute exact collision with square
+            const squareLeft = gridRect.left + tileX * squareWidth;
+            const squareRight = squareLeft + squareWidth;
+            const squareTop = gridRect.top + tileY * squareHeight;
+            const squareBottom = squareTop + squareHeight;
 
-    const tDeltaY = dy === 0 ? Infinity : Math.abs(tileHeight / dy);//Can probably replace with tileHeight / dy * yDir;
-    if (tDeltaY < 0)
-        throw new Error(`tDeltaY is negative: ${tDeltaY}`);
+            const t = Collision.movingCircleIntersectsSquare(x0, y0, dx, dy, r, squareLeft, squareTop, squareRight, squareBottom);
+            if (t !== null && t < shortestT)
+                shortestT = t;
+        }
 
-    // let tileX = Math.floor((lineStartX - gridLeft) / tileWidth);
-    // let tileY = Math.floor((lineStartY - gridTop) / tileHeight);
-    let tileX = xTileStartInc;
-    let tileY = yTileStartInc;
-
-    const xTileStartWorld = xDirIsRight ? gridLeft + xTileStartInc * tileWidth : gridLeft + (xTileStartInc + 1) * tileWidth;
-    let xT = Collision.getCrossTimePos(lineStartX, lineEndX, xTileStartWorld) ?? Infinity;
-    if (xT < 0)
-        throw new Error(`tX is negative: ${xT}`);
-
-    const yTileStartWorld = yDirIsDown ? gridTop + yTileStartInc * tileHeight : gridTop + (yTileStartInc + 1) * tileHeight;
-    let yT = Collision.getCrossTimePos(lineStartY, lineEndY, yTileStartWorld) ?? Infinity;
-    if (yT < 0)
-        throw new Error(`tY is negative: ${yT}`);
-
-    if (tileX < 0 || tileX >= tileCountX || tileY < 0 || tileY >= tileCountY)
-        throw new Error(`Invalid tile coordinates: (${tileX}, ${tileY})`);
-
-    let t = 0;
-    while (t <= 1) {
-        if (xT < yT) {
-            if (xT > 1)
-                break;
-
-            t = xT;
-            if (xT < 0)
-                throw new Error(`xT is negative: ${xT}`);
-
-            const ballCenterY = y0 + xT * dy;
-            const ballTopY = ballCenterY - r;
-            const ballBottomY = ballCenterY + r;
-            const ballTopTileY = Math.max(Math.floor((ballTopY - gridTop) * invTileHeight), 0);
-            const ballBottomTileY = Math.min(Math.floor((ballBottomY - gridTop) * invTileHeight), tileCountY - 1);
-            for (let y = ballTopTileY; y <= ballBottomTileY; y += 1) {
-                if (tileX < 0 || tileX >= tileCountX || y < 0 || y >= tileCountY)
-                    throw new Error(`Invalid tile coordinates: (${tileX}, ${y})`);
-
-                if (isSolidTile(tileX, y)) {
-                    if (xT < shortestT) {
-                        shortestT = xT;
-                        shortestTileX = tileX;
-                        shortestTileY = y;
-                        directionOfHitX = xDir;
-                        directionOfHitY = 0;
-                        //console.log(`X Hit found: ${tileX}, ${y}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
-                    }
-                    
-                    break;
-                }
-            }
-
-            tileX += xDir;
-            xT += tDeltaX;
+        // Step to next tile
+        if (tMaxX < tMaxY) {
+            tMaxX += tDeltaX;
+            tileX += stepX;
         } else {
-            if (yT > 1)
-                break;
-
-            t = yT;
-            if (yT < 0)
-                throw new Error(`yT is negative: ${yT}`);
-            
-            const ballCenterX = x0 + yT * dx;
-            const ballLeftX = ballCenterX - r;
-            const ballRightX = ballCenterX + r;
-            const ballLeftTileX = Math.max(Math.floor((ballLeftX - gridLeft) * invTileWidth), 0);
-            const ballRightTileX = Math.min(Math.floor((ballRightX - gridLeft) * invTileWidth), tileCountX - 1);
-            for (let x = ballLeftTileX; x <= ballRightTileX; x += 1) {
-                if (x < 0 || x >= tileCountX || tileY < 0 || tileY >= tileCountY)
-                    throw new Error(`Invalid tile coordinates: (${x}, ${tileY})`);
-
-                if (isSolidTile(x, tileY)) {
-                    if (yT < shortestT) {
-                        shortestT = yT;
-                        shortestTileX = x;
-                        shortestTileY = tileY;
-                        directionOfHitX = 0;
-                        directionOfHitY = yDir;
-                        //console.log(`Y Hit found: ${x}, ${tileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
-                    }
-
-                    break;
-                }
-            }
-
-            tileY += yDir;
-            yT += tDeltaY;
+            tMaxY += tDeltaY;
+            tileY += stepY;
         }
+
+        // Stop if we've gone past t=1
+        if (Math.min(tMaxX, tMaxY) > 1)
+            break;
     }
 
-    if (shortestT !== Infinity) {
-        //console.log(`Final Hit: ${shortestTileX}, ${shortestTileY}, t: ${shortestT}, hitX: ${x0 + shortestT * dx}, hitY: ${y0 + shortestT * dy}, lineHitX: ${lineStartX + shortestT * (lineEndX - lineStartX)}, lineHitY: ${lineStartY + shortestT * (lineEndY - lineStartY)}, directionOfHit: (${directionOfHitX}, ${directionOfHitY})`);
-        if (directionOfHitX === 0 && directionOfHitY === 0)
-            throw new Error(`Direction of hit is zero: (${directionOfHitX}, ${directionOfHitY})`);
+    if (shortestT === Infinity)
+        return null;
 
-        if (shortestT < 0 || shortestT > 1)
-            throw new Error(`t is out of bounds: ${shortestT}`);
-
-        return {
-            tileX: shortestTileX,
-            tileY: shortestTileY,
-            t: shortestT,
-            hitX: x0 + shortestT * dx,
-            hitY: y0 + shortestT * dy,
-            directionOfHit: new Vectors.Vector(directionOfHitX, directionOfHitY),
-        }
-    }
+    return {
+        t: shortestT,
+        collisionX: x0 + dx * shortestT,
+        collisionY: y0 + dy * shortestT
+    };
 }
+
+//Alternative method:
+//Calculate 2 lines representing the left and right edges of the ball.
+//Extend the top of the rectangle made out to the edge of the ball so that you gather more than needed.
+//Make an enumerable that traverses the grid and pulls the closest tile first and checks for collision.
+//Return when a collision is found.

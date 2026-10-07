@@ -5,8 +5,11 @@ Struct.EquationTests = {};
 Struct.EquationTests.runTests = () => {
     if (Zon.Equation.debug) {
         //Struct.EquationTests.equationTests_N(Zon.Equation_N);
-        Struct.EquationTests.equationTests_BN(Zon.Equation_BN);
+        //Struct.EquationTests.equationTests_BN(Zon.Equation_BN);
     }
+
+    //Struct.EquationTests.equationTests_N(Zon.Equation_N);
+    //Struct.EquationTests.equationTests_BN(Zon.Equation_BN);
     
     // Struct.EquationTests.exampleWithLevelToXP();
     // Struct.EquationTests.exampleWithLevelToXP_BN();
@@ -308,7 +311,6 @@ Struct.EquationTests.equationTests_N = (testClass) => {
             const args = [
                 new Zon.Type_N(stageNum),
             ];
-            const effStageNum = `effStageNum`;
             const testArgs = [
                 [10],
                 [20]
@@ -326,7 +328,6 @@ Struct.EquationTests.equationTests_N = (testClass) => {
             ];
             const effStageNum = `effStageNum`;
             const effStageNumEquation = Zon.Equation_N.create(effStageNum, `${stageNum} + ${Zon.GlobalVarNames.PRESTIGE_COUNT} * ${maxStageNum}`, [], args, constants);
-            const healthPow = `healthPow`;
             const subEquations = [
                 effStageNumEquation,
             ];
@@ -335,6 +336,40 @@ Struct.EquationTests.equationTests_N = (testClass) => {
                 [20]
             ];
             return new EquationTest_N(`3 * (2^(${effStageNum} / 10) - 1)`, (args, variables) => 3 * (2 ** ((args[0] + Zon.GlobalVariables.get(Zon.GlobalVarNames.PRESTIGE_COUNT).value * Zon.LevelData.maxStageDisplayedNum) / 10) - 1), [], args, constants, testArgs, [], subEquations);
+        })(),
+        (() => {
+            //How to have BN math inside a N equation:
+
+            //2. Super Exponential
+            //dxp = A * B^(level^K)
+            //xp ~ A * B^((level - 1)^K)
+            //level ~ logB(xp / A + 1)^(1 / K) + 1
+            const A = `A`;
+            const B = `B`;
+            const K = `K`;
+            const a = 10;
+            const b = 2;
+            const k = 1.5;
+            const constants = [
+                [A, `${a}`],
+                [B, `${b}`],
+                [K, `${k}`],
+            ];
+            const xp = `xp`;
+            const args = [
+                new Zon.Type_BN(xp),
+            ];
+            const levelMinusOne = `levelMinusOne`;
+            const levelMinusOneEquation = Zon.Equation_BN.create(levelMinusOne, `log(${xp} / ${A} + 1, ${B})^(1 / ${K})`, [], args, constants);
+            const subEquations = [
+                levelMinusOneEquation,
+            ];
+            const testArgs = [
+                [Struct.BigNumber.ZERO],
+                [Struct.BigNumber.fromBase10Exp(1, 1000)],
+                [Struct.BigNumber.fromBase10Exp(1.25, 6400)]
+            ];
+            return new EquationTest_N(`${levelMinusOne} + 1`, (args, variables) => args[0].clone.divideI(a.BN()).addI((1).BN()).logI(b.BN()).powI((1).BN().divideI(k.BN())).toNumber() + 1, [], args, constants, testArgs, [], subEquations);
         })(),
     ];
 

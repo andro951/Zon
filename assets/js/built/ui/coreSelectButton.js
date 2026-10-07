@@ -2,7 +2,7 @@
 
 Zon.CoreSelectButton = class extends Zon.UI.UIElementDiv {
     constructor() {
-        super();
+        super(`coreSelectButton`);
     }
     postLoadSetup() {
         

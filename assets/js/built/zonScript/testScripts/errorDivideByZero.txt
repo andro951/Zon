@@ -1,0 +1,10 @@
+Title: Divide by Zero
+Description:
+Triggers: OnGainAether
+---
+print("AetherGained: " + AetherGained + " (before divide by zero)")
+
+a = true ? 0 : 1 + 1;
+AetherGained = AetherGained / a
+
+print("AetherGained: " + AetherGained + " (after divide by zero)")

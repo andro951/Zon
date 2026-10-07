@@ -1,0 +1,5 @@
+Title: Action Trigger Loop
+Description: Calls the action that causes this trigger.
+Triggers: OnResetCoreEnhancementPoints
+---
+@TryResetCoreEnhancementPoints("Combat")

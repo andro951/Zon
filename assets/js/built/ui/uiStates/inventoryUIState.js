@@ -2,7 +2,7 @@
 
 Zon.InventoryUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
-        super();
+        super(`inventoryUIstate`);
     }
     postLoadSetup() {
         

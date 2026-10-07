@@ -10,7 +10,7 @@ Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
         this.element.style.borderRadius = `${Zon.UI.UIElementBase.defaultButtonBorderRadius}px`;
         this.element.style.borderWidth = `2px`;
         this.element.style.borderStyle = 'solid';
-        this.element.style.borderColor = `#AAA`;
+        this.element.style.borderColor = Struct.Color.fromUInt(0xAAAAAAFF).cssString;
         this.openUIs = [];
     }
     static heightScale = 0.08;
@@ -19,9 +19,9 @@ Zon.UI.CloseButtonUIState = class extends Zon.UI.UIElementDiv {
         super.setup();
         
         this.replaceLeft(() => 0);
-        this.replaceTop(() => Zon.device.height * (1 - Zon.UI.CloseButtonUIState.heightScale));
-        this.replaceWidth(() => Zon.device.width);
-        this.replaceHeight(() => Zon.device.height * Zon.UI.CloseButtonUIState.heightScale);
+        this.replaceTop(() => this.parent.height * (1 - Zon.UI.CloseButtonUIState.heightScale));
+        this.replaceWidth(() => this.parent.width);
+        this.replaceHeight(() => this.parent.height * Zon.UI.CloseButtonUIState.heightScale);
 
         this.element.addOnClick(this.hide);
         this.addEmptyIcon();

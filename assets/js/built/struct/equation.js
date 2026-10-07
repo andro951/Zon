@@ -2,7 +2,7 @@
 
 {
     const debugEquation = zonDebug && false;
-    const debugEquationFunction = zonDebug && false;
+    const debugEquationFunction = zonDebug && true;
     Zon.Equation = class Equation {
         constructor() {
             if (new.target === Zon.Equation)
@@ -25,6 +25,8 @@
             this._equationTreeHeadNotCondensed = null;
             this._equationTreeHead = null;
             this._equationFunction = null;
+            this.onChanged = this.onChanged.bind(this);
+            this.onChangedAction = new Actions.Action(`${this.constructor.name} ${this.name} onChanged`);
         }
         static create(equation, name, equationString, operationsSet, variablesArr = [], argsArr = [], constantsMap = new Map(), subEquations = []) {
             equation.name = name;
@@ -140,6 +142,17 @@
         }
         toString() {
             return `${this.name}${(this.defaultArgsArr.length > 0 ? `(${this.defaultArgsArr.join(', ')})` : '')} = ${this.equationString}`;
+        }
+        onChanged() {
+            if (Variable.Base.paused) {
+                for (const callback of this.onChangedAction.callbacks) {
+                    Variable.Base.pausedCallbacks.add(callback);
+                }
+                
+                return;
+            }
+
+            this.onChangedAction.call();
         }
     }
 
@@ -455,6 +468,7 @@
                     if (Zon.Util.getTypeStr(variable.value) !== operationsSet.typeString)
                         applySingleVariableOperation(SingleVariableOperationID.CONVERT);
 
+                    variable.onChangedAction.add(equation.onChanged);
                     placeConstantOrVariable(new VariableReference(equation, word, variableIndex));
                     return true;
                 }
@@ -476,6 +490,7 @@
                     if (word !== globalVariable.name)
                         throw new Error(`Global variable name mismatch: expected "${globalVariable.name}", got "${word}"`);
 
+                    globalVariable.onChangedAction.add(equation.onChanged);
                     placeConstantOrVariable(new GlobalVariableReference(equation, word));
                     return true;
                 }
@@ -834,6 +849,7 @@
     const cconsts = `_cachedConstants`;//Cashed (unnamed) constants
     const cc = `_cc`;
     const eq = `_subEquation`;
+    const r = '_r';//result.  Only used when debugging.
 
     class TreeNode {
         constructor(parent = null) {
@@ -1075,12 +1091,16 @@
         writeToString(stringArr) {
             stringArr.push(`${this.name}`);
         }
+        get type() {
+            const variable = this.equation.variablesArr[this.index];
+            const type = Zon.Util.getTypeStr(variable.value);
+            return type;
+        }
         populateFunctionReferences(refs) {
             if (refs.varsStrings[this.index])
                 return;
             
-            const variable = this.equation.variablesArr[this.index];
-            const type = Zon.Util.getTypeStr(variable.value);
+            const type = this.type;
             const wrongType = type !== this.equation.operationsSet.typeString;
             refs.varsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${vars}[${this.index}].value);//${type}\n` : `${vars}[${this.index}].value;\n`)}`;
         }
@@ -1130,6 +1150,11 @@
         writeToString(stringArr) {
             stringArr.push(`${this.name}`);
         }
+        get type() {
+            const variable = Zon.GlobalVariables.get(this.name);
+            const type = Zon.Util.getTypeStr(variable.value);
+            return type;
+        }
         populateFunctionReferences(refs) {
             this.index = refs.globalVarLookup.get(this.name);
             if (this.index === undefined || this.index === null) {
@@ -1140,8 +1165,7 @@
                 return;
             }
             
-            const variable = Zon.GlobalVariables.get(this.name);
-            const type = Zon.Util.getTypeStr(variable.value);
+            const type = this.type;
             const wrongType = type !== this.equation.operationsSet.typeString;
             refs.globalVarStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}Zon.GlobalVariables.get("${this.name}").value);//${type}\n` : `Zon.GlobalVariables.get("${this.name}").value;\n`)}`;
         }
@@ -1246,12 +1270,14 @@
         writeToString(stringArr) {
             stringArr.push(this.subEquation.name);
         }
+        get type() {
+            return Zon.Util.getTypeStr(this.value);
+        }
         populateFunctionReferences(refs) {
             if (refs.subEquationsStrings[this.index])
                 return;
             
-            const value = this.value;
-            const type = Zon.Util.getTypeStr(value);
+            const type = this.type;
             const wrongType = type !== this.equation.operationsSet.typeString;
             const parts = [];
             parts.push(`\tconst ${this.subEquation.name} = `);
@@ -1313,13 +1339,17 @@
         writeToString(stringArr) {
             stringArr.push(this.name);
         }
+        get type() {
+            const arg = this.equation.argsArr[this.index];
+            return arg.typeID;
+        }
         populateFunctionReferences(refs) {
             if (refs.argsStrings[this.index])
                 return;
 
-            const arg = this.equation.argsArr[this.index];
-            const wrongType = arg.typeID !== this.equation.operationsSet.type;
-            refs.argsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${args}[${this.index}]);//${Zon.TypeNames[arg.typeID]}\n` : `${args}[${this.index}];\n`)}`;
+            const type = this.type;
+            const wrongType = type !== this.equation.operationsSet.type;
+            refs.argsStrings[this.index] = `\tconst ${this.name} = ${(wrongType ? `${this.equation.operationsSet.convertString}${args}[${this.index}]);//${Zon.TypeNames[type]}\n` : `${args}[${this.index}];\n`)}`;
         }
         populateFunctionReferencesCounts(operationSet) {
             operationSet.argsCounts[this.index]++;
@@ -2335,8 +2365,8 @@
         trunc = (t) => Math.trunc(t);
         floor = (t) => Math.floor(t);
         isFinite = (t) => Number.isFinite(t);
-        convert = (t) => Number(t);
-        convertString = `Number(`;
+        convert = (t) => Struct.BigNumber.toNumberStatic(t);// Number(t);
+        convertString = `Struct.BigNumber.toNumberStatic(`;//Struct.BigNumber.prototype.toNumber
         getUniquePrecursorOperation(precursorOperationID) {
             switch (precursorOperationID) {
                 default:
@@ -2373,6 +2403,8 @@
             ['π', Math.PI],
         ]);
         createFunction(equation) {
+            //Need to look through all of them, and if any are BigNumber, convert everything to BigNumber then back at the end.
+
             //if (debugEquation) console.log(`Creating function for equation: ${equation.toString()}`);
             const stringArr = [];
             
@@ -2435,10 +2467,22 @@
                 stringArr.push(globalVarString);
             }
 
-            stringArr.push('\treturn ');
-            equation._equationTreeHead.writeToString(stringArr);
+            if (debugEquationFunction) {
+                stringArr.push(`\tconst ${r} = `);
+                equation._equationTreeHead.writeToString(stringArr);
+                stringArr.push(`;\n`);
+                stringArr.push(`\tif (!Number.isFinite(${r}))\n\t\tthrow new Error("result was not finite.  result: ${r}, Equation: ${equation.toString()}");\n\n`);
+                stringArr.push('\treturn ');
+                stringArr.push(r);
+            }
+            else {
+                stringArr.push('\treturn ');
+                equation._equationTreeHead.writeToString(stringArr);
+            }
+            
             stringArr.push(';');
             const equationString = stringArr.join('');
+            //console.log(`\n${equationString}\n`);
             return new Function(vars, nconsts, cconsts, args, eq, equationString);
         }
         writeOperationToString(stringArr, operationID, left, right) {
@@ -2731,6 +2775,8 @@
 
             stringArr.push(';');
             const equationString = stringArr.join('');
+
+            //console.log(`\n${equationString}\n`);
 
             delete this.varsCounts;
             delete this.argsCounts;

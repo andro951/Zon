@@ -12,8 +12,43 @@ Zon.TimeController = class {
         this.deltaTimeSeconds = 0;
         this.gameStarted = false;
         this.paused = false;
+        this.pausedByMinimizingGame = false;
+        this.timePaused = 0;
+        this.timeResumed = 0;
+        this.totalTimePaused = 0;
         this.targetFPS = new Variable.Value(60, `TargetFPS`);
         this.targetTimePerFrameMilliseconds = new Variable.Dependent(() => 1000 / this.targetFPS.value, `TargetTimePerFrameMilliseconds`, { this: this });
+
+        this.onPauseActions = new Actions.Action(`On Pause`);
+        this.onResumeActions = new Actions.Action(`On Resume`);
+
+        this.onMinimizedWindowActions = new Actions.Action(`On Minimize Window`);
+        this.onMaximizedWindowActions = new Actions.Action(`On Maximize Window`);
+        document.addEventListener("visibilitychange", () => {
+            if (document.hidden) {
+                //console.log(`Window minimized or lost focus. Pausing game.`);
+                if (!this.paused) {
+                    //console.log(`Pausing game and calling onMinimizedWindowActions.`);
+                    this.pause();
+                    this.pausedByMinimizingGame = true;
+                    this.onMinimizedWindowActions.call();
+                }
+            } else {
+                //console.log(`Window maximized or gained focus. Resuming game.`);
+                if (this.pausedByMinimizingGame) {
+                    if (!this.paused)
+                        throw new Error("Game should be paused when it is minimized, but it wasn't.");
+
+                    //console.log(`Resuming game and calling onMaximizedWindowActions.`);
+
+                    this.onMaximizedWindowActions.call();
+
+                    this.resume();
+
+                    this.pausedByMinimizingGame = false;
+                }
+            }
+        });
     }
 
     postLoadSetup = () => {
@@ -25,7 +60,7 @@ Zon.TimeController = class {
         this.startTimeMilliseconds = performance.now();
         this.timeMilliseconds = this.startTimeMilliseconds;
         this.lastTimeMilliseconds = this.timeMilliseconds;
-        this.timeSeconds = this.startTimeMilliseconds / 1000;
+        this.timeSeconds = this.startTimeMilliseconds * 0.001;
         this.lastTimeSeconds = this.timeSeconds;
         this.deltaTimeSeconds = 0;
         this.resume();
@@ -38,9 +73,9 @@ Zon.TimeController = class {
         this.lastTimeMilliseconds = this.timeMilliseconds;
         this.timeMilliseconds = currentTimeMilliseconds;
         
-        this.deltaTimeSeconds = this.deltaTimeMilliseconds / 1000;
+        this.deltaTimeSeconds = this.deltaTimeMilliseconds * 0.001;
         this.lastTimeSeconds = this.timeSeconds;
-        this.timeSeconds = currentTimeMilliseconds / 1000;
+        this.timeSeconds = currentTimeMilliseconds * 0.001;
     }
 
     onLevelCompleted = (levelData) => {
@@ -56,7 +91,9 @@ Zon.TimeController = class {
             return;
 
         this.paused = true;
+        this.timePaused = performance.now();
         Zon.GameManager.onPause();
+        this.onPauseActions.call();
     }
 
     resume = () => {
@@ -64,7 +101,13 @@ Zon.TimeController = class {
             return;
 
         this.paused = false;
+        this.timeResumed = performance.now();
+        this.totalTimePaused = this.timeResumed - this.timePaused;
         Zon.GameManager.onResume();
+        this.onResumeActions.call();
+        this.timePaused = 0;
+        this.timeResumed = 0;
+        this.totalTimePaused = 0;
     }
 
     onSwitchStage = () => {

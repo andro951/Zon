@@ -6,12 +6,12 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
             topFunc,
             widthFunc,
             heightFunc,
+            isChild = false,
             backgroundPath = Zon.TextureLoader.getUITexturePath(Zon.UITextureFolders.UI_PANELS, 'buttonSquare_grey_pressed_NoRips'),
         } = {}) {
         super(buttonName, Zon.UI.UIElementZID.MAIN_UI, parent);
         this.element.style.cursor = 'pointer';
-        if (!leftFunc || !topFunc || !widthFunc || !heightFunc)
-            throw new Error("All position and size functions must be provided.");
+        this.validateSizeFunctions(leftFunc, topFunc, widthFunc, heightFunc);
         
         this._options = {
             iconPath,
@@ -23,6 +23,9 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
         };
 
         this.element.addOnClick(onClick);
+
+        if (isChild)
+            this.isChild = true;
     }
     postConstructor() {
         super.postConstructor();
@@ -30,10 +33,7 @@ Zon.UI.SimpleIconButton = class SimpleIconButton extends Zon.UI.UIElementDiv {
     setup() {
         super.setup();
 
-        this.replaceLeft(this._options.leftFunc);
-        this.replaceTop(this._options.topFunc);
-        this.replaceWidth(this._options.widthFunc);
-        this.replaceHeight(this._options.heightFunc);
+        this.applySizeFunctions(this._options);
 
         this.addEmptyIcon();
 

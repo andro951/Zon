@@ -1,0 +1,8 @@
+Title: Shadowing a Variable 2
+Description: 
+Triggers: OnGainAether
+---
+a = 6//Declaration is assumed when the variable doesn't already exist.
+print(a)
+let a = 10//Trying to re-declare, not allowed.
+print(a)

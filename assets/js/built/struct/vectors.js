@@ -29,24 +29,64 @@ Vectors.Vector = class Vector {
         this.y = y;
     }
 
-    addTo(vect) {
-        this.x += vect.x;
-        this.y += vect.y;
+    get clone() {
+        return new Vectors.Vector(this.x, this.y);
     }
 
-    multiplyBy(scalar) {
+    add(vect) {
+        return new Vectors.Vector(this.x + vect.x, this.y + vect.y);
+    }
+    addI(vect) {
+        this.x += vect.x;
+        this.y += vect.y;
+        return this;
+    }
+    subtract(vect) {
+        return new Vectors.Vector(this.x - vect.x, this.y - vect.y);
+    }
+    subtractI(vect) {
+        this.x -= vect.x;
+        this.y -= vect.y;
+        return this;
+    }
+    multiply(scalar) {
+        return new Vectors.Vector(this.x * scalar, this.y * scalar);
+    }
+    multiplyI(scalar) {
         this.x *= scalar;
         this.y *= scalar;
+        return this;
+    }
+    divide(scalar) {
+        const invScalar = 1 / scalar;
+        return new Vectors.Vector(this.x * invScalar, this.y * invScalar);
+    }
+    divideI(scalar) {
+        const invScalar = 1 / scalar;
+        this.x *= invScalar;
+        this.y *= invScalar;
+        return this;
+    }
+
+    normalizeI() {
+        const mag = Math.sqrt(this.x * this.x + this.y * this.y);
+        if (mag === 0)
+            return this;
+        
+        const invMag = 1 / mag;
+        this.x *= invMag;
+        this.y *= invMag;
+
+        return this;
     }
 
     normalize() {
         const mag = Math.sqrt(this.x * this.x + this.y * this.y);
         if (mag === 0)
-            return;
-        
+            return new Vectors.Vector(0, 0);
+
         const invMag = 1 / mag;
-        this.x *= invMag;
-        this.y *= invMag;
+        return new Vectors.Vector(this.x * invMag, this.y * invMag);
     }
 
     get angle() {
@@ -80,6 +120,8 @@ Vectors.Vector = class Vector {
         return this.x * this.x + this.y * this.y;
     }
     reflect(axis) {
+        //axis does not need to be a unit vector
+
         //Expects axis to be a surface vector being reflected off of, NOT A NORMAL!!!
 
         //Need to break appart this vector into a parallel (P) and perpendicular component (T) relative to the axis (A)
@@ -140,8 +182,39 @@ Vectors.Vector = class Vector {
         const y = k * axis.y - this.y;
         return new Vectors.Vector(x, y);
     }
+    reflectNormal(unitNormal) {
+        return this.reflectUnitAxis(unitNormal.perpendicular);
+    }
+    reflectUnitAxis(unitAxis) {
+        const k = 2 * (this.x * unitAxis.x + this.y * unitAxis.y);
+        const x = k * unitAxis.x - this.x;
+        const y = k * unitAxis.y - this.y;
+        return new Vectors.Vector(x, y);
+    }
     get perpendicular() {
         return new Vectors.Vector(-this.y, this.x);
+    }
+    get perpRight() {
+        return new Vectors.Vector(this.y, -this.x);
+    }
+    get perpLeft() {
+        return new Vectors.Vector(-this.y, this.x);
+    }
+    get negate() {
+        return new Vectors.Vector(-this.x, -this.y);
+    }
+    get negateY() {
+        return new Vectors.Vector(this.x, -this.y);
+    }
+    get negateYI() {
+        this.y = -this.y;
+        return this;
+    }
+    get swap() {
+        return new Vectors.Vector(this.y, this.x);
+    }
+    get swapNegate() {
+        return new Vectors.Vector(-this.y, -this.x);
     }
 
     static read(reader) {
@@ -153,6 +226,10 @@ Vectors.Vector = class Vector {
     write(writer) {
         writer.writeNumber(this.x);
         writer.writeNumber(this.y);
+    }
+
+    toString() {
+        return `(${this.x}, ${this.y})`;
     }
 }
 
@@ -166,5 +243,8 @@ Vectors.Polar = class Polar {
         const x = this.radius * Math.cos(this.angle);
         const y = this.radius * Math.sin(this.angle);
         return new Vectors.Vector(x, y);
+    }
+    toString() {
+        return `(r: ${this.radius}, θ: ${this.angle})`;
     }
 }

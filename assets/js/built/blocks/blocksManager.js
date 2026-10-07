@@ -5,15 +5,15 @@ Zon.BlocksManager = class {
         this.canvas = document.getElementById('combatAreaCanvas');
         this.ctx = this.canvas.getContext('2d');
         this.tileCount = new Vectors.Vector(16, 16);
-        this.heightScaleNum = 8;
-        this.heightScaleDenom = 9;
-        this.widthScaleNum = 8;
-        this.widthScaleDenom = 9;
+        const widthMod = Math.floor(this.canvas.width / (this.tileCount.x + 2));
+        const widthR = (this.canvas.width - widthMod * (this.tileCount.x + 2)) * 0.5;
+        const heightMod = Math.floor(this.canvas.height / (this.tileCount.y + 2));
+        const heightR = (this.canvas.height - heightMod * (this.tileCount.y + 2)) * 0.5;
         this.blockArea = new Struct.Rectangle(
-            this.canvas.width / this.widthScaleDenom / 2 * (this.widthScaleDenom - this.heightScaleNum),
-            this.canvas.height / this.heightScaleDenom / 2 * (this.heightScaleDenom - this.heightScaleNum),
-            this.canvas.width / this.widthScaleDenom * this.widthScaleNum,
-            this.canvas.height / this.heightScaleDenom * this.heightScaleNum
+            widthMod + widthR,
+            heightMod + heightR,
+            widthMod * this.tileCount.x,
+            heightMod * this.tileCount.y
         );
 
         this._levelData = null;
@@ -62,9 +62,15 @@ Zon.BlocksManager = class {
     }
 
     getBlockX = (xPixel) => {
+        if (xPixel < 0 || xPixel >= this._imagePixelsWidth)
+            throw new Error(`Block X coordinate out of bounds: ${xPixel}`);
+
         return this.blockArea.left + xPixel * this._blockSize.x;
     }
     getBlockY = (yPixel) => {
+        if (yPixel < 0 || yPixel >= this._imagePixelsHeight)
+            throw new Error(`Block Y coordinate out of bounds: ${yPixel}`);
+        
         return this.blockArea.top + yPixel * this._blockSize.y;
     }
     getBlockPosition = (xPixel, yPixel) => {
@@ -74,6 +80,9 @@ Zon.BlocksManager = class {
         return this._blocks[this.getBlockIndex(xPixel, yPixel)];
     }
     getBlockIndex = (xPixel, yPixel) => {
+        if (xPixel < 0 || xPixel >= this._imagePixelsWidth || yPixel < 0 || yPixel >= this._imagePixelsHeight)
+            throw new Error(`Block coordinates out of bounds: (${xPixel}, ${yPixel})`);
+
         return yPixel * this._imagePixelsWidth + xPixel;
     }
     tileHasBlock = (xIndex, yIndex) => {
@@ -99,7 +108,7 @@ Zon.BlocksManager = class {
         this._imagePixelsWidth = this._levelData.width();
         this._imagePixelsHeight = this._levelData.height();
         this.tileCount = new Vectors.Vector(this._imagePixelsWidth, this._imagePixelsHeight);
-        this._blockSize = new Vectors.Vector(this.blockArea.width / this.tileCount.x, this.blockArea.height / this.tileCount.y);//100, 100
+        this._blockSize = new Vectors.Vector(this.blockArea.width / this.tileCount.x, this.blockArea.height / this.tileCount.y);//53, 53
         this._blocks = new Array(this._imagePixelsWidth * this._imagePixelsHeight);
 
         const blockMaxHealth = this._levelData.blockMaxHealth;

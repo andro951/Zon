@@ -22,6 +22,7 @@ Zon.UI.AetherUI = class AetherUI extends Zon.UI.UIElementDiv {
         this.textElement.style.position = "relative";
         this.textElement.style.zIndex = "1";
         this.textElement.textContent = "0";
+        this.textElement.style.whiteSpace = 'nowrap';
         this.element.appendChild(this.textElement);
     }
     postConstructor() {

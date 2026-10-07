@@ -1,0 +1,294 @@
+---CSC499 project 2---
+Modular game engine with built-in mod support
+Features:
+  -Binary compression based save/load system
+  -Variable system
+  -UI system
+  -Equation system
+  -Timing/update system with seperate pause/resume for each game mode
+
+Goal for project is to make a project with 3 simple games that are each mods.  Removing any one of them works fine:
+  -Snake (pauses)
+  -Pong (pauses)
+  -Afk generators game (just money and generators, nothing else, runs always)
+
+4 main mods:
+  -Container with a basic ui bar
+  -3 games which register buttons with the container
+  
+Add other simple mods to the 3 games:
+  -Pong - ball goes faster and colored
+  -Snake - snake grows when it eats food
+  -Generators - Adds new generator (have multiple to demonstrate ordering)
+
+How can this show how conflicts get resolved?
+
+Limitations:
+  -Screen size will be the default Phone screen shape
+
+This will probably be a lot easier if I start over from scratch and import things intentionally
+
+Esentially what I'm making is a game framework that you can build a modular game off of.
+
+Server hosted database of scripts
+Server hosted mods
+Mod system using classes instead of just data:
+  -Content is modular Examples to convert to content mods:
+    -Player level system
+    -Combat Core
+    -All effects need to be added as a mod
+  -Common hooks at important times
+  -Mod conflict support
+    -ordering of hook functions
+    -Global map of loaded mods
+    -Modifying mod load order.
+    -How to handle hooks that return a bool? Probably have a default sticky value. If any say no, it's no, or if any say yes, it's yes.
+  -Cross mod support/interaction - standardize method of interacting between mods.
+
+Base game vs mod additions:
+
+Base game:
+  -timing, pausing, game mode system
+  -Effects system
+  -UI system and default animations
+  -Actions
+  -Variables
+  -Equations
+  -BigNumber
+  -Setting system
+  -Load/save system
+  -Level tracker system
+  -Ability to be running one or more game modes at once (think a minigame while the main game is still going)
+  
+
+Mods:
+  -Core system and all cores
+  -Effects
+  -All UI's
+  -Script system and global variable system
+  -Settings
+  -Balls
+  -Block combat system/game mode + side bar + top/bottom bar
+
+
+
+
+---Circle grid collisions---
+Volume rendering
+Implicit surfaces
+
+
+---Progress update notes---
+Added functions:
+  -floor
+  -ceil
+  -trunc
+  -round
+
+Infinite loop prevention:
+  -Compile time error when dissallowed action is in a script
+    -errorActionTriggerLoop.txt
+  -Runtime error if a dissalowed action is called while the associated script is on the scriptCallStack.
+    -No test script currently
+  -Runtime error if a script is called and it already exists on the stack from the same trigger.
+    -No test script currently
+  -Max call stack.  If it's exceeded, stop and disable all scripts on stack.
+    -No test script currently
+
+Lag prevention:
+  -Added script timing and max execution time.  Default of 10ms, editable up to 10s using the MaxExecutionTime Meta Data Label
+  -errorMaxExecutionTime.txt - runs past 10ms
+  -testingManualUnrecognizedMeta.txt - runs past 10ms and has MexExecutuionTime: 100 (typo)
+
+Documentation:
+  -Button on Script UI to open in a new tab.
+
+Script execution time issue:
+  -It was taking a long script 40-50ms to run (3-4 frames).
+  -Made improvements to GrammarForge's execution time, but not good enough ~30ms to run.
+  -The problem was mainly console.log() takes ~0.5ms each time it's called. Without them, it runs in ~0.4ms instead of ~30ms.
+  -Now, I store the printed strings and do just 1 print at the end of a script. ~0.7ms to run.
+  -Added agressive token removal. Tokens are only kept in the AST if they have a parse funtion, 
+    have a math operator tag, or have the new "KEEP" tag on them.
+
+GrammarForge 2.0
+  -Replaced execution function tree with node objects that have execution functions and store references to grammar objects.
+  -Added agressive node reduction, removing all of the fall through nodes like; exp_add : exp_mul (op_add exp_mul)* 
+    when the optional part is empty.
+  -print(string) calls now store the strings in an array and do 1 print at the end of a script instead.  Massive time savings.
+
+Delimited list
+  -Added a delimited list definition to GrammarForge like "exp..." which is similar to (exp (COMMA exp)*)?, but evaluates
+    directly to an array of exp, [ exp, exp, ..., exp ] instead of [exp, [exp, exp, ..., exp ]]
+
+Ternary operator a = exp ? stmt : stmt;
+
+stmt_exp - Allow specific expressions to also be statements, discarding their return value.
+
+Increment, decrement: i++, i--
+
+declaring and calling functions
+  -Simple self recursion check at runtime
+  -Stack based recursion check at runtime
+
+
+---Progress update notes--- 11MAY26
+Safety
+  -Error try catch: (scriptManager.js 33, scriptForge.js 190)
+    -onErrorInScriptFunction - Problem with a script written by a player, disable the script
+    -onErrorDuringActionFunction - Problem with my code when a script calls my action, print an error to console and disable the script
+    -onParseScriptErrorFunction - Problem parsing a player written script, disable the script
+    -Only error that doesn't disable a script is a non-existant trigger Name, it is skipped and printed to the console instead.
+
+Automatic conversion between Number (JS double) and BigNumber (my custom floating point type bigger than double)
+  -The player and/or script writer doesn't know that BigNumber exists.  All they see is numbers as text.
+    They don't interact with conversions at all.
+  -Replaced all opperator functions in GrammarForge, +, -, /, *, ^, -#, +#, ==, !=, >, <, >=, <=, %
+  -Operators check if one is a BigNumber, if so, it promotes the other to BigNumber and uses the BigNumber operator.
+    If both are doubles, it checks if the result will overflow and instead converts to BigNumber.  
+    If no overflow, do the Number operation.
+    When returning a BigNumber value, it always tryes to convert it to a Number by checking if it is smaller than Number.MAX_VALUE.
+  -Added log() as part of the grammar since I don't have a default log() call in GrammarForge.
+
+Script UI
+  -Upload + saving to local storage
+  -Enable/disable
+  -Manual Run for Manual Trigger
+  -Edit does nothing yet
+  -Warning/Error popups
+
+New test scripts:
+  -testingBigNumber.txt - Tests the math operators and type conversions.
+  -Rest test specific types of errors
+
+
+
+
+---High Priority---
+
+Force Clear error button on the info panel.
+
+Monaco Editor for code editing/syntax highlighting/pretty printing
+
+
+
+
+---Medium Priority---
+Save script _enabled and error states with a saveLoadHelper.
+
+Make and find a good spot to call 1s trigger
+Make triggers:
+  -1s
+  -OnGainEnhancementPoints
+Make actions:
+  -tryLevelUpCoreEnhancement
+
+Edit button needs to do something even if just downloading the file.
+
+Idea for a defualt script:
+  When a ui opens, swap to auto-attack.  When ui closes (displays combat ui), turn off auto-attack
+    -This will be the only interaction allowed with combat (active) gameplay.
+
+Variables:
+Static – Available to only the script that defines it. Persists when script ends. (low priority, probably skip)
+Global – Available to any script that includes it. Persists when script ends. (low priority, probably skip)
+Scripts that define or use Static or Global variables will receive a warning if they
+  don’t also define a script for the OnReincarnate trigger that includes the static or global. (low priority, probably skip)
+(Can accomplish this by making copies of the static/global variables, add them to the variables map.  
+  If the script has no errors, check that the values are valid, then update the real ones.)
+
+No, this is not needed.  I will have default scripts.  Instead, it needs a tutorial thing that will be added later.
+    Add a child element into the list of scriptsUI list that is only shown when the children's length is 1.
+    It should have info like "Zon allows you to make in game scripts to automate some actions." and a link to more info.
+
+
+
+
+---Low Priority---
+I meant for 4 script pannels to fit perfectly on the screen, but with 4, there is too much space below.
+
+Multiple things aren't saved yet:
+Stage settings (despite there being a save file for settings....?)
+Core stuff
+
+Replace stageUIState popup with Zon.UI.PopupButtonInfo
+
+Clicking the outside edges of the combat area throws an error for index out of range.
+
+warning: divId is recommended for UIElementDiv to prevent id conflicts.  Proceeding without divId.
+
+Keybinding settings in general and for scripts.
+
+Script UI button icon - scroll or similar
+
+Loading screen for when setting up/loading etc.
+
+The error messages from ScriptForge are pretty lengthy and repetative.  Try to trim them a bit.
+
+The whole game doesn't really need to wait for GrammarForge.  Only the script related stuff should need to wait.
+  If needed, I can create some stuff that is empty then fill them once it loads.  Could be loading most files while waiting on GF.
+
+Game realTimeUpdate: More than 2 seconds since last per second update! (8779.800000190735 ms)
+  -Should have a way to ignore the very first update
+  -Long updates can happen from minimizing the window.  Either find a way to make the game keep running as long as it's open, or 
+    Just add the missed time to AFK battery time.
+  -Maybe there is a way to check if the focus is on the window?  Like if >= 2 sec since last and not out of focus, then do error.
+
+Monitization plan:
+  Goal is to prevent players from using content they didn't pay for, not prevent them from cheating.
+  Must make something good enough to deter most people.  They fail, and their account is deleted, and anyone using their 
+    files also gets their account deleted.  Each file would have to have it's own key in it.  
+    When you connect and request updates, you create a checksum of all file keys.  
+    If they don't match, it needs to force delete and re-download the game files they paid for.  Then try again. (count the number of times this happens on an account.  High number could be banned manually or have additional checks)
+    If the key matches someone else's key, both accounts get disabled. It will allow them to still play the base game, but not the full game.
+      -Have an option to re-purchase the game if they want to get a new key assigned, but maintane the old one.  (consider permenant ban if multiple times)
+
+    -Checksum of all files each time they load the game and request updates.
+  Must be online to use 
+  Create a unique string of characters make from scrambling the accounts status with the current time. 
+
+Pausing/resuming is not working at all.
+  -What should be controlling pausing?  GameManager and it's game state swapping with pauseGameState?  Or just leave it to time controller?
+  -Need to do something like: when pausing, continue the current game tick (this includes when window is minimized/maximized)
+    Then add the missed time to the AFK battery and set the current game time to the current time, and increase last game tick by the difference in the previous time and the previous last time.
+    For example, if the current game time is 2.340 and the last game time is 2.290, but the real time is now 12.000, the new 
+    game time should be 12.000 and the last game time should be 11.950.  When the window minimizes, it will stop everything from going, but the game won't know, it will essentially see it as a really long laggy game tick.  
+
+META_DATA is hardcoded between zon and scriptforge.  It should just belong to scriptforge.
+ -Script checking for exact metadata isn't ok.  I should move the metadata checks from Script to ScriptWithVariables.
+
+Add more code functionallity:
+  - Update the function definition to actually store the function definition in the node instead of making it at run time.
+  - var nodes should always just execute. They just evaluate to a token value.
+  - Self operators like +=, -=...
+  - functions (not allowed to call themselves.  To handle this, maybe just make new scripts internally so recursion will be caught by the call stack?)
+  - foreach() statements
+  - arrays with array functions
+  - indexing arrays
+  - Some more built in functions:
+    - abs(x)
+    - min(a, b)
+    - max(a, b)
+    - sqrt(x)
+  - Script enable/disable control from inside a script?
+
+BigNumber s() (toString) is displaying things like 3.2e700 then 3.21e700 in numbers that can change frequently.
+  Make sure in UI to force it to be 3.20e700 for numbers that can change regularly like costs and Aether.
+  Probably just always force it to show the amount of decimals you specify instaed of allowing it to shrink automatically.
+
+More AST optimization/reductions:
+ -Operators on Constants
+ -Variables that are never assigned to after initial assign -> Constants
+ -When there are var nodes, execute the inner TokenNode
+ -If condition is always true in an if condition or turnary condition -> delete condition and replace with stmt
+ -Conversion of conditions that are always true/false to literal true/false
+
+
+
+  ---Ideas---
+Gain player level xp from various different things based on each core, but the xp gained is very small.
+  -Make sure displayed number is truncated.
+  -Completing a level gives stageNum amount of xp.
+  -Gaining Aether from aether nodes gives 1xp base and increases as the amount of aether gained goes up.
+    -It should double each time like <= 10^3 -> 1xp, 10^3 to 10^6 -> 2xp, 10^6 to 10^12 -> 3xp, 10^12 to 10^24 -> 4xp, ... 
+      10^1536 -> 10xp

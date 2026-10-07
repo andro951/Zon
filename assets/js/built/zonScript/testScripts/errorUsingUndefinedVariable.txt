@@ -1,0 +1,6 @@
+Title: Using Undefined Variable
+Description: 
+Triggers: OnGainAether
+---
+
+print("a: " + a)

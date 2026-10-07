@@ -9,7 +9,7 @@ Zon.Keybindings.registeredKeyUpActions = new Map();
 Zon.Keybindings.registerKeyPress = (key, action) => {
     let actions = Zon.Keybindings.registeredKeyPressActions.get(key);
     if (!actions) {
-        actions = new Actions.Action();
+        actions = new Actions.Action(`Key press ${key} actions`);
         Zon.Keybindings.registeredKeyPressActions.set(key, actions);
     }
 
@@ -18,7 +18,7 @@ Zon.Keybindings.registerKeyPress = (key, action) => {
 Zon.Keybindings.registerKeyDown = (key, action) => {
     let actions = Zon.Keybindings.registeredKeyDownActions.get(key);
     if (!actions) {
-        actions = new Actions.Action();
+        actions = new Actions.Action(`Key down ${key} actions`);
         Zon.Keybindings.registeredKeyDownActions.set(key, actions);
     }
 
@@ -27,7 +27,7 @@ Zon.Keybindings.registerKeyDown = (key, action) => {
 Zon.Keybindings.registerKeyUp = (key, action) => {
     let actions = Zon.Keybindings.registeredKeyUpActions.get(key);
     if (!actions) {
-        actions = new Actions.Action();
+        actions = new Actions.Action(`Key up ${key} actions`);
         Zon.Keybindings.registeredKeyUpActions.set(key, actions);
     }
 

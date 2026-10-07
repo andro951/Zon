@@ -9,20 +9,28 @@ Struct.DynamicRectangle = class {
         this._top = top;
         this._width = width;
         this._height = height;
-        this._right = new Variable.Dependent(() => this.left + this.width, `${name}Right`, { this: this });
-        this._bottom = new Variable.Dependent(() => this.top + this.height, `${name}Bottom`, { this: this });
+        this._right = new Variable.Dependent(() => 
+            this.left + this.width, `${name}Right`, { this: this });
+        this._bottom = new Variable.Dependent(() => 
+            this.top + this.height, `${name}Bottom`, { this: this });
     }
 
-    static empty(name) {
+    static zero(name) {
         if (name === undefined || name === null)
-            throw new Error("Name cannot be null or undefined for Struct.DynamicRectangle.empty");
+            throw new Error("Name cannot be null or undefined for Struct.DynamicRectangle.zero");
 
-        return new Struct.DynamicRectangle(new Variable.Value(0, `${name}Left`), new Variable.Value(0, `${name}Top`), new Variable.Value(0, `${name}Width`), new Variable.Value(0, `${name}Height`), name);
+        return new Struct.DynamicRectangle(
+            new Variable.Value(0, `${name}Left`),
+            new Variable.Value(0, `${name}Top`),
+            new Variable.Value(0, `${name}Width`),
+            new Variable.Value(0, `${name}Height`),
+            name
+        );
     }
 
-    static dependent(name, thisObj = undefined, args = {}) {
+    static dependentEmpty(name, thisObj = undefined, args = {}) {
         if (name === undefined || name === null)
-            throw new Error("Name cannot be null or undefined for Struct.DynamicRectangle.dependent");
+            throw new Error("Name cannot be null or undefined for Struct.DynamicRectangle.dependentEmpty");
 
         return new Struct.DynamicRectangle(
             Variable.Dependent.empty(`${name}Left`, thisObj, args),

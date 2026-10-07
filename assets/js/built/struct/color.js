@@ -94,6 +94,9 @@ Struct.Color = class Color extends Struct.ColorBase {
     set uint(value) {
         this._uint32Array[0] = value;
     }
+    get clone() {
+        return Struct.Color.fromUInt(this.uint);
+    }
 
     static parseUInt(colorString) {
         if (colorString.startsWith('#')) {
@@ -160,5 +163,14 @@ Struct.Color = class Color extends Struct.ColorBase {
         }
 
         return null;
+    }
+    equals(other) {
+        return this.uint === other.uint;
+    }
+    notEquals(other) {
+        return this.uint !== other.uint;
+    }
+    toString() {
+        return this.cssString;
     }
 }

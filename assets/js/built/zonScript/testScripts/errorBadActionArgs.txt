@@ -1,0 +1,9 @@
+Title: Bad Action Args
+Description:
+Triggers: OnGainAether
+---
+print("AetherGained: " + AetherGained + ", total Aether: " + Aether + " Trying to empower combat core...")
+if (@TryEmpowerCore("Combat")?)
+    @TryEmpowerCore("Combat", "Jello", 1)
+
+print("total Aether after trying to empower: " + Aether)

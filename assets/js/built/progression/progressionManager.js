@@ -21,3 +21,7 @@ Zon.ProgressionManager.onClickStageSelectButton = (stageID, stageNum) => {
 Zon.ProgressionManager.onPlayerSwitchToStage = (stageID, stageNum) => {
     
 }
+
+Zon.ProgressionManager.onUnlockCore = (core) => {
+
+}

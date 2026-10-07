@@ -42,6 +42,9 @@ if (zonDebug) {
         Zon.Keybindings.registerKeyPress(`2`, () => {
             Zon.topUI.levelBar._fitText();
         });
+        Zon.Keybindings.registerKeyPress(`3`, () => {
+            Zon.DevCheats.onPress3();
+        });
     }
 
     Zon.DevCheats.killAllBlocks = () => {
@@ -52,14 +55,64 @@ if (zonDebug) {
         console.log(`All blocks killed.`);
     }
 
+    Zon.DevCheats.onPress3 = () => {
+        // const logUISizes = (ui) => {
+        //     const element = ui.element;
+        //     const style = element.style;
+        //     console.log(`${element.id} - left: ${style.left}, top: ${style.top}, width: ${style.width}, height: ${style.height}.`);
+        //     console.log(`${element.id} - _value; left: ${ui._left._value}, top: ${ui._top._value}, width: ${ui._width._value}, height: ${ui._height._value}.`);
+        //     console.log(`${element.id} - value; left: ${ui.left}, top: ${ui.top}, width: ${ui.width}, height: ${ui.height}.`);
+        //     console.log(`element.style.display: ${ui.element.style.display}`);
+        // }
+
+        // logUISizes(Zon.device);
+        // logUISizes(Zon.topUI);
+        // logUISizes(Zon.combatUI);
+        // logUISizes(Zon.bottomUI);
+        // console.log("Window size:", window.innerWidth, window.innerHeight);
+
+
+
+        // console.log(`${Zon.UI.scriptsUIState.element.style.backgroundColor}`);
+        // console.log(`${Zon.UI.scriptsUIState.useableSpace.element.style.backgroundColor}`);
+        // console.log(`${Zon.UI.scriptsUIState.useableSpace.scriptPanelsList.element.style.backgroundColor}`);
+        // const scriptPanel = Zon.UI.scriptsUIState.useableSpace.scriptPanelsList.children[0];
+        // console.log(`${scriptPanel.element.style.backgroundColor}`);
+        // console.log(`${scriptPanel.scriptTitle.element.style.backgroundColor}`);
+
+
+        
+        //Zon.UI.UIElementBase.testingLineSpacing();
+
+        // const popup = Zon.UI.Popup.allPopups.values().next().value;
+        // const textPanel = popup.popupPanel.popupText;
+        // console.log(`textPanel width, height: ${textPanel.width}, ${textPanel.height}`);
+
+
+
+        // const textFunc = new Variable.DependentFunction(() =>
+        //     `Test Text`
+        //     , {  });
+        // Zon.UI.InfoPopup.makePopup('Test Info Popup', textFunc, Zon.device);
+
+
+        ZonScript.runEquivalentNumericBenchmark();
+    }
+
     Zon.DevCheats.runTests = () => {
-        Zon.DevCheats.simpleBigNumberConversionTest();
+        //Zon.DevCheats.simpleBigNumberConversionTest();
         //BinaryTests.allTests();
         //Zon.DevCheats.runSaveLoadTests();
         //BigNumberTests.Test_BigNumberConversions();
         //NumberTests.Test_CalculateSignificandExponent();
         //Struct.EquationTests.runTests();
         //Zon.DevCheats.runCircleGetBlockTests();
+        Zon.combatCore.isUnlocked.value = true;//Unlock combat core for testing
+        
+        if (ZonScript.runOldTestScripts)
+            ZonScript.test();
+
+        Collision.Tests.runTests();
     }
 
     Zon.DevCheats.simpleBigNumberConversionTest = () => {

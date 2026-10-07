@@ -24,6 +24,8 @@ Zon.hideCombatUI = () => {
     Zon.bottomUI.bottomBar.hide();
 }
 
+Zon.CombatUItestColors = false;
+
 Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
     constructor() {
         super('topUI', Zon.UI.UIElementZID.MAIN_UI);
@@ -39,14 +41,22 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
     }
     setup() {
         super.setup();
+
+        if (Zon.CombatUItestColors) {
+            this.backgroundColor.uint = 0xFF0000FF;
+        }
+        else {
+            this.backgroundColor.uint = 0x060606FF;
+        }
         
-        this.backgroundColor.uint = 0x060606FF;
-        this.replaceLeft(() => 0);
-        this.replaceWidth(() => Zon.device.width);
-        this.replaceHeight(() => Math.min(Zon.device.height * this.topUIPercentOfHeight, Zon.device.width / this.topUIAspectRatio));
+        this.replaceLeft(() => 
+            0);
+        this.replaceWidth(() => 
+            Zon.device.width);
+        this.replaceHeight(() => 
+            Math.min(Zon.device.height * this.topUIPercentOfHeight, Zon.device.width / this.topUIAspectRatio));
         this.updateCombatLayout(Zon.Settings.getDisplay(Zon.DisplaySettingsID.CombatUILayout));
         // this.draw();
-        // Zon.device.onResize.add(this.draw);
 
         // const panel = document.createElement('div');
         // panel.id = 'someBasicPanel';
@@ -88,12 +98,12 @@ Zon.TopUI = class TopUI extends Zon.UI.UIElementDiv {
         switch (newLayout) {
             case Zon.Settings.CombatUILayoutID.DEFAULT:
             case Zon.Settings.CombatUILayoutID.BOTTOM:
-                this.calculateTop = () => 0;
-                this.replaceTop(this.calculateTop);
+                this.replaceTop(() => 
+                    0);
                 break;
             case Zon.Settings.CombatUILayoutID.CENTER:
-                this.calculateTop = () => Zon.combatUI.top - this.height;
-                this.replaceTop(this.calculateTop);
+                this.replaceTop(() =>
+                    Zon.combatUI.top - this.height);
                 break;
             default:
                 throw new Error(`Unknown combat layout: ${newLayout}`);
@@ -132,6 +142,10 @@ Zon.CombatUI = class CombatUI extends Zon.UI.UIElementCanvas {
     setup() {
         super.setup();
 
+        if (Zon.CombatUItestColors) {
+            this.backgroundColor.uint = 0x0000FFFF;
+        }
+
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Zon.device.width / Zon.combatUI.combatUIAspectRatio);
@@ -164,6 +178,12 @@ Zon.BottomUI = class BottomUI extends Zon.UI.UIElementDiv {
         this.bottomBar = Zon.UI.BottomBar.create();//Parent is Zon.device because of different zIndex.
     }
     setup() {
+        super.setup();
+
+        if (Zon.CombatUItestColors) {
+            this.backgroundColor.uint = 0x00FF00FF;
+        }
+
         this.replaceLeft(() => 0);
         this.replaceWidth(() => Zon.device.width);
         this.replaceHeight(() => Math.min(Zon.device.height * this.bottomUIPercentOfHeight, Zon.device.width / this.bottomUIAspectRatio));
@@ -175,6 +195,7 @@ Zon.BottomUI = class BottomUI extends Zon.UI.UIElementDiv {
             case Zon.Settings.CombatUILayoutID.DEFAULT:
             case Zon.Settings.CombatUILayoutID.BOTTOM:
                 this.replaceTop(() => Zon.device.height - Zon.bottomUI.height);
+                //this.replaceTop(() => 600);
                 break;
             case Zon.Settings.CombatUILayoutID.CENTER:
                 this.replaceTop(() => Zon.combatUI.bottom);

@@ -202,7 +202,7 @@ Struct.NodeArray = class NodeArray {
     constructor(name) {
         this.name = name;
         this._nodes = [];
-        this.onChangedAction = new Actions.Action();
+        this.onChangedAction = new Actions.Action(`${this.constructor.name} ${name} onChanged`);
     }
 
     get length() {

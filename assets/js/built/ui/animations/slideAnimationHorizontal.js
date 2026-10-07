@@ -1,38 +1,16 @@
 "use strict";
 
-Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal {
+Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal extends Zon.UI.SlideAnimation {
     constructor(uiState, fromLeft = true, { slideInTime = 0.25, slideOutTime = 0.1 } = {}) {
-        this.uiState = uiState;
+        super(uiState);
         this.slideInTime = slideInTime * 1000;
         this.slideOutTime = slideOutTime * 1000;
         this.fromLeft = fromLeft;
-        this.hiding = false;
         this.bindAll();
-        Zon.Setup.postLinkAndFinalizeUiSetupActions.add(this._moveToInitialPosition);
     }
 
-    _moveToInitialPosition() {
-        if (this.uiState.shown.value) {
-            this.uiState.leftOffset = 0;
-        }
-        else {
-            this.uiState.leftOffset = this.fromLeft ? -this.uiState.width : this.uiState.width;
-        }
-    }
-
-    show() {
-        this.uiState.forceShow();
-        Zon.game.preDrawActions.remove(this._updateHidePosition);
-        Zon.game.preDrawActions.add(this._updateShowPosition);
-    }
-
-    hide() {
-        if (this.hiding)
-            return;
-
-        this.hiding = true;
-        Zon.game.preDrawActions.remove(this._updateShowPosition);
-        Zon.game.preDrawActions.add(this._updateHidePosition);
+    _moveToShowAnimationStartPosition() {
+        this.uiState.leftOffset = this.fromLeft ? -this.uiState.width : this.uiState.width;
     }
 
     _updateShowPosition = () => {
@@ -40,7 +18,7 @@ Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal {
         const amountToMove = Zon.timeController.deltaTimeMilliseconds / this.slideInTime * this.uiState.width;
         if (Math.abs(leftOffset) < amountToMove) {
             this.uiState.leftOffset = 0;
-            Zon.game.preDrawActions.remove(this._updateShowPosition);
+            this.onFinishShowing();
         } else {
             this.uiState.leftOffset += leftOffset > 0 ? -amountToMove : amountToMove;
         }
@@ -52,8 +30,6 @@ Zon.UI.SlideAnimationHorizontal = class SlideAnimationHorizontal {
         const amountToMove = Zon.timeController.deltaTimeMilliseconds / this.slideOutTime * this.uiState.width;
         if (Math.abs(diff) < amountToMove) {
             this.uiState.leftOffset = hiddenPosition;
-            Zon.game.preDrawActions.remove(this._updateHidePosition);
-            this.hiding = false;
             this.uiState.forceHide();
         } else {
             this.uiState.leftOffset += diff > 0 ? amountToMove : -amountToMove;

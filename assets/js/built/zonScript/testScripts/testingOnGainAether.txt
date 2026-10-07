@@ -1,0 +1,11 @@
+Title: Testing OnGainAether Trigger
+Description: Print the aether gained and total aether.
+Triggers: OnGainAether RageQuit
+---
+//RageQuit is an intentional incorrect tirgger name
+
+print("AetherGained: " + AetherGained + ", total Aether: " + Aether + " Trying to empower combat core...")
+if (@TryEmpowerCore("Combat")?)
+    @TryEmpowerCore("Combat")
+
+print("total Aether after trying to empower: " + Aether)

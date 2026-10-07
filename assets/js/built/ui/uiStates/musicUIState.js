@@ -76,7 +76,6 @@ Zon.UI.MusicUIState = class MusicUIState extends Zon.UI.CloseButtonLinkedUIState
     static SongButtonsList = class SongButtonsList extends Zon.UI.UIElementDiv {
         constructor(parent) {
             super(`SongButtonsList`, Zon.UI.UIElementZID.CLOSE_BUTTON_MENU, parent);
-            this.buttons = [];
             this.element.style.backgroundColor = Struct.Color.fromUInt(0xFF0000FF).cssString;
             
             this.makeScrollableColumn();

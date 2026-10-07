@@ -115,7 +115,7 @@
 			},
 			"Cores": {
 				"CombatCore": "assets/textures/ui/Cores/CombatCore.png",
-				"CombatCore1_32x32": "assets/textures/ui/Cores/CombatCore1_32x32.png",
+				"CombatCore_32x32": "assets/textures/ui/Cores/CombatCore_32x32.png",
 				"CoreOfCreation": "assets/textures/ui/Cores/CoreOfCreation.png",
 				"CoreOfCreation_32x32": "assets/textures/ui/Cores/CoreOfCreation_32x32.png",
 				"SphereEnergyCore3": "assets/textures/ui/Cores/SphereEnergyCore3.png",

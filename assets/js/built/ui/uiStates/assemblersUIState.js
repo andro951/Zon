@@ -2,7 +2,7 @@
 
 Zon.AssemblersUIState = class extends Zon.UI.CloseButtonLinkedUIState {
     constructor() {
-        super();
+        super(`assemblersUIState`);
     }
     postLoadSetup() {
         
